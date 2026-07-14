@@ -5,6 +5,7 @@ import { GodRays } from "@react-three/postprocessing";
 import { BlendFunction, KernelSize } from "postprocessing";
 import * as THREE from "three";
 import CanvasStage, { useSpeed } from "./CanvasStage";
+import useDragOrbit from "../hooks/useDragOrbit";
 import { seeded } from "../utils/procedural";
 import "./CathedralAscent3D.css";
 
@@ -236,10 +237,15 @@ function ReflectiveFloor() {
 
 function CathedralRig({ children }) {
   const group = useRef();
-  useFrame((state) => {
+  const rotationRef = useRef({ yaw: 0, pitch: 0 });
+  const dragRef = useDragOrbit();
+  useFrame((state, delta) => {
     if (!group.current) return;
-    group.current.rotation.y = state.pointer.x * 0.05;
-    group.current.rotation.x = state.pointer.y * 0.02;
+    const rotation = rotationRef.current;
+    rotation.yaw = THREE.MathUtils.damp(rotation.yaw, dragRef.current.targetYaw, 3.4, delta);
+    rotation.pitch = THREE.MathUtils.damp(rotation.pitch, dragRef.current.targetPitch, 3.4, delta);
+    group.current.rotation.y = rotation.yaw;
+    group.current.rotation.x = rotation.pitch;
   });
   return <group ref={group}>{children}</group>;
 }

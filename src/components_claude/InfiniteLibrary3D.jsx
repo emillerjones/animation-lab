@@ -188,7 +188,7 @@ export default function InfiniteLibrary3D({ settings = {} }) {
 
   return (
     <section className="atmosphere infinite-library-3d">
-      <CanvasStage camera={{ position: [0, 1.4, 9], fov: 52 }} speed={settings.speed ?? 1} bloom={{ intensity: 0.6 }}>
+      <CanvasStage camera={{ position: [0, 1.4, 9], fov: 52 }} orbitEnabled speed={settings.speed ?? 1} bloom={{ intensity: 0.6 }}>
         <color attach="background" args={["#050309"]} />
         <fogExp2 attach="fog" args={["#050309", 0.01]} />
         <ambientLight intensity={0.15} />

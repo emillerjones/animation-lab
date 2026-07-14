@@ -9,6 +9,7 @@ import {
 } from "three.quarks";
 import { getProject } from "@theatre/core";
 import CanvasStage, { useSpeed } from "./CanvasStage";
+import useDragOrbit from "../hooks/useDragOrbit";
 import { seeded } from "../utils/procedural";
 import "./NeuralNetworkUniverse3D.css";
 
@@ -169,7 +170,8 @@ function useAmbientDust() {
 }
 
 function NetworkScene({ settings }) {
-  const { camera, pointer } = useThree();
+  const { camera } = useThree();
+  const dragRef = useDragOrbit();
   const speed = useSpeed();
   const count = Math.max(30, Math.min(170, settings.nodes ?? 150));
   const pulseRateMul = settings.pulseRate ?? 0.9;
@@ -350,11 +352,12 @@ function NetworkScene({ settings }) {
 
     orbitRef.current += delta * tuning.value.orbitSpeed;
     const radius = tuning.value.orbitRadius;
-    const pitch = Math.sin(t * 0.09) * 0.35;
+    const yaw = orbitRef.current + dragRef.current.targetYaw;
+    const pitch = Math.sin(t * 0.09) * 0.35 + dragRef.current.targetPitch;
     camera.position.set(
-      Math.sin(orbitRef.current) * radius * Math.cos(pitch),
-      2 + Math.sin(pitch) * radius * 0.5 + pointer.y * 0.6,
-      Math.cos(orbitRef.current) * radius * Math.cos(pitch),
+      Math.sin(yaw) * radius * Math.cos(pitch),
+      2 + Math.sin(pitch) * radius * 0.5,
+      Math.cos(yaw) * radius * Math.cos(pitch),
     );
     camera.lookAt(0, 1, 0);
   });

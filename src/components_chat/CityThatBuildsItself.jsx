@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { MeshBasicNodeMaterial, PostProcessing, WebGPURenderer } from "three/webgpu";
 import { color, mix, pass, sin, time, uniform, uv } from "three/tsl";
 import { bloom } from "three/addons/tsl/display/BloomNode.js";
+import { createDragOrbit } from "../utils/dragOrbit";
 import { WEBGL_DPR_MAX } from "../rendering/quality";
 import "./CityThatBuildsItself.css";
 
@@ -119,6 +120,7 @@ function buildCity(canvas, host, settingsRef, report) {
   const pointerTarget = new THREE.Vector2();
   const raycaster = new THREE.Raycaster();
   const dummy = new THREE.Object3D();
+  const dragOrbit = createDragOrbit(host);
   const buildingData = createCityData();
   const state = {
     progress: 0.07,
@@ -514,11 +516,13 @@ function buildCity(canvas, host, settingsRef, report) {
 
       const pathPosition = cameraPath.getPointAt(state.progress);
       const lookPosition = cameraLookPath.getPointAt(state.progress);
+      const orbitYaw = Math.sin(dragOrbit.state.targetYaw);
+      const orbitPitch = dragOrbit.state.targetPitch;
       camera.position.lerp(
-        pathPosition.add(new THREE.Vector3(pointer.x * 1.25, pointer.y * 0.6, 0)),
+        pathPosition.add(new THREE.Vector3(orbitYaw * 1.25, orbitPitch * 0.6, 0)),
         1 - Math.exp(-delta * 3.8),
       );
-      camera.lookAt(lookPosition.x + pointer.x * 1.1, lookPosition.y + pointer.y * 0.5, lookPosition.z);
+      camera.lookAt(lookPosition.x + orbitYaw * 1.1, lookPosition.y + orbitPitch * 0.5, lookPosition.z);
       cityRoot.rotation.y = Math.sin(elapsed * 0.06) * 0.006 + corruption * Math.sin(elapsed * 9) * 0.007;
       holograms.forEach((hologram, index) => {
         hologram.rotation.y = elapsed * (0.07 + index * 0.012);
@@ -553,6 +557,7 @@ function buildCity(canvas, host, settingsRef, report) {
     host.removeEventListener("pointercancel", onPointerUp);
     host.removeEventListener("dblclick", onDoubleClick);
     host.removeEventListener("wheel", onWheel);
+    dragOrbit.dispose();
     transient.forEach((mesh) => {
       gsap.killTweensOf(mesh.scale);
       gsap.killTweensOf(mesh.material);

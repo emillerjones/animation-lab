@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { getProject } from "@theatre/core";
 import RAPIER from "@dimforge/rapier3d-compat";
 import * as THREE from "three";
+import { createDragOrbit } from "../utils/dragOrbit";
 import {
   MeshBasicNodeMaterial,
   MeshPhysicalNodeMaterial,
@@ -267,6 +268,7 @@ function buildStormScene(canvas, host, settingsRef, report) {
   const pointer = new THREE.Vector2();
   const pointerTarget = new THREE.Vector2();
   const pointerWorld = new THREE.Vector3();
+  const dragOrbit = createDragOrbit(host);
   const raycaster = new THREE.Raycaster();
   const interactionPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -3.5);
   const lightning = [];
@@ -619,10 +621,12 @@ function buildStormScene(canvas, host, settingsRef, report) {
       artifact.rotation.y = THREE.MathUtils.damp(artifact.rotation.y, pointer.x * 0.045, 2.6, delta);
       artifact.rotation.x = THREE.MathUtils.damp(artifact.rotation.x, -pointer.y * 0.025, 2.6, delta);
       const cameraPush = state.progress > 0.86 ? (state.progress - 0.86) * 18 : 0;
-      camera.position.x = THREE.MathUtils.damp(camera.position.x, pointer.x * 0.42, 2.2, delta);
-      camera.position.y = THREE.MathUtils.damp(camera.position.y, 1.2 + pointer.y * 0.28, 2.2, delta);
+      const orbitYaw = Math.sin(dragOrbit.state.targetYaw);
+      const orbitPitch = dragOrbit.state.targetPitch;
+      camera.position.x = THREE.MathUtils.damp(camera.position.x, orbitYaw * 0.42, 2.2, delta);
+      camera.position.y = THREE.MathUtils.damp(camera.position.y, 1.2 + orbitPitch * 0.28, 2.2, delta);
       camera.position.z = THREE.MathUtils.damp(camera.position.z, 22 - cameraPush, 2, delta);
-      camera.lookAt(3.1 + pointer.x * 0.25, pointer.y * 0.16, 0);
+      camera.lookAt(3.1 + orbitYaw * 0.25, orbitPitch * 0.16, 0);
 
       if (frame % 18 === 0) {
         const stageIndex = clamp(Math.floor(state.progress * STAGES.length), 0, STAGES.length - 1);
@@ -650,6 +654,7 @@ function buildStormScene(canvas, host, settingsRef, report) {
     host.removeEventListener("pointerup", onPointerUp);
     host.removeEventListener("pointercancel", onPointerUp);
     host.removeEventListener("wheel", onWheel);
+    dragOrbit.dispose();
     lightning.forEach((bolt) => {
       bolt.geometry.dispose();
       bolt.material.dispose();

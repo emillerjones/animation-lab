@@ -95,6 +95,8 @@ export default function SolarFlare3D({ settings = {} }) {
     <section className="atmosphere solar-flare-3d">
       <CanvasStage
         camera={{ position: [1.2, 0.6, 9], fov: 46 }}
+        orbitEnabled
+        orbitFocus={[1.2, 0, 0]}
         speed={settings.speed ?? 1}
         bloom={{ intensity: 0.6, threshold: 0.5 }}
         extraEffects={sun ? (

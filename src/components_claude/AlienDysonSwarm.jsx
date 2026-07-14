@@ -5,6 +5,7 @@ import { GodRays, ChromaticAberration } from "@react-three/postprocessing";
 import { BlendFunction, KernelSize } from "postprocessing";
 import * as THREE from "three";
 import CanvasStage, { useSpeed } from "./CanvasStage";
+import useDragOrbit from "../hooks/useDragOrbit";
 import { seeded } from "../utils/procedural";
 import "./AlienDysonSwarm.css";
 
@@ -197,6 +198,7 @@ function CoronaShell({ index, intensity }) {
 function Swarm({ settings, onSunReady }) {
   const { camera } = useThree();
   const speed = useSpeed();
+  const dragRef = useDragOrbit();
   const groupRefs = useRef([]);
   const debrisRef = useRef();
   const droneRef = useRef();
@@ -283,8 +285,8 @@ function Swarm({ settings, onSunReady }) {
     const focusedEl = focusedIndex != null ? groupRefs.current[focusedIndex] : null;
     const target = focusedEl ? focusedEl.position : origin;
     const desiredDistance = focusedEl ? Math.max(4, nodes[focusedIndex].scale * 3.2) : distanceRef.current;
-    const yaw = baseAngleRef.current + state.pointer.x * 0.22;
-    const pitch = 0.2 + state.pointer.y * 0.1;
+    const yaw = baseAngleRef.current + dragRef.current.targetYaw;
+    const pitch = THREE.MathUtils.clamp(0.2 + dragRef.current.targetPitch, -1.4, 1.4);
     const camX = target.x + Math.cos(yaw) * Math.cos(pitch) * desiredDistance;
     const camZ = target.z + Math.sin(yaw) * Math.cos(pitch) * desiredDistance;
     const camY = target.y + Math.sin(pitch) * desiredDistance;

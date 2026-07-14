@@ -104,7 +104,7 @@ function ColliderScene({ settings }) {
 export default function ParticleCollider3D({ settings = {} }) {
   return (
     <section className="atmosphere particle-collider-3d">
-      <CanvasStage camera={{ position: [0, 1, 9], fov: 46 }} speed={settings.speed ?? 1} bloom={{ intensity: 1.5, threshold: 0.15 }}>
+      <CanvasStage camera={{ position: [0, 1, 9], fov: 46 }} orbitEnabled speed={settings.speed ?? 1} bloom={{ intensity: 1.5, threshold: 0.15 }}>
         <ambientLight intensity={0.08} />
         <ColliderScene settings={settings} />
       </CanvasStage>

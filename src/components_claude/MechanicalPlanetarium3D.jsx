@@ -2,6 +2,7 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import CanvasStage, { useSpeed } from "./CanvasStage";
+import useDragOrbit from "../hooks/useDragOrbit";
 import { seeded } from "../utils/procedural";
 import "./MechanicalPlanetarium3D.css";
 
@@ -60,10 +61,17 @@ function Planet({ planet, orbitSpeed }) {
 function SolarRig({ children }) {
   const group = useRef();
   const speed = useSpeed();
+  const dragRef = useDragOrbit();
+  const autoYawRef = useRef(0);
+  const orbitRef = useRef({ yaw: 0, pitch: -0.32 });
   useFrame((state, delta) => {
     if (!group.current) return;
-    group.current.rotation.y += delta * 0.025 * speed;
-    group.current.rotation.x = -0.32 + state.pointer.y * 0.06;
+    autoYawRef.current += delta * 0.025 * speed;
+    const orbit = orbitRef.current;
+    orbit.yaw = THREE.MathUtils.damp(orbit.yaw, dragRef.current.targetYaw, 3.4, delta);
+    orbit.pitch = THREE.MathUtils.damp(orbit.pitch, -0.32 + dragRef.current.targetPitch, 3.4, delta);
+    group.current.rotation.y = autoYawRef.current + orbit.yaw;
+    group.current.rotation.x = orbit.pitch;
   });
   return <group ref={group}>{children}</group>;
 }

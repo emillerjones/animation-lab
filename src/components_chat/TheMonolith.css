@@ -8,7 +8,7 @@
 .monolith-experience__copy p { margin: 0 0 18px; color: #87cfff; font-size: 9px; letter-spacing: .28em; text-transform: uppercase; }
 .monolith-experience__copy h1 { margin: 0; font: 350 clamp(58px, 7vw, 108px)/.78 system-ui, sans-serif; letter-spacing: -.07em; }
 .monolith-experience__copy > span { display: block; max-width: 310px; margin-top: 28px; color: rgb(235 241 255 / 57%); font-size: 14px; line-height: 1.7; }
-.monolith-experience__copy button { display: inline-flex; align-items: center; gap: 35px; margin-top: 28px; border: 1px solid rgb(115 177 255 / 32%); padding: 13px 17px; background: rgb(11 18 32 / 42%); color: #cde9ff; cursor: pointer; font-size: 9px; letter-spacing: .18em; text-transform: uppercase; backdrop-filter: blur(12px); transition: border-color .25s ease, background .25s ease, box-shadow .25s ease; }
+.monolith-experience__copy button { display: inline-flex; align-items: center; gap: 35px; margin-top: 28px; border: 1px solid rgb(115 177 255 / 32%); padding: 13px 17px; background: rgb(11 18 32 / 42%); color: #cde9ff; cursor: pointer; font-size: 9px; letter-spacing: .18em; text-transform: uppercase; backdrop-filter: blur(12px); transition: border-color .25s ease, background .25s ease, box-shadow .25s ease; pointer-events: auto; }
 .monolith-experience__copy button:hover { border-color: rgb(141 209 255 / 72%); background: rgb(23 40 70 / 54%); box-shadow: 0 0 30px rgb(71 137 255 / 15%); }
 .monolith-experience__copy button i { color: #fff; font-style: normal; }
 .monolith-experience__scroll { position: absolute; z-index: 4; bottom: 28px; left: 50%; display: flex; flex-direction: column; align-items: center; gap: 8px; color: rgb(223 234 255 / 42%); transform: translateX(-50%); pointer-events: none; }

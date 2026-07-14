@@ -58,7 +58,7 @@ export default function BioluminescentTide3D({ settings = {} }) {
   const waterTint = useMemo(() => new THREE.Color().setHSL(hue, 0.55, 0.045), [hue]);
   return (
     <section className="atmosphere bioluminescent-tide-3d">
-      <CanvasStage camera={{ position: [0, 1.2, 8], fov: 48 }} speed={settings.speed ?? 1} bloom={{ intensity: 1.2 }}>
+      <CanvasStage camera={{ position: [0, 1.2, 8], fov: 48 }} orbitEnabled speed={settings.speed ?? 1} bloom={{ intensity: 1.2 }}>
         <ambientLight intensity={0.05} />
         <Plankton count={count} color={glowColor} />
         <ReflectiveWater tint={waterTint} />

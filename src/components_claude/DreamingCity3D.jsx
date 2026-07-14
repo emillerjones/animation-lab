@@ -97,7 +97,7 @@ export default function DreamingCity3D({ settings = {} }) {
   const count = Math.max(12, Math.min(120, settings.towers ?? 60));
   return (
     <section className="atmosphere dreaming-city-3d">
-      <CanvasStage camera={{ position: [1.6, 2.2, 10], fov: 46 }} speed={settings.speed ?? 1} bloom={{ intensity: 0.9 }}>
+      <CanvasStage camera={{ position: [1.6, 2.2, 10], fov: 46 }} orbitEnabled orbitFocus={[1.6, 0, -2]} speed={settings.speed ?? 1} bloom={{ intensity: 0.9 }}>
         <color attach="background" args={["#04050a"]} />
         <fogExp2 attach="fog" args={["#04050a", 0.028]} />
         <ambientLight intensity={0.15} />

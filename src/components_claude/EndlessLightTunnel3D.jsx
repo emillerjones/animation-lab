@@ -285,6 +285,7 @@ export default function EndlessLightTunnel3D({ settings = {} }) {
     <section className="atmosphere endless-light-tunnel-3d">
       <CanvasStage
         camera={{ position: [0, 2.6, 10], fov: 56 }}
+        orbitEnabled
         speed={settings.speed ?? 1}
         bloom={{ intensity: 0.55, threshold: 0.38 }}
         vignette={{ darkness: 0.96 }}

@@ -18,6 +18,7 @@ import {
   vec3,
 } from "three/tsl";
 import { bloom } from "three/addons/tsl/display/BloomNode.js";
+import { createDragOrbit } from "../utils/dragOrbit";
 import { WEBGL_DPR_MAX } from "../rendering/quality";
 import "./ColossusAwakens.css";
 
@@ -478,6 +479,8 @@ function buildExperience(canvas, host, settingsRef, report) {
   const pointer = new THREE.Vector2();
   const pointerTarget = new THREE.Vector2();
   const raycaster = new THREE.Raycaster();
+  const dragOrbit = createDragOrbit(host);
+  const orbit = { yaw: 0, pitch: 0 };
   const state = {
     started: false,
     progress: 0,
@@ -802,6 +805,8 @@ function buildExperience(canvas, host, settingsRef, report) {
       state.velocity *= Math.exp(-delta * 3.8);
       state.progress = THREE.MathUtils.clamp(state.progress + state.velocity * speed * delta, 0, 1);
       pointer.lerp(pointerTarget, 1 - Math.exp(-delta * 3.2));
+      orbit.yaw = THREE.MathUtils.damp(orbit.yaw, dragOrbit.state.targetYaw, 3.4, delta);
+      orbit.pitch = THREE.MathUtils.damp(orbit.pitch, dragOrbit.state.targetPitch, 3.4, delta);
       theatreSheet.sequence.position = Math.min(Math.max(state.progress, state.awakening * 0.38) * 24, 10);
 
       updateSand(delta * speed, elapsed, sandDensity, state.awakening);
@@ -819,10 +824,10 @@ function buildExperience(canvas, host, settingsRef, report) {
       const lookPosition = lookPath.getPointAt(state.progress);
       const shake = distortion * rapidDistortion * 0.08 + state.failure * distortion * 0.045;
       camera.position.lerp(
-        pathPosition.add(new THREE.Vector3(pointer.x * 0.72 + Math.sin(elapsed * 37) * shake, pointer.y * 0.32, Math.cos(elapsed * 29) * shake)),
+        pathPosition.add(new THREE.Vector3(Math.sin(orbit.yaw) * 6 + Math.sin(elapsed * 37) * shake, orbit.pitch * 5, Math.cos(elapsed * 29) * shake)),
         1 - Math.exp(-delta * 3.2),
       );
-      camera.lookAt(lookPosition.x + pointer.x * 0.42, lookPosition.y + pointer.y * 0.22, lookPosition.z);
+      camera.lookAt(lookPosition.x + Math.sin(orbit.yaw) * 4, lookPosition.y + orbit.pitch * 3, lookPosition.z);
       scene.fog.density = THREE.MathUtils.lerp(0.0135, 0.004, THREE.MathUtils.smoothstep(state.progress, 0.68, 0.82));
       renderer.toneMappingExposure = 0.5 + state.awakening * 0.38 + state.progress * 0.12;
 
@@ -860,6 +865,7 @@ function buildExperience(canvas, host, settingsRef, report) {
     host.removeEventListener("pointerup", onPointerUp);
     host.removeEventListener("pointercancel", onPointerUp);
     host.removeEventListener("wheel", onWheel);
+    dragOrbit.dispose();
     transient.forEach((mesh) => {
       gsap.killTweensOf(mesh.scale);
       gsap.killTweensOf(mesh.material);

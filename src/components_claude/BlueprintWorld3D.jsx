@@ -72,7 +72,7 @@ export default function BlueprintWorld3D({ settings = {} }) {
   const measurements = Math.max(6, Math.min(28, settings.measurements ?? 18));
   return (
     <section className="atmosphere blueprint-world-3d">
-      <CanvasStage camera={{ position: [1.6, 0.6, 10], fov: 48 }} speed={settings.speed ?? 1} bloom={{ intensity: 0.7 }}>
+      <CanvasStage camera={{ position: [1.6, 0.6, 10], fov: 48 }} orbitEnabled orbitFocus={[1.6, 0, -2]} speed={settings.speed ?? 1} bloom={{ intensity: 0.7 }}>
         <ambientLight intensity={0.1} />
         <group position={[1.6, 0, -2]}>
           {Array.from({ length: count }).map((_, index) => <ConstructBlock key={index} index={index} accent="#78e8ff" />)}

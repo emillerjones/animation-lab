@@ -25,6 +25,7 @@ import {
   sin,
   time,
 } from "three/tsl";
+import useDragOrbit from "../hooks/useDragOrbit";
 import { WEBGL_DPR } from "../rendering/quality";
 import "./GravityMuseum.css";
 
@@ -567,6 +568,7 @@ function GravityDirector({
   onStage,
 }) {
   const { world } = useRapier();
+  const dragRef = useDragOrbit();
   const currentGravity = useRef(new THREE.Vector3());
   const lastStage = useRef("");
   const lastAutoStage = useRef("");
@@ -663,8 +665,8 @@ function GravityDirector({
 
     const opening = THREE.MathUtils.smoothstep(elapsed, 0, choreography.value.glideEnds);
     const cameraZ = THREE.MathUtils.lerp(choreography.value.cameraStartZ, choreography.value.cameraEndZ, opening);
-    state.camera.position.x = THREE.MathUtils.damp(state.camera.position.x, GALLERY_X + 2.7 + state.pointer.x * 0.45, 2.8, delta);
-    state.camera.position.y = THREE.MathUtils.damp(state.camera.position.y, 4.3 + state.pointer.y * 0.3, 2.8, delta);
+    state.camera.position.x = THREE.MathUtils.damp(state.camera.position.x, GALLERY_X + 2.7 + Math.sin(dragRef.current.targetYaw) * 0.45, 2.8, delta);
+    state.camera.position.y = THREE.MathUtils.damp(state.camera.position.y, 4.3 + dragRef.current.targetPitch * 0.3, 2.8, delta);
     state.camera.position.z = THREE.MathUtils.damp(state.camera.position.z, cameraZ - Math.sin(elapsed * 0.06) * 1.2, 2.4, delta);
     state.camera.lookAt(GALLERY_X, 3.1, -13.5);
   });

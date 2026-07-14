@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { getProject } from "@theatre/core";
 import * as THREE from "three";
 import { MeshBasicNodeMaterial, PostProcessing, WebGPURenderer } from "three/webgpu";
+import { createDragOrbit } from "../utils/dragOrbit";
 import {
   color,
   mix,
@@ -160,6 +161,7 @@ function buildScene(canvas, host, settingsRef, report) {
   const dynamicStars = [];
   const pointer = new THREE.Vector2();
   const pointerTarget = new THREE.Vector2();
+  const dragOrbit = createDragOrbit(host);
   const clock = new THREE.Clock();
   const state = {
     progress: 0.015,
@@ -456,10 +458,12 @@ function buildScene(canvas, host, settingsRef, report) {
       const diveCurve = Math.pow(dive, THREE.MathUtils.lerp(2.15, 1.15, THREE.MathUtils.clamp(diveAcceleration / 2, 0, 1)));
       const diveZ = THREE.MathUtils.lerp(cameraZ, 1.15, diveCurve);
       const orbit = elapsed * 0.022;
-      camera.position.x = Math.cos(orbit) * (1.35 - dive * 1.1) + pointer.x * (1.2 - dive);
-      camera.position.y = THREE.MathUtils.lerp(7.5, 1.1, approach) + pointer.y * (0.7 - dive * 0.5);
+      const orbitYaw = Math.sin(dragOrbit.state.targetYaw);
+      const orbitPitch = dragOrbit.state.targetPitch;
+      camera.position.x = Math.cos(orbit) * (1.35 - dive * 1.1) + orbitYaw * (1.2 - dive);
+      camera.position.y = THREE.MathUtils.lerp(7.5, 1.1, approach) + orbitPitch * (0.7 - dive * 0.5);
       camera.position.z = diveZ;
-      camera.lookAt(pointer.x * 0.45, pointer.y * 0.26, -Math.max(0, dive * 18));
+      camera.lookAt(orbitYaw * 0.45, orbitPitch * 0.26, -Math.max(0, dive * 18));
 
       blackHole.rotation.y = -elapsed * 0.025;
       disk.rotation.z = elapsed * 0.028;
@@ -534,6 +538,7 @@ function buildScene(canvas, host, settingsRef, report) {
     host.removeEventListener("pointerup", onPointerUp);
     host.removeEventListener("pointercancel", onPointerUp);
     host.removeEventListener("wheel", onWheel);
+    dragOrbit.dispose();
     dynamicStars.forEach((star) => {
       star.geometry.dispose();
       star.material.dispose();

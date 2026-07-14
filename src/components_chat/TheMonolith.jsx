@@ -3,6 +3,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { Edges, Line, RoundedBox } from "@react-three/drei";
 import { Bloom, EffectComposer, SMAA } from "@react-three/postprocessing";
 import * as THREE from "three";
+import useDragOrbit from "../hooks/useDragOrbit";
 import { seeded } from "../utils/procedural";
 import { WEBGL_DPR, WEBGL_MSAA_SAMPLES } from "../rendering/quality";
 import "./TheMonolith.css";
@@ -130,15 +131,22 @@ function Monolith({ progressRef, settings, pulseRef }) {
   const coreLightRef = useRef();
   const rotationRate = settings.rotationRate ?? 0.5;
   const coreEnergy = (settings.coreEnergy ?? 100) / 100;
+  const dragRef = useDragOrbit();
+  const autoYawRef = useRef(0);
+  const orbitRef = useRef({ yaw: 0, pitch: 0 });
 
   useFrame((state, delta) => {
     const progress = progressRef.current;
     const opening = THREE.MathUtils.smoothstep(progress, 0.42, 1);
     const speed = settings.speed ?? 1;
     if (rootRef.current) {
-      rootRef.current.rotation.y += Math.min(delta, 0.05) * rotationRate * speed * (0.07 + progress * 0.13);
-      rootRef.current.rotation.x = THREE.MathUtils.damp(rootRef.current.rotation.x, state.pointer.y * 0.055, 3, delta);
-      rootRef.current.rotation.z = THREE.MathUtils.damp(rootRef.current.rotation.z, -state.pointer.x * 0.035, 3, delta);
+      autoYawRef.current += Math.min(delta, 0.05) * rotationRate * speed * (0.07 + progress * 0.13);
+      const orbit = orbitRef.current;
+      orbit.yaw = THREE.MathUtils.damp(orbit.yaw, dragRef.current.targetYaw, 3, delta);
+      orbit.pitch = THREE.MathUtils.damp(orbit.pitch, dragRef.current.targetPitch, 3, delta);
+      rootRef.current.rotation.y = autoYawRef.current + orbit.yaw;
+      rootRef.current.rotation.x = orbit.pitch;
+      rootRef.current.rotation.z = THREE.MathUtils.damp(rootRef.current.rotation.z, -Math.sin(orbit.yaw) * 0.035, 3, delta);
     }
     if (leftRef.current && rightRef.current) {
       leftRef.current.position.x = -0.7 - opening * 0.48;
