@@ -5,10 +5,12 @@
   isolation: isolate;
   color: #e9fffb;
   background: #010305;
-  cursor: crosshair;
+  cursor: grab;
   touch-action: none;
   user-select: none;
 }
+
+.city-builds-itself:active { cursor: grabbing; }
 
 .city-builds-itself__canvas {
   position: absolute;
@@ -24,16 +26,9 @@
   z-index: 2;
   pointer-events: none;
   background:
-    radial-gradient(ellipse at 62% 54%, transparent 15%, rgb(0 5 7 / 18%) 48%, rgb(0 1 2 / 78%) 100%),
-    linear-gradient(90deg, rgb(0 1 2 / 66%) 0%, transparent 38%, transparent 82%, rgb(0 3 4 / 38%) 100%);
+    radial-gradient(ellipse at 62% 54%, transparent 22%, rgb(0 5 7 / 8%) 58%, rgb(0 1 2 / 56%) 100%),
+    linear-gradient(90deg, rgb(0 1 2 / 52%) 0%, transparent 34%, transparent 86%, rgb(0 3 4 / 22%) 100%);
   transition: filter 0.8s ease;
-}
-
-.city-builds-itself.is-corrupted .city-builds-itself__atmosphere {
-  filter: hue-rotate(132deg) contrast(1.14);
-  background:
-    repeating-linear-gradient(0deg, transparent 0 3px, rgb(255 31 102 / 2%) 4px),
-    radial-gradient(ellipse at 62% 54%, transparent 10%, rgb(18 0 7 / 22%) 48%, rgb(2 0 1 / 82%) 100%);
 }
 
 .city-builds-itself__grain {

@@ -43,7 +43,7 @@ function jsWaveHeight(x, z, time, windStrength, swellHeight) {
   return swell + chop;
 }
 
-function useOceanMaterial({ windUniform, swellUniform, skyColorUniform, deepColorUniform }) {
+function useOceanMaterial({ windUniform, swellUniform, skyColorUniform, deepColorUniform, sunGlintUniform }) {
   return useMemo(() => {
     const timeUniform = uniform(0);
     const material = new THREE.MeshStandardNodeMaterial({ roughness: 0.32, metalness: 0.02, side: THREE.DoubleSide });
@@ -71,16 +71,31 @@ function useOceanMaterial({ windUniform, swellUniform, skyColorUniform, deepColo
     const litColor = mix(baseColor, foamColor, foamMix);
 
     const fresnel = pow(oneMinus(clamp(dot(normalView, positionViewDirection), 0, 1)), 3);
-    material.colorNode = mix(litColor, skyColorUniform, mul(fresnel, 0.55));
+    const shaded = mix(litColor, skyColorUniform, mul(fresnel, 0.55));
+
+    // Sun-glint: bright, high-frequency sparkle points on wave crests that fade in as the
+    // weather clears — a cheap stand-in for real reflections (this scene's WebGPURenderer
+    // can't use drei's MeshReflectorMaterial, which patches raw GLSL and isn't TSL/Node-based).
+    // Frequency must be much higher than the swell/chop noise (which shapes the whole 220-unit
+    // plane) — a low frequency here produced huge soft white blobs instead of fine sparkle.
+    const glintPx = positionLocal.x;
+    const glintPz = positionLocal.y;
+    const glintNoise = mx_fractal_noise_float(
+      vec2(mul(glintPx, 9).add(mul(timeUniform, 0.6)), mul(glintPz, 9).sub(mul(timeUniform, 0.5))),
+      2, 2.0, 0.5, 1,
+    );
+    const glintMask = mul(pow(clamp(glintNoise, 0, 1), 22), clamp(mul(heightNorm.sub(0.6), 4), 0, 1));
+    const glintColor = color("#ffe9c0");
+    material.colorNode = shaded.add(mul(glintColor, mul(glintMask, mul(sunGlintUniform, 0.6))));
     material.emissiveNode = mul(foamColor, mul(foamMix, 0.35));
 
     return { material, timeUniform };
   }, []);
 }
 
-function OceanSurface({ onReady, windUniform, swellUniform, skyColorUniform, deepColorUniform, speedRef }) {
+function OceanSurface({ onReady, windUniform, swellUniform, skyColorUniform, deepColorUniform, sunGlintUniform, speedRef }) {
   const meshRef = useRef();
-  const { material, timeUniform } = useOceanMaterial({ windUniform, swellUniform, skyColorUniform, deepColorUniform });
+  const { material, timeUniform } = useOceanMaterial({ windUniform, swellUniform, skyColorUniform, deepColorUniform, sunGlintUniform });
 
   const geometry = useMemo(() => {
     const geo = new THREE.PlaneGeometry(OCEAN_SIZE, OCEAN_SIZE, OCEAN_SEGMENTS, OCEAN_SEGMENTS);
@@ -165,7 +180,7 @@ function Rain({ settings, stormRef, speedRef }) {
 
   useFrame((state) => {
     if (!meshRef.current) return;
-    const rainIntensity = (settings.rainDensity / 100) * stormRef.current.intensity;
+    const rainIntensity = (settings.rainDensity / 100) * Math.max(0.15, stormRef.current.intensity);
     const activeCount = Math.round(maxCount * rainIntensity);
     const elapsed = state.clock.elapsedTime * speedRef.current;
     drops.forEach((drop, index) => {
@@ -206,7 +221,7 @@ function SeaSpray({ settings, stormRef, speedRef }) {
 
   useFrame((state) => {
     if (!meshRef.current) return;
-    const sprayIntensity = (settings.foamAmount / 100) * stormRef.current.intensity;
+    const sprayIntensity = (settings.foamAmount / 100) * Math.max(0.12, stormRef.current.intensity);
     const elapsed = state.clock.elapsedTime * speedRef.current;
     specks.forEach((speck, index) => {
       const active = index < count * sprayIntensity;
@@ -336,6 +351,7 @@ function OceanScene({ settings, speedRef, onSunReady }) {
   // the per-frame skyColorUniform.value.copy(...) below threw on every tick.
   const skyColorUniform = useMemo(() => uniform(new THREE.Color("#0a0d14")), []);
   const deepColorUniform = useMemo(() => uniform(new THREE.Color("#020a12")), []);
+  const sunGlintUniform = useMemo(() => uniform(0), []);
 
   const windStrengthRef = useRef(0.7);
   const swellHeightRef = useRef(1);
@@ -343,15 +359,23 @@ function OceanScene({ settings, speedRef, onSunReady }) {
   const ripplesRef = useRef([]);
   const [oceanMesh, setOceanMesh] = useState(null);
 
-  const stormProgressRef = useRef(0);
+  // Starts partway into the weather (not pure predawn black) and climbs on its own toward
+  // a lively storm-clearing state — this used to only advance via desktop mouse-wheel, so
+  // mobile (no wheel event) was stuck at progress=0 forever. Wheel/scroll still works and
+  // takes over manual control once used.
+  const INITIAL_PROGRESS = 0.3;
+  const AUTO_TARGET_PROGRESS = 0.82;
+  const AUTO_CLIMB_SECONDS = 25;
+  const stormProgressRef = useRef(INITIAL_PROGRESS);
+  const manualProgressRef = useRef(false);
   const dragRef = useRef({ yaw: 0, pitch: 0 });
   const lightningRef = useRef({ nextStrike: 3, flash: 0 });
   const sunRef = useRef();
   const skyColorObj = useMemo(() => new THREE.Color(), []);
-  const calmColor = useMemo(() => new THREE.Color("#05070c"), []);
-  const stormColor = useMemo(() => new THREE.Color("#171a20"), []);
+  const calmColor = useMemo(() => new THREE.Color("#101b2c"), []);
+  const stormColor = useMemo(() => new THREE.Color("#232a3c"), []);
   const clearColor = useMemo(() => new THREE.Color("#c99a5b"), []);
-  const deepCalm = useMemo(() => new THREE.Color("#020a12"), []);
+  const deepCalm = useMemo(() => new THREE.Color("#081a28"), []);
   const deepClear = useMemo(() => new THREE.Color("#0a2f38"), []);
 
   useEffect(() => {
@@ -363,6 +387,7 @@ function OceanScene({ settings, speedRef, onSunReady }) {
 
     const onWheel = (event) => {
       event.preventDefault();
+      manualProgressRef.current = true;
       stormProgressRef.current = THREE.MathUtils.clamp(stormProgressRef.current + event.deltaY * 0.00035, 0, 1);
     };
     const onPointerDown = (event) => {
@@ -414,13 +439,18 @@ function OceanScene({ settings, speedRef, onSunReady }) {
 
   useFrame((state, rawDelta) => {
     const delta = Math.min(rawDelta, 0.05) * speedRef.current;
+    const elapsed = state.clock.elapsedTime * speedRef.current;
+    if (!manualProgressRef.current) {
+      const climbT = THREE.MathUtils.smoothstep(elapsed, 0, AUTO_CLIMB_SECONDS);
+      stormProgressRef.current = THREE.MathUtils.lerp(INITIAL_PROGRESS, AUTO_TARGET_PROGRESS, climbT);
+    }
     const progress = stormProgressRef.current;
     const intensity = Math.pow(Math.max(0, Math.sin(Math.min(progress, 1) * Math.PI)), 0.8);
     stormRef.current.progress = progress;
     stormRef.current.intensity = intensity;
 
-    const windStrength = (settings.windStrength / 100) * (0.3 + intensity * 0.9);
-    const swellHeight = (settings.swellHeight / 100) * (0.5 + intensity * 0.8);
+    const windStrength = (settings.windStrength / 100) * (0.42 + intensity * 0.85);
+    const swellHeight = (settings.swellHeight / 100) * (0.6 + intensity * 0.75);
     windStrengthRef.current = windStrength;
     swellHeightRef.current = swellHeight;
     windUniform.value = windStrength;
@@ -434,6 +464,7 @@ function OceanScene({ settings, speedRef, onSunReady }) {
     }
     skyColorUniform.value.copy(skyColorObj);
     deepColorUniform.value.copy(deepCalm).lerp(deepClear, THREE.MathUtils.clamp(progress, 0, 1) * 0.6);
+    sunGlintUniform.value = THREE.MathUtils.clamp((progress - 0.35) * 1.1, 0, 1);
 
     if (gl.background === undefined || true) {
       state.scene.background = skyColorObj;
@@ -444,9 +475,9 @@ function OceanScene({ settings, speedRef, onSunReady }) {
     lightningRef.current.nextStrike -= delta;
     if (lightningRef.current.nextStrike <= 0) {
       const gapRange = tuning.value.lightningMaxGap - tuning.value.lightningMinGap;
-      const strikeChance = intensity * (settings.lightningRate / 100);
+      const strikeChance = Math.max(0.05, intensity) * (settings.lightningRate / 100);
       lightningRef.current.nextStrike = tuning.value.lightningMinGap + gapRange * (1 - strikeChance);
-      if (strikeChance > 0.15 && Math.random() < strikeChance) {
+      if (strikeChance > 0.04 && Math.random() < strikeChance) {
         lightningRef.current.flash = 1;
       }
     }
@@ -470,14 +501,15 @@ function OceanScene({ settings, speedRef, onSunReady }) {
 
   return (
     <group>
-      <ambientLight intensity={0.18} />
-      <directionalLight ref={sunRef} position={[8, 14, -6]} intensity={1.1} color="#ffe9c4" />
+      <ambientLight intensity={0.34} />
+      <directionalLight ref={sunRef} position={[8, 14, -6]} intensity={1.4} color="#ffe9c4" />
       <OceanSurface
         onReady={setOceanMesh}
         windUniform={windUniform}
         swellUniform={swellUniform}
         skyColorUniform={skyColorUniform}
         deepColorUniform={deepColorUniform}
+        sunGlintUniform={sunGlintUniform}
         speedRef={speedRef}
       />
       <Clouds stormRef={stormRef} />
@@ -524,7 +556,7 @@ export default function ProceduralOcean({ settings = {} }) {
       <div className="experiment-copy">
         <p>Claude — Weather that actually arrives</p>
         <h1>Procedural<br />Ocean.</h1>
-        <span>A calm predawn sea slowly gives way to wind, rain, and swell before the light breaks through. Scroll to move through the weather, drag to look around, click the water to send out a ripple.</span>
+        <span>A predawn sea builds through wind, rain, and swell on its own as warm light breaks through. Scroll to steer the weather yourself, drag to look around, click the water to send out a ripple.</span>
       </div>
     </section>
   );

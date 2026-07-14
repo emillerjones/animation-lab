@@ -3,7 +3,6 @@ import { lazy } from "react";
 const load = (path) => lazy(() => path());
 
 const EndlessLightTunnel = load(() => import("../components_chat/EndlessLightTunnel"));
-const SolarFlare = load(() => import("../components_chat/SolarFlare"));
 const BioluminescentTide = load(() => import("../components_chat/BioluminescentTide"));
 const PrismPulse = load(() => import("../components_chat/PrismPulse"));
 const LuminousMycelium = load(() => import("../components_chat/LuminousMycelium"));
@@ -14,9 +13,7 @@ const CathedralAscent3D = load(() => import("../components_claude/CathedralAscen
 const MechanicalPlanetarium3D = load(() => import("../components_claude/MechanicalPlanetarium3D"));
 const InfiniteDataOcean3D = load(() => import("../components_claude/InfiniteDataOcean3D"));
 const NeuralNetworkUniverse3D = load(() => import("../components_claude/NeuralNetworkUniverse3D"));
-const ParticleCollider3D = load(() => import("../components_claude/ParticleCollider3D"));
 const EndlessLightTunnel3D = load(() => import("../components_claude/EndlessLightTunnel3D"));
-const SolarFlare3D = load(() => import("../components_claude/SolarFlare3D"));
 const BioluminescentTide3D = load(() => import("../components_claude/BioluminescentTide3D"));
 const PrismPulse3D = load(() => import("../components_claude/PrismPulse3D"));
 const LuminousMycelium3D = load(() => import("../components_claude/LuminousMycelium3D"));
@@ -29,7 +26,6 @@ const NeuralNetworkUniverse = load(() => import("../components_chat/NeuralNetwor
 const MechanicalPlanetarium = load(() => import("../components_chat/MechanicalPlanetarium"));
 const InfiniteLibrary = load(() => import("../components_chat/InfiniteLibrary"));
 const BlueprintWorld = load(() => import("../components_chat/BlueprintWorld"));
-const ParticleCollider = load(() => import("../components_chat/ParticleCollider"));
 const SakuraFall = load(() => import("../components_chat/SakuraFall"));
 const OrigamiFold = load(() => import("../components_chat/OrigamiFold"));
 const CircuitPulse = load(() => import("../components_chat/CircuitPulse"));
@@ -68,20 +64,6 @@ export const animations = [
       { key: "dust", label: "Rushing particles", min: 40, max: 140, step: 10, default: 120 },
       { key: "debris", label: "Physics debris", min: 8, max: 36, step: 2, default: 20 },
     ],
-  },
-  {
-    id: "solar-flare",
-    provider: "chatgpt",
-    title: "Solar Flare",
-    category: "Plasma / Orbit",
-    description: "A churning plasma surface erupts with flares while a lone body orbits the roiling light at a careful distance.",
-    accent: "#ffb13b",
-    accentRgb: "255 177 59",
-    component: SolarFlare,
-    variantComponent: SolarFlare3D,
-    variantLabel: "ChatGPT",
-    variantBLabel: "Claude",
-    controls: [{ key: "energy", label: "Flare energy", min: 50, max: 150, step: 5, default: 100, suffix: "%" }],
   },
   {
     id: "bioluminescent-tide",
@@ -260,22 +242,6 @@ export const animations = [
     ],
   },
   {
-    id: "particle-collider",
-    provider: "chatgpt",
-    title: "Particle Collider",
-    category: "Physics / Collision",
-    description: "Opposing charged beams collide inside rotating guide rings and convert invisible force into an expanding field of sparks.",
-    accent: "#b0ff72", accentRgb: "176 255 114",
-    component: ParticleCollider,
-    variantComponent: ParticleCollider3D,
-    variantLabel: "ChatGPT",
-    variantBLabel: "Claude",
-    controls: [
-      { key: "rings", label: "Guide rings", min: 6, max: 18, step: 1, default: 14 },
-      { key: "sparks", label: "Collision sparks", min: 20, max: 64, step: 4, default: 52 },
-    ],
-  },
-  {
     id: "sakura-fall",
     provider: "chatgpt",
     title: "Sakura Fall",
@@ -422,7 +388,7 @@ export const animations = [
     collection: "advanced",
     title: "The City That Builds Itself",
     category: "Instancing / Living Architecture",
-    description: "A reflective grid grows into an endless procedural city of assembling towers, energy roads, transit trails, weather, and repairable corruption.",
+    description: "A living urban forest continuously sprouts new towers while its oldest structures fade away and return to the grid.",
     accent: "#63f2e7",
     accentRgb: "99 242 231",
     component: CityThatBuildsItself,
@@ -431,7 +397,7 @@ export const animations = [
       { key: "buildRate", label: "Construction rate", min: 0.2, max: 2, step: 0.1, default: 0.9, suffix: "×" },
       { key: "rainDensity", label: "Rain density", min: 0, max: 100, step: 5, default: 55, suffix: "%" },
       { key: "roadEnergy", label: "Road energy", min: 20, max: 160, step: 5, default: 100, suffix: "%" },
-      { key: "corruption", label: "Corruption severity", min: 0, max: 100, step: 5, default: 35, suffix: "%" },
+      { key: "corruption", label: "Ecosystem turnover", min: 0, max: 100, step: 5, default: 35, suffix: "%" },
     ],
   },
   {

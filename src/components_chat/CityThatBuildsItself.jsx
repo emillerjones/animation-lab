@@ -1,7 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { getProject } from "@theatre/core";
-import { acceleratedRaycast, MeshBVH } from "three-mesh-bvh";
-import gsap from "gsap";
 import * as THREE from "three";
 import { MeshBasicNodeMaterial, PostProcessing, WebGPURenderer } from "three/webgpu";
 import { color, mix, pass, sin, time, uniform, uv } from "three/tsl";
@@ -12,17 +9,6 @@ import "./CityThatBuildsItself.css";
 
 const CITY_SIDE = 19;
 const MAX_BUILDINGS = CITY_SIDE * CITY_SIDE;
-const theatreProject = getProject("The City That Builds Itself", {
-  state: { sheetsById: {}, definitionVersion: "0.4.0", revisionHistory: [] },
-});
-const theatreSheet = theatreProject.sheet("Continuous Assembly");
-theatreSheet.object("Construction Director", {
-  gridExpansion: 0,
-  towerWave: 0,
-  bridgeReveal: 0,
-  transitEnergy: 0,
-  corruption: 0,
-});
 
 const clamp01 = (value) => THREE.MathUtils.clamp(value, 0, 1);
 const hash = (x, z) => {
@@ -50,6 +36,8 @@ function createCityData() {
         distance,
         seed,
         phase: hash(gx + 42, gz + 91) * Math.PI * 2,
+        lifeOffset: hash(gx + 73, gz + 29),
+        lifeSpan: 13 + hash(gx + 19, gz + 67) * 11,
         avenue,
       });
     }
@@ -68,20 +56,6 @@ function makeRoadMaterial(energyUniform) {
   const pulse = sin(uv().y.mul(72).sub(time.mul(energyUniform))).mul(0.5).add(0.5).pow(10);
   material.colorNode = mix(color("#06444c"), color("#8affef"), pulse);
   material.opacityNode = pulse.mul(0.82).add(0.08);
-  return material;
-}
-
-function makeHologramMaterial() {
-  const material = new MeshBasicNodeMaterial({
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    toneMapped: false,
-    side: THREE.DoubleSide,
-  });
-  const scan = sin(uv().y.mul(110).sub(time.mul(3.2))).mul(0.5).add(0.5).pow(7);
-  material.colorNode = mix(color("#042d38"), color("#8bf8ff"), scan);
-  material.opacityNode = scan.mul(0.36).add(0.035);
   return material;
 }
 
@@ -115,28 +89,22 @@ function buildCity(canvas, host, settingsRef, report) {
   let frame = 0;
   const clock = new THREE.Clock();
   const disposables = [];
-  const transient = new Set();
-  const pointer = new THREE.Vector2();
-  const pointerTarget = new THREE.Vector2();
-  const raycaster = new THREE.Raycaster();
   const dummy = new THREE.Object3D();
-  const dragOrbit = createDragOrbit(host);
+  const dragOrbit = createDragOrbit(host, { yawSpeed: 0.0052, pitchSpeed: 0.0034, pitchMin: -0.32, pitchMax: 0.48 });
   const buildingData = createCityData();
+  const orbitTarget = new THREE.Vector3(0, 8, 0);
+  const orbitPosition = new THREE.Vector3();
   const state = {
-    progress: 0.07,
-    velocity: 0,
-    autoReveal: 0,
-    holding: false,
-    corrupted: false,
-    selected: new Map(),
-    pointerDownAt: 0,
+    progress: 0,
+    orbitYaw: 0,
+    orbitPitch: 0.08,
   };
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color("#010305");
-  scene.fog = new THREE.FogExp2("#02080b", 0.018);
+  scene.background = new THREE.Color("#02080c");
+  scene.fog = new THREE.FogExp2("#06141a", 0.004);
   const camera = new THREE.PerspectiveCamera(52, 1, 0.08, 260);
-  camera.position.set(0, 7.5, 34);
+  camera.position.set(0, 19, 42);
 
   const renderer = new WebGPURenderer({
     canvas,
@@ -145,33 +113,35 @@ function buildCity(canvas, host, settingsRef, report) {
   });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.86;
+  renderer.toneMappingExposure = 1.12;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, WEBGL_DPR_MAX));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-  scene.add(new THREE.HemisphereLight("#6bb7c7", "#030203", 0.5));
-  const keyLight = new THREE.DirectionalLight("#b8fff6", 3.2);
+  scene.add(new THREE.HemisphereLight("#9eefff", "#071014", 1.35));
+  const keyLight = new THREE.DirectionalLight("#d9fffa", 3.8);
   keyLight.position.set(-15, 28, 14);
   keyLight.castShadow = true;
   keyLight.shadow.mapSize.set(1024, 1024);
   scene.add(keyLight);
+  const rimLight = new THREE.DirectionalLight("#4ea7ff", 1.8);
+  rimLight.position.set(22, 15, -32);
+  scene.add(rimLight);
 
   const cityRoot = new THREE.Group();
+  cityRoot.scale.setScalar(0.82);
   scene.add(cityRoot);
 
   const floorGeometry = new THREE.PlaneGeometry(180, 180, 1, 1);
   floorGeometry.rotateX(-Math.PI / 2);
-  floorGeometry.boundsTree = new MeshBVH(floorGeometry);
   const floorMaterial = new THREE.MeshPhysicalMaterial({
-    color: "#020708",
-    metalness: 0.94,
-    roughness: 0.17,
+    color: "#07171b",
+    metalness: 0.72,
+    roughness: 0.28,
     clearcoat: 1,
-    clearcoatRoughness: 0.1,
+    clearcoatRoughness: 0.16,
   });
   const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-  floor.raycast = acceleratedRaycast;
   floor.receiveShadow = true;
   cityRoot.add(floor);
   disposables.push(floorGeometry, floorMaterial);
@@ -197,11 +167,11 @@ function buildCity(canvas, host, settingsRef, report) {
 
   const buildingGeometry = new THREE.BoxGeometry(1, 1, 1);
   const buildingMaterial = new THREE.MeshStandardMaterial({
-    color: "#061014",
-    metalness: 0.82,
-    roughness: 0.3,
-    emissive: "#06242b",
-    emissiveIntensity: 0.5,
+    color: "#24434a",
+    metalness: 0.58,
+    roughness: 0.36,
+    emissive: "#0d3940",
+    emissiveIntensity: 0.95,
     vertexColors: true,
   });
   const buildings = new THREE.InstancedMesh(buildingGeometry, buildingMaterial, MAX_BUILDINGS);
@@ -209,37 +179,11 @@ function buildCity(canvas, host, settingsRef, report) {
   buildings.castShadow = true;
   buildings.receiveShadow = true;
   buildingData.forEach((building, index) => {
-    const tint = new THREE.Color().setHSL(0.49 + building.seed * 0.055, 0.52, 0.1 + building.seed * 0.055);
+    const tint = new THREE.Color().setHSL(0.48 + building.seed * 0.055, 0.42, 0.28 + building.seed * 0.12);
     buildings.setColorAt(index, tint);
   });
   cityRoot.add(buildings);
   disposables.push(buildingGeometry, buildingMaterial);
-
-  const windowPositions = [];
-  const windowMeta = [];
-  buildingData.forEach((building, buildingIndex) => {
-    const rows = Math.min(15, Math.max(2, Math.floor(building.height / 1.1)));
-    for (let row = 0; row < rows; row += 1) {
-      if (hash(buildingIndex, row) < 0.25) continue;
-      windowPositions.push(building.x, 0.65 + row * 0.85, building.z + building.depth * 0.505);
-      windowMeta.push(buildingIndex, row, building.phase);
-    }
-  });
-  const windowGeometry = new THREE.BufferGeometry();
-  windowGeometry.setAttribute("position", new THREE.Float32BufferAttribute(windowPositions, 3));
-  windowGeometry.userData.meta = windowMeta;
-  const windowMaterial = new THREE.PointsMaterial({
-    color: "#8fffe7",
-    size: 0.105,
-    transparent: true,
-    opacity: 0.92,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    toneMapped: false,
-  });
-  const windows = new THREE.Points(windowGeometry, windowMaterial);
-  cityRoot.add(windows);
-  disposables.push(windowGeometry, windowMaterial);
 
   const transitCount = 950;
   const transitPositions = new Float32Array(transitCount * 3);
@@ -274,47 +218,13 @@ function buildCity(canvas, host, settingsRef, report) {
   cityRoot.add(transit);
   disposables.push(transitGeometry, transitMaterial);
 
-  const hologramMaterial = makeHologramMaterial();
-  const hologramGeometry = new THREE.CylinderGeometry(0.04, 1.2, 22, 28, 1, true);
-  const holograms = [];
-  [
-    [-17, 12, -19],
-    [18, 9, -12],
-    [-8, 16, -30],
-    [24, 13, -27],
-  ].forEach(([x, y, z], index) => {
-    const hologram = new THREE.Mesh(hologramGeometry, hologramMaterial);
-    hologram.position.set(x, y / 2, z);
-    hologram.scale.setScalar(0.65 + index * 0.12);
-    cityRoot.add(hologram);
-    holograms.push(hologram);
-  });
-  disposables.push(hologramGeometry, hologramMaterial);
-
   const rain = makeRain(9500);
   scene.add(rain.points);
   disposables.push(rain.geometry, rain.material);
 
-  const cameraPath = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0, 7.5, 34),
-    new THREE.Vector3(-14, 5.7, 18),
-    new THREE.Vector3(9, 9, 2),
-    new THREE.Vector3(-8, 13, -17),
-    new THREE.Vector3(12, 19, -37),
-    new THREE.Vector3(0, 30, -58),
-  ], false, "catmullrom", 0.38);
-  const cameraLookPath = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0, 5, 3),
-    new THREE.Vector3(-6, 6, -2),
-    new THREE.Vector3(4, 8, -15),
-    new THREE.Vector3(0, 10, -30),
-    new THREE.Vector3(0, 13, -50),
-    new THREE.Vector3(0, 11, -80),
-  ]);
-
   const scenePass = pass(scene, camera);
   const sceneColor = scenePass.getTextureNode();
-  const bloomPass = bloom(sceneColor, 0.76, 0.32, 0.85);
+  const bloomPass = bloom(sceneColor, 0.52, 0.38, 0.82);
   const post = new PostProcessing(renderer);
   post.outputNode = sceneColor.add(bloomPass);
 
@@ -330,127 +240,45 @@ function buildCity(canvas, host, settingsRef, report) {
   resizeObserver.observe(host);
   resize();
 
-  function updatePointer(event) {
-    const rect = host.getBoundingClientRect();
-    pointerTarget.set(
-      ((event.clientX - rect.left) / rect.width) * 2 - 1,
-      -((event.clientY - rect.top) / rect.height) * 2 + 1,
-    );
-  }
-
-  function createShockwave(point, strong = false) {
-    const geometry = new THREE.RingGeometry(0.7, 0.77, 96);
-    const material = new THREE.MeshBasicMaterial({
-      color: strong ? "#ff467e" : "#7effed",
-      transparent: true,
-      opacity: 0.92,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      toneMapped: false,
-      side: THREE.DoubleSide,
-    });
-    const wave = new THREE.Mesh(geometry, material);
-    wave.rotation.x = -Math.PI / 2;
-    wave.position.copy(point).setY(0.09);
-    cityRoot.add(wave);
-    transient.add(wave);
-    gsap.to(wave.scale, { x: strong ? 24 : 13, y: strong ? 24 : 13, duration: strong ? 1.8 : 1.2, ease: "power2.out" });
-    gsap.to(material, {
-      opacity: 0,
-      duration: strong ? 1.8 : 1.2,
-      ease: "power1.in",
-      onComplete: () => {
-        cityRoot.remove(wave);
-        transient.delete(wave);
-        geometry.dispose();
-        material.dispose();
-      },
-    });
-  }
-
-  function pick(event) {
-    updatePointer(event);
-    pointer.copy(pointerTarget);
-    raycaster.setFromCamera(pointer, camera);
-    const buildingHit = raycaster.intersectObject(buildings, false)[0];
-    if (buildingHit?.instanceId != null) {
-      state.selected.set(buildingHit.instanceId, 0.001);
-      const building = buildingData[buildingHit.instanceId];
-      createShockwave(new THREE.Vector3(building.x, 0, building.z));
-      return;
-    }
-    const groundHit = raycaster.intersectObject(floor, false)[0];
-    if (groundHit) createShockwave(groundHit.point, state.holding);
-  }
-
-  function onPointerMove(event) {
-    updatePointer(event);
-    if (state.holding && frame % 7 === 0) pick(event);
-  }
-
-  function onPointerDown(event) {
-    state.holding = true;
-    state.pointerDownAt = performance.now();
-    host.setPointerCapture?.(event.pointerId);
-    pick(event);
-  }
-
-  function onPointerUp(event) {
-    state.holding = false;
-    host.releasePointerCapture?.(event.pointerId);
-  }
-
-  function onDoubleClick(event) {
-    updatePointer(event);
-    state.corrupted = !state.corrupted;
-    const rect = host.getBoundingClientRect();
-    raycaster.setFromCamera(pointerTarget, camera);
-    const hit = raycaster.intersectObject(floor, false)[0];
-    createShockwave(hit?.point || new THREE.Vector3(), true);
-  }
-
-  function onWheel(event) {
-    event.preventDefault();
-    state.velocity += THREE.MathUtils.clamp(event.deltaY, -180, 180) * 0.0039;
-  }
-
-  host.addEventListener("pointermove", onPointerMove);
-  host.addEventListener("pointerdown", onPointerDown);
-  host.addEventListener("pointerup", onPointerUp);
-  host.addEventListener("pointercancel", onPointerUp);
-  host.addEventListener("dblclick", onDoubleClick);
-  host.addEventListener("wheel", onWheel, { passive: false });
-
-  function updateBuildings(elapsed, delta, reveal, corruption, density) {
+  function updateBuildings(elapsed, density, buildRate, turnover) {
     const visibleCount = Math.floor(MAX_BUILDINGS * THREE.MathUtils.lerp(0.28, 1, density));
     buildingData.forEach((building, index) => {
-      const selected = state.selected.get(index) || 0;
-      const localReveal = clamp01((reveal * 1.42 - building.distance * 0.68 - building.seed * 0.18) * 2.4);
-      const eased = localReveal * localReveal * (3 - 2 * localReveal);
       const hidden = index >= visibleCount;
-      const glitchGate = corruption > 0.03 && hash(index, Math.floor(elapsed * 3)) < corruption * 0.12;
-      const glitch = glitchGate ? corruption * (hash(index + 9, Math.floor(elapsed * 8)) - 0.5) : 0;
-      const open = selected > 0 ? Math.sin(selected * Math.PI) : 0;
+      const life = (elapsed * buildRate / building.lifeSpan + building.lifeOffset) % 1;
+      const heightBias = clamp01((building.height - 10) / 24);
+      const growEnd = 0.18 + building.seed * 0.06;
+      const matureEnd = 0.76 - turnover * 0.17 - heightBias * 0.08;
+      const decayEnd = 0.91;
+      let growth = 0;
+
+      if (life < growEnd) {
+        const sprout = THREE.MathUtils.smoothstep(life, 0, growEnd);
+        growth = sprout * sprout * (3 - 2 * sprout);
+      } else if (life < matureEnd) {
+        growth = 1;
+      } else if (life < decayEnd) {
+        const decay = THREE.MathUtils.smoothstep(life, matureEnd, decayEnd);
+        growth = THREE.MathUtils.lerp(1, 0.035, decay);
+      }
+
+      const currentHeight = building.height * growth;
+      const widthGrowth = THREE.MathUtils.lerp(0.32, 1, Math.sqrt(growth));
       dummy.position.set(
-        building.x + glitch * 3 + open * Math.sign(building.x || 1) * 0.7,
-        hidden ? -20 : building.height * eased * 0.5 - (1 - eased) * 1.8,
-        building.z + glitch * 2,
+        building.x,
+        hidden || growth < 0.002 ? -20 : currentHeight * 0.5,
+        building.z,
       );
-      dummy.rotation.set(glitch * 0.32, glitch * 1.4 + open * 0.12, glitch * 0.18);
+      dummy.rotation.set(0, (building.seed - 0.5) * 0.04, 0);
       dummy.scale.set(
-        hidden ? 0.001 : building.width * (1 + open * 0.18),
-        hidden ? 0.001 : Math.max(0.015, building.height * eased),
-        hidden ? 0.001 : building.depth * (1 + open * 0.18),
+        hidden ? 0.001 : building.width * widthGrowth,
+        hidden ? 0.001 : Math.max(0.015, currentHeight),
+        hidden ? 0.001 : building.depth * widthGrowth,
       );
       dummy.updateMatrix();
       buildings.setMatrixAt(index, dummy.matrix);
-      if (selected > 0) {
-        const next = selected + delta * 0.52;
-        if (next >= 1) state.selected.delete(index);
-        else state.selected.set(index, next);
-      }
     });
     buildings.instanceMatrix.needsUpdate = true;
+
   }
 
   function updateRain(delta, rainDensity) {
@@ -498,46 +326,36 @@ function buildCity(canvas, host, settingsRef, report) {
       const buildRate = settings.buildRate ?? 0.9;
       const rainDensity = THREE.MathUtils.clamp((settings.rainDensity ?? 55) / 100, 0, 1);
       const roadEnergy = (settings.roadEnergy ?? 100) / 100;
-      const corruptionSetting = THREE.MathUtils.clamp((settings.corruption ?? 35) / 100, 0, 1);
+      const turnover = THREE.MathUtils.clamp((settings.corruption ?? 35) / 100, 0, 1);
 
-      state.autoReveal = Math.min(1, state.autoReveal + delta * 0.055 * buildRate * speed);
-      state.velocity *= Math.exp(-delta * 4.2);
-      state.progress = THREE.MathUtils.clamp(state.progress + state.velocity * speed * delta, 0, 1);
-      pointer.lerp(pointerTarget, 1 - Math.exp(-delta * 4));
-      const sequenceStage = Math.max(state.autoReveal, state.progress) * 14;
-      theatreSheet.sequence.position = Math.min(sequenceStage, 10);
-      const reveal = THREE.MathUtils.smoothstep(sequenceStage, 0.3, 12.5);
-      const corruption = corruptionSetting * (state.corrupted ? 1 : 0.12);
-
-      updateBuildings(elapsed, delta, reveal, corruption, density);
+      state.progress = (elapsed * buildRate * speed / 18) % 1;
+      updateBuildings(elapsed * speed, density, buildRate, turnover);
       updateRain(delta * speed, rainDensity);
       updateTransit(delta * speed, THREE.MathUtils.lerp(5, 18, roadEnergy));
       roadEnergyUniform.value = THREE.MathUtils.lerp(2.2, 8.5, roadEnergy);
 
-      const pathPosition = cameraPath.getPointAt(state.progress);
-      const lookPosition = cameraLookPath.getPointAt(state.progress);
-      const orbitYaw = Math.sin(dragOrbit.state.targetYaw);
-      const orbitPitch = dragOrbit.state.targetPitch;
-      camera.position.lerp(
-        pathPosition.add(new THREE.Vector3(orbitYaw * 1.25, orbitPitch * 0.6, 0)),
-        1 - Math.exp(-delta * 3.8),
+      state.orbitYaw = THREE.MathUtils.damp(state.orbitYaw, dragOrbit.state.targetYaw, 7, delta);
+      state.orbitPitch = THREE.MathUtils.damp(state.orbitPitch, dragOrbit.state.targetPitch, 7, delta);
+      const radius = 72;
+      const cosPitch = Math.cos(state.orbitPitch);
+      orbitPosition.set(
+        orbitTarget.x + Math.sin(state.orbitYaw) * radius * cosPitch,
+        orbitTarget.y + 24 + Math.sin(state.orbitPitch) * 30,
+        orbitTarget.z + Math.cos(state.orbitYaw) * radius * cosPitch,
       );
-      camera.lookAt(lookPosition.x + orbitYaw * 1.1, lookPosition.y + orbitPitch * 0.5, lookPosition.z);
-      cityRoot.rotation.y = Math.sin(elapsed * 0.06) * 0.006 + corruption * Math.sin(elapsed * 9) * 0.007;
-      holograms.forEach((hologram, index) => {
-        hologram.rotation.y = elapsed * (0.07 + index * 0.012);
-        hologram.scale.y = 0.7 + reveal * 0.3;
-      });
-      windowMaterial.opacity = 0.58 + Math.sin(elapsed * 2.2) * 0.12 + roadEnergy * 0.22;
-      renderer.toneMappingExposure = 0.74 + roadEnergy * 0.18;
+      camera.position.lerp(
+        orbitPosition,
+        1 - Math.exp(-delta * 7),
+      );
+      camera.lookAt(orbitTarget);
+      renderer.toneMappingExposure = 1.02 + roadEnergy * 0.18;
 
       frame += 1;
       if (frame % 18 === 0) {
         report({
           progress: state.progress,
-          stage: state.corrupted ? "DISTRICT INSTABILITY" : reveal < 0.98 ? "CITY ASSEMBLING" : "CITY ONLINE",
+          stage: "URBAN ECOSYSTEM / RENEWING",
           districts: Math.round(visibleCountFor(density)),
-          corrupted: state.corrupted,
         });
       }
       post.render();
@@ -551,20 +369,7 @@ function buildCity(canvas, host, settingsRef, report) {
     disposed = true;
     renderer.setAnimationLoop(null);
     resizeObserver.disconnect();
-    host.removeEventListener("pointermove", onPointerMove);
-    host.removeEventListener("pointerdown", onPointerDown);
-    host.removeEventListener("pointerup", onPointerUp);
-    host.removeEventListener("pointercancel", onPointerUp);
-    host.removeEventListener("dblclick", onDoubleClick);
-    host.removeEventListener("wheel", onWheel);
     dragOrbit.dispose();
-    transient.forEach((mesh) => {
-      gsap.killTweensOf(mesh.scale);
-      gsap.killTweensOf(mesh.material);
-      mesh.geometry.dispose();
-      mesh.material.dispose();
-    });
-    floorGeometry.disposeBoundsTree?.();
     disposables.forEach((item) => item.dispose?.());
     post.dispose?.();
     renderer.dispose();
@@ -576,10 +381,9 @@ export default function CityThatBuildsItself({ settings = {} }) {
   const canvasRef = useRef(null);
   const settingsRef = useRef(settings);
   const [telemetry, setTelemetry] = useState({
-    progress: 0.07,
-    stage: "GRID GENESIS",
+    progress: 0,
+    stage: "URBAN ECOSYSTEM / AWAKENING",
     districts: 0,
-    corrupted: false,
   });
 
   settingsRef.current = settings;
@@ -592,17 +396,17 @@ export default function CityThatBuildsItself({ settings = {} }) {
   return (
     <section
       ref={hostRef}
-      className={`city-builds-itself ${telemetry.corrupted ? "is-corrupted" : ""}`}
-      aria-label="Interactive procedural city constructing itself"
+      className="city-builds-itself"
+      aria-label="A living procedural city growing and renewing itself; drag to orbit"
     >
       <canvas ref={canvasRef} className="city-builds-itself__canvas" />
       <div className="city-builds-itself__atmosphere" aria-hidden="true" />
       <div className="city-builds-itself__grain" aria-hidden="true" />
 
       <div className="city-builds-itself__copy">
-        <p>ADVANCED STUDY — SELF-ASSEMBLING URBANISM</p>
+        <p>ADVANCED STUDY — LIVING URBANISM</p>
         <h1>The city<br />writes itself.</h1>
-        <span>Scroll to fly. Click to open a tower. Double-click to corrupt the grid.</span>
+        <span>Towers sprout, mature, fade, and return. Drag to orbit the living skyline.</span>
       </div>
 
       <div className="city-builds-itself__telemetry" aria-hidden="true">
