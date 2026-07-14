@@ -2,7 +2,7 @@
 
 .monolith-experience { position: relative; min-height: 100svh; overflow: hidden; background: #000; color: #f7f9ff; }
 .monolith-experience__canvas { position: absolute !important; inset: 0; width: 100% !important; height: 100% !important; }
-.monolith-experience canvas { display: block; touch-action: none; }
+.monolith-experience canvas { display: block; }
 .monolith-experience::after { position: absolute; z-index: 2; inset: 0; background: linear-gradient(90deg, rgb(0 0 0 / 78%) 0, rgb(0 0 0 / 16%) 38%, transparent 64%); pointer-events: none; content: ""; }
 .monolith-experience__copy { position: absolute; z-index: 4; top: 50%; left: 7vw; width: min(390px, 36vw); transform: translateY(-50%); text-shadow: 0 3px 30px #000; }
 .monolith-experience__copy p { margin: 0 0 18px; color: #87cfff; font-size: 9px; letter-spacing: .28em; text-transform: uppercase; }

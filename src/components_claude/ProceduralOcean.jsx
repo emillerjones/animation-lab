@@ -379,7 +379,9 @@ function OceanScene({ settings, speedRef, onSunReady }) {
       lastX = event.clientX;
       lastY = event.clientY;
       dragRef.current.yaw = THREE.MathUtils.clamp(dragRef.current.yaw - dx * 0.0025, -0.5, 0.5);
-      dragRef.current.pitch = THREE.MathUtils.clamp(dragRef.current.pitch - dy * 0.0018, -0.25, 0.2);
+      if (event.pointerType !== "touch") {
+        dragRef.current.pitch = THREE.MathUtils.clamp(dragRef.current.pitch - dy * 0.0018, -0.25, 0.2);
+      }
     };
     const onPointerUp = (event) => {
       if (dragging && !dragMoved && oceanMesh) {

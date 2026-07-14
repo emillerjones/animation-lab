@@ -261,7 +261,9 @@ function CathedralScene({ speedRef, onIntroStarted }) {
       lastX = event.clientX;
       lastY = event.clientY;
       dragRef.current.yaw = THREE.MathUtils.clamp(dragRef.current.yaw - dx * 0.002, -0.26, 0.26);
-      dragRef.current.pitch = THREE.MathUtils.clamp(dragRef.current.pitch - dy * 0.0015, -0.18, 0.18);
+      if (event.pointerType !== "touch") {
+        dragRef.current.pitch = THREE.MathUtils.clamp(dragRef.current.pitch - dy * 0.0015, -0.18, 0.18);
+      }
     };
     const onPointerUp = (event) => {
       if (dragging && !dragMoved) {

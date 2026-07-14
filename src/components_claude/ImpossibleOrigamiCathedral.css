@@ -1,7 +1,7 @@
 @import "../experiment-base.css";
 .impossible-origami-cathedral { background: #040302; }
 .impossible-origami-cathedral__stage { position: absolute; inset: 0; z-index: 0; background: #040302; }
-.impossible-origami-cathedral__stage canvas { display: block; outline: none; touch-action: none; }
+.impossible-origami-cathedral__stage canvas { display: block; outline: none; touch-action: pan-y; }
 .impossible-origami-cathedral .experiment-copy { z-index: 20; }
 .impossible-origami-cathedral__prompt {
   position: absolute;

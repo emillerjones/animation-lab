@@ -8,7 +8,7 @@
   color: #fbf3e4;
   background: #030201;
   cursor: grab;
-  touch-action: none;
+  touch-action: pan-y;
   user-select: none;
 }
 

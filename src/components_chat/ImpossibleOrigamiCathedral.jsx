@@ -666,7 +666,9 @@ export default function ImpossibleOrigamiCathedral({ settings = {} }) {
     interaction.y = event.clientY;
     if (Math.abs(dx) + Math.abs(dy) > 2) interaction.moved = true;
     interaction.yawTarget = THREE.MathUtils.clamp(interaction.yawTarget - dx * 0.0025, -0.42, 0.42);
-    interaction.pitchTarget = THREE.MathUtils.clamp(interaction.pitchTarget + dy * 0.0019, -0.24, 0.24);
+    if (event.pointerType !== "touch") {
+      interaction.pitchTarget = THREE.MathUtils.clamp(interaction.pitchTarget + dy * 0.0019, -0.24, 0.24);
+    }
   }, []);
 
   const handlePointerUp = useCallback(() => {

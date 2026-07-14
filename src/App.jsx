@@ -62,9 +62,14 @@ class AnimationErrorBoundary extends Component {
   }
 }
 
+function isMobileViewport() {
+  return window.matchMedia("(max-width: 760px)").matches;
+}
+
 function AnimationStage({ animation, settings, variant, onSettingChange, onVariantChange }) {
   const pageRef = useRef(null);
-  const [controlsOpen, setControlsOpen] = useState(true);
+  const controlsRef = useRef(null);
+  const [controlsOpen, setControlsOpen] = useState(() => !isMobileViewport());
   const ActiveComponent = variant === "b" && animation.variantComponent
     ? animation.variantComponent
     : animation.component;
@@ -90,7 +95,18 @@ function AnimationStage({ animation, settings, variant, onSettingChange, onVaria
 
   useEffect(() => { document.title = `${animation.title} — Animation Lab`; }, [animation.title]);
 
-  useEffect(() => { setControlsOpen(true); }, [animation.id]);
+  useEffect(() => { setControlsOpen(!isMobileViewport()); }, [animation.id]);
+
+  useEffect(() => {
+    if (!controlsOpen || !isMobileViewport()) return undefined;
+    const handlePointerDown = (event) => {
+      if (controlsRef.current && !controlsRef.current.contains(event.target)) {
+        setControlsOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [controlsOpen]);
 
   const renderControl = (control) => {
     const settingKey = control.settingKey ?? control.key;
@@ -131,7 +147,7 @@ function AnimationStage({ animation, settings, variant, onSettingChange, onVaria
         </Suspense>
       </AnimationErrorBoundary>
 
-      <details className={`motion-controls ${hasVariantControls ? "motion-controls--paired" : ""}`} open={controlsOpen} onToggle={(event) => setControlsOpen(event.currentTarget.open)}>
+      <details ref={controlsRef} className={`motion-controls ${hasVariantControls ? "motion-controls--paired" : ""}`} open={controlsOpen} onToggle={(event) => setControlsOpen(event.currentTarget.open)}>
         <summary>Motion controls <span aria-hidden="true">⌁</span></summary>
         <div className="motion-controls__body">
           <label className="motion-controls__shared">
