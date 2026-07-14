@@ -204,7 +204,6 @@ function Swarm({ settings, onSunReady }) {
   const baseAngleRef = useRef(0.6);
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [focusedIndex, setFocusedIndex] = useState(null);
-  const touchPointerRef = useRef(false);
 
   const swarmDensity = Math.round(settings.swarmDensity ?? 90);
   const debrisDensity = Math.round(settings.debrisDensity ?? 1600);
@@ -229,14 +228,7 @@ function Swarm({ settings, onSunReady }) {
       distanceRef.current = THREE.MathUtils.clamp(distanceRef.current - event.deltaY * 0.045, 9, 92);
     };
     stageEl.addEventListener("wheel", onWheel, { passive: false });
-    const trackPointerType = (event) => { touchPointerRef.current = event.pointerType === "touch"; };
-    stageEl.addEventListener("pointerdown", trackPointerType);
-    stageEl.addEventListener("pointermove", trackPointerType);
-    return () => {
-      stageEl.removeEventListener("wheel", onWheel);
-      stageEl.removeEventListener("pointerdown", trackPointerType);
-      stageEl.removeEventListener("pointermove", trackPointerType);
-    };
+    return () => stageEl.removeEventListener("wheel", onWheel);
   }, []);
 
   const dummy = useMemo(() => new THREE.Object3D(), []);
@@ -292,7 +284,7 @@ function Swarm({ settings, onSunReady }) {
     const target = focusedEl ? focusedEl.position : origin;
     const desiredDistance = focusedEl ? Math.max(4, nodes[focusedIndex].scale * 3.2) : distanceRef.current;
     const yaw = baseAngleRef.current + state.pointer.x * 0.22;
-    const pitch = 0.2 + (touchPointerRef.current ? 0 : state.pointer.y) * 0.1;
+    const pitch = 0.2 + state.pointer.y * 0.1;
     const camX = target.x + Math.cos(yaw) * Math.cos(pitch) * desiredDistance;
     const camZ = target.z + Math.sin(yaw) * Math.cos(pitch) * desiredDistance;
     const camY = target.y + Math.sin(pitch) * desiredDistance;

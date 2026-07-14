@@ -528,7 +528,7 @@ function CathedralScene({ settings, interactionRef, onFormed }) {
       const maxTravel = Math.min(stations * SECTION_DEPTH - 5, 24) * scrollTravel;
       const z = choreography.value.cameraEndZ - interaction.scroll * maxTravel;
       const pointerX = state.pointer.x * 0.28;
-      const pointerY = (interaction.isTouch ? 0 : state.pointer.y) * 0.16;
+      const pointerY = state.pointer.y * 0.16;
       state.camera.position.set(
         SCENE_X + 1.8 + pointerX,
         3.65 + pointerY,
@@ -636,6 +636,7 @@ export default function ImpossibleOrigamiCathedral({ settings = {} }) {
     x: 0,
     y: 0,
   });
+
   const [formed, setFormed] = useState(false);
   const [dragging, setDragging] = useState(false);
 
@@ -654,13 +655,11 @@ export default function ImpossibleOrigamiCathedral({ settings = {} }) {
     interaction.moved = false;
     interaction.x = event.clientX;
     interaction.y = event.clientY;
-    interaction.isTouch = event.pointerType === "touch";
     setDragging(true);
   }, []);
 
   const handlePointerMove = useCallback((event) => {
     const interaction = interactionRef.current;
-    interaction.isTouch = event.pointerType === "touch";
     if (!interaction.dragging) return;
     const dx = event.clientX - interaction.x;
     const dy = event.clientY - interaction.y;
@@ -668,9 +667,7 @@ export default function ImpossibleOrigamiCathedral({ settings = {} }) {
     interaction.y = event.clientY;
     if (Math.abs(dx) + Math.abs(dy) > 2) interaction.moved = true;
     interaction.yawTarget = THREE.MathUtils.clamp(interaction.yawTarget - dx * 0.0025, -0.42, 0.42);
-    if (event.pointerType !== "touch") {
-      interaction.pitchTarget = THREE.MathUtils.clamp(interaction.pitchTarget + dy * 0.0019, -0.24, 0.24);
-    }
+    interaction.pitchTarget = THREE.MathUtils.clamp(interaction.pitchTarget + dy * 0.0019, -0.24, 0.24);
   }, []);
 
   const handlePointerUp = useCallback(() => {

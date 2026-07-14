@@ -1,2 +1,2 @@
 .canvas-stage { position: absolute; inset: 0; z-index: 0; background: #000; }
-.canvas-stage canvas { display: block; outline: none; }
+.canvas-stage canvas { display: block; outline: none; touch-action: none; }

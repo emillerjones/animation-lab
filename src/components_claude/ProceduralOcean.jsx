@@ -345,7 +345,6 @@ function OceanScene({ settings, speedRef, onSunReady }) {
 
   const stormProgressRef = useRef(0);
   const dragRef = useRef({ yaw: 0, pitch: 0 });
-  const touchPointerRef = useRef(false);
   const lightningRef = useRef({ nextStrike: 3, flash: 0 });
   const sunRef = useRef();
   const skyColorObj = useMemo(() => new THREE.Color(), []);
@@ -367,14 +366,12 @@ function OceanScene({ settings, speedRef, onSunReady }) {
       stormProgressRef.current = THREE.MathUtils.clamp(stormProgressRef.current + event.deltaY * 0.00035, 0, 1);
     };
     const onPointerDown = (event) => {
-      touchPointerRef.current = event.pointerType === "touch";
       dragging = true;
       dragMoved = false;
       lastX = event.clientX;
       lastY = event.clientY;
     };
     const onPointerMove = (event) => {
-      touchPointerRef.current = event.pointerType === "touch";
       if (!dragging) return;
       const dx = event.clientX - lastX;
       const dy = event.clientY - lastY;
@@ -382,9 +379,7 @@ function OceanScene({ settings, speedRef, onSunReady }) {
       lastX = event.clientX;
       lastY = event.clientY;
       dragRef.current.yaw = THREE.MathUtils.clamp(dragRef.current.yaw - dx * 0.0025, -0.5, 0.5);
-      if (event.pointerType !== "touch") {
-        dragRef.current.pitch = THREE.MathUtils.clamp(dragRef.current.pitch - dy * 0.0018, -0.25, 0.2);
-      }
+      dragRef.current.pitch = THREE.MathUtils.clamp(dragRef.current.pitch - dy * 0.0018, -0.25, 0.2);
     };
     const onPointerUp = (event) => {
       if (dragging && !dragMoved && oceanMesh) {
@@ -461,7 +456,7 @@ function OceanScene({ settings, speedRef, onSunReady }) {
     }
 
     const yaw = dragRef.current.yaw + state.pointer.x * 0.05;
-    const pitch = dragRef.current.pitch + (touchPointerRef.current ? 0 : state.pointer.y) * 0.03;
+    const pitch = dragRef.current.pitch + state.pointer.y * 0.03;
     const distance = tuning.value.cameraDistance + intensity * 0.4;
     camera.position.set(
       Math.sin(yaw) * distance,

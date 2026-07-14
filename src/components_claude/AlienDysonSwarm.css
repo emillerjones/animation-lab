@@ -1,6 +1,5 @@
 @import "../experiment-base.css";
 .alien-dyson-swarm { background: #020103; }
-.alien-dyson-swarm .canvas-stage canvas { touch-action: none; }
 .alien-dyson-swarm .experiment-copy { z-index: 20; }
 .alien-dyson-swarm__label {
   padding: 6px 12px;
