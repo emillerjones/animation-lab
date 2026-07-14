@@ -359,14 +359,20 @@ function buildScene(canvas, host, settingsRef, report) {
     dynamicStars.push(star);
   }
 
+  function applyPointerTarget(event) {
+    const point = screenToPlane(event);
+    pointerTarget.x = point.x;
+    if (event.pointerType !== "touch") pointerTarget.y = point.y;
+  }
+
   function onPointerMove(event) {
-    pointerTarget.copy(screenToPlane(event));
+    applyPointerTarget(event);
   }
 
   function onPointerDown(event) {
     state.holding = true;
     state.lastPointerDown = performance.now();
-    pointerTarget.copy(screenToPlane(event));
+    applyPointerTarget(event);
     injectStar(1.8);
     host.setPointerCapture?.(event.pointerId);
   }

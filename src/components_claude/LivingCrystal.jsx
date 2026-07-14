@@ -260,6 +260,7 @@ function CrystalScene({ settings, speedRef, onStats }) {
   const growthTargetRef = useRef(0.56);
   const growthValueRef = useRef(0.56);
   const fpsRef = useRef({ frames: 0, time: 0 });
+  const touchPointerRef = useRef(false);
 
   const hitGeometry = useMemo(() => {
     const geo = new THREE.SphereGeometry(1, 8, 8);
@@ -353,9 +354,13 @@ function CrystalScene({ settings, speedRef, onStats }) {
     };
 
     const onPointerDown = (event) => {
+      touchPointerRef.current = event.pointerType === "touch";
       downTime = performance.now();
       const downBranch = raycastBranch(event);
       heldBranchRef.current = downBranch >= 0 ? downBranch : null;
+    };
+    const onPointerMove = (event) => {
+      touchPointerRef.current = event.pointerType === "touch";
     };
     const onPointerUp = (event) => {
       heldBranchRef.current = null;
@@ -376,9 +381,11 @@ function CrystalScene({ settings, speedRef, onStats }) {
     };
 
     canvasEl.addEventListener("pointerdown", onPointerDown);
+    canvasEl.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
     return () => {
       canvasEl.removeEventListener("pointerdown", onPointerDown);
+      canvasEl.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
     };
   }, [camera, branches, pulseTime, timeUniform]);
@@ -451,7 +458,7 @@ function CrystalScene({ settings, speedRef, onStats }) {
         if (entry.growProgress > 0.001 && !entry.nudged) {
           entry.nudged = true;
           const yaw = pointer.x * 0.6;
-          const pitch = pointer.y * 0.4;
+          const pitch = (touchPointerRef.current ? 0 : pointer.y) * 0.4;
           const cursorDir = new THREE.Vector3(Math.sin(yaw), 0.3 + pitch, Math.cos(yaw)).normalize();
           b.renderDir.copy(b.originalDir).lerp(cursorDir, 0.22).normalize();
         }
@@ -480,7 +487,7 @@ function CrystalScene({ settings, speedRef, onStats }) {
       clampNumber(maxMatureDepth / 3.4, 0, 1),
     );
     const yaw = dragRef.current.yaw + pointer.x * 0.12;
-    const pitch = dragRef.current.pitch + pointer.y * 0.08;
+    const pitch = dragRef.current.pitch + (touchPointerRef.current ? 0 : pointer.y) * 0.08;
     camera.position.set(
       Math.sin(yaw) * Math.cos(pitch) * distance,
       1.1 + Math.sin(pitch) * distance * 0.5,

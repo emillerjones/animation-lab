@@ -330,10 +330,10 @@ function buildCity(canvas, host, settingsRef, report) {
 
   function updatePointer(event) {
     const rect = host.getBoundingClientRect();
-    pointerTarget.set(
-      ((event.clientX - rect.left) / rect.width) * 2 - 1,
-      -((event.clientY - rect.top) / rect.height) * 2 + 1,
-    );
+    pointerTarget.setX(((event.clientX - rect.left) / rect.width) * 2 - 1);
+    if (event.pointerType !== "touch") {
+      pointerTarget.setY(-((event.clientY - rect.top) / rect.height) * 2 + 1);
+    }
   }
 
   function createShockwave(point, strong = false) {

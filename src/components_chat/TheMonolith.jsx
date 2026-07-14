@@ -1,5 +1,5 @@
-import { useMemo, useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { useEffect, useMemo, useRef } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Edges, Line, RoundedBox } from "@react-three/drei";
 import { Bloom, EffectComposer, SMAA } from "@react-three/postprocessing";
 import * as THREE from "three";
@@ -123,13 +123,26 @@ function CrackField({ progressRef, settings }) {
 }
 
 function Monolith({ progressRef, settings, pulseRef }) {
+  const { gl } = useThree();
   const rootRef = useRef();
   const leftRef = useRef();
   const rightRef = useRef();
   const coreRef = useRef();
   const coreLightRef = useRef();
+  const touchPointerRef = useRef(false);
   const rotationRate = settings.rotationRate ?? 0.5;
   const coreEnergy = (settings.coreEnergy ?? 100) / 100;
+
+  useEffect(() => {
+    const canvasEl = gl.domElement;
+    const trackPointerType = (event) => { touchPointerRef.current = event.pointerType === "touch"; };
+    canvasEl.addEventListener("pointerdown", trackPointerType);
+    canvasEl.addEventListener("pointermove", trackPointerType);
+    return () => {
+      canvasEl.removeEventListener("pointerdown", trackPointerType);
+      canvasEl.removeEventListener("pointermove", trackPointerType);
+    };
+  }, [gl]);
 
   useFrame((state, delta) => {
     const progress = progressRef.current;
@@ -137,7 +150,7 @@ function Monolith({ progressRef, settings, pulseRef }) {
     const speed = settings.speed ?? 1;
     if (rootRef.current) {
       rootRef.current.rotation.y += Math.min(delta, 0.05) * rotationRate * speed * (0.07 + progress * 0.13);
-      rootRef.current.rotation.x = THREE.MathUtils.damp(rootRef.current.rotation.x, state.pointer.y * 0.055, 3, delta);
+      rootRef.current.rotation.x = THREE.MathUtils.damp(rootRef.current.rotation.x, (touchPointerRef.current ? 0 : state.pointer.y) * 0.055, 3, delta);
       rootRef.current.rotation.z = THREE.MathUtils.damp(rootRef.current.rotation.z, -state.pointer.x * 0.035, 3, delta);
     }
     if (leftRef.current && rightRef.current) {

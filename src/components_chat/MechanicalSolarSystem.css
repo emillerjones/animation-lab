@@ -6,7 +6,7 @@
   color: #f3e6ca;
   background: #020202;
   cursor: grab;
-  touch-action: pan-y;
+  touch-action: none;
   user-select: none;
 }
 

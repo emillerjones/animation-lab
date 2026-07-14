@@ -449,10 +449,10 @@ function buildMechanicalScene(canvas, host, settingsRef, report) {
 
   function updatePointer(event) {
     const bounds = host.getBoundingClientRect();
-    pointerTarget.set(
-      ((event.clientX - bounds.left) / bounds.width) * 2 - 1,
-      -((event.clientY - bounds.top) / bounds.height) * 2 + 1,
-    );
+    pointerTarget.setX(((event.clientX - bounds.left) / bounds.width) * 2 - 1);
+    if (event.pointerType !== "touch") {
+      pointerTarget.setY(-((event.clientY - bounds.top) / bounds.height) * 2 + 1);
+    }
   }
 
   function pickPlanet() {

@@ -528,7 +528,7 @@ function CathedralScene({ settings, interactionRef, onFormed }) {
       const maxTravel = Math.min(stations * SECTION_DEPTH - 5, 24) * scrollTravel;
       const z = choreography.value.cameraEndZ - interaction.scroll * maxTravel;
       const pointerX = state.pointer.x * 0.28;
-      const pointerY = state.pointer.y * 0.16;
+      const pointerY = (interaction.isTouch ? 0 : state.pointer.y) * 0.16;
       state.camera.position.set(
         SCENE_X + 1.8 + pointerX,
         3.65 + pointerY,
@@ -654,11 +654,13 @@ export default function ImpossibleOrigamiCathedral({ settings = {} }) {
     interaction.moved = false;
     interaction.x = event.clientX;
     interaction.y = event.clientY;
+    interaction.isTouch = event.pointerType === "touch";
     setDragging(true);
   }, []);
 
   const handlePointerMove = useCallback((event) => {
     const interaction = interactionRef.current;
+    interaction.isTouch = event.pointerType === "touch";
     if (!interaction.dragging) return;
     const dx = event.clientX - interaction.x;
     const dy = event.clientY - interaction.y;
