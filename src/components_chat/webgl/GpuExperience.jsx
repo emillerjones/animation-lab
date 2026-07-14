@@ -4,7 +4,6 @@ import { AdaptiveDpr } from "@react-three/drei";
 import { Bloom, EffectComposer, Noise, SMAA, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { WEBGL_DPR, WEBGL_MSAA_SAMPLES } from "../../rendering/quality";
-import { World } from "./GpuWorlds";
 import "./GpuExperience.css";
 
 function CameraRig({ speed = 1, impulse }) {
@@ -22,7 +21,7 @@ function CameraRig({ speed = 1, impulse }) {
   return null;
 }
 
-function Stage({ scene, settings, accent, background, impulse, actionActive }) {
+function Stage({ World, settings, accent, background, impulse, actionActive }) {
   const speed = settings.speed ?? 1;
   return (
     <>
@@ -32,7 +31,7 @@ function Stage({ scene, settings, accent, background, impulse, actionActive }) {
       <directionalLight position={[4, 10, 6]} intensity={1.1} color="#fff1d3" />
       <pointLight position={[-6, 4, 3]} intensity={22} distance={32} color={accent} />
       <CameraRig speed={speed} impulse={impulse} />
-      <World type={scene} settings={settings} accent={accent} impulse={impulse} actionActive={actionActive} />
+      <World settings={settings} accent={accent} impulse={impulse} actionActive={actionActive} />
       <EffectComposer multisampling={WEBGL_MSAA_SAMPLES}>
         <Bloom mipmapBlur intensity={1.3} luminanceThreshold={.18} luminanceSmoothing={.45} />
         <Noise opacity={.018} premultiply />
@@ -46,6 +45,7 @@ function Stage({ scene, settings, accent, background, impulse, actionActive }) {
 
 export default function GpuExperience({
   scene,
+  World,
   settings = {},
   eyebrow,
   title,
@@ -87,7 +87,7 @@ export default function GpuExperience({
         }}
       >
         <Suspense fallback={null}>
-          <Stage scene={scene} settings={settings} accent={accent} background={background} impulse={impulse} actionActive={actionActive} />
+          <Stage World={World} settings={settings} accent={accent} background={background} impulse={impulse} actionActive={actionActive} />
         </Suspense>
       </Canvas>
       <div className="gpu-experience__veil" aria-hidden="true" />

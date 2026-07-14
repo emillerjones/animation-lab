@@ -94,7 +94,7 @@ function ReflectiveGround() {
 }
 
 export default function DreamingCity3D({ settings = {} }) {
-  const count = Math.max(8, Math.min(22, settings.towers ?? 20));
+  const count = Math.max(12, Math.min(120, settings.towers ?? 60));
   return (
     <section className="atmosphere dreaming-city-3d">
       <CanvasStage camera={{ position: [1.6, 2.2, 10], fov: 46 }} speed={settings.speed ?? 1} bloom={{ intensity: 0.9 }}>

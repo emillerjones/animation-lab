@@ -3,8 +3,6 @@ import { lazy } from "react";
 const load = (path) => lazy(() => path());
 
 const EndlessLightTunnel = load(() => import("../components_chat/EndlessLightTunnel"));
-const StarryNight = load(() => import("../components_chat/StarryNight"));
-const RainWindow = load(() => import("../components_chat/RainWindow"));
 const SolarFlare = load(() => import("../components_chat/SolarFlare"));
 const BioluminescentTide = load(() => import("../components_chat/BioluminescentTide"));
 const PrismPulse = load(() => import("../components_chat/PrismPulse"));
@@ -13,14 +11,11 @@ const GlassHarmonics = load(() => import("../components_chat/GlassHarmonics"));
 const DreamingCity = load(() => import("../components_chat/DreamingCity"));
 const CathedralOfLight = load(() => import("../components_chat/CathedralOfLight"));
 const CathedralAscent3D = load(() => import("../components_claude/CathedralAscent3D"));
-const BlackHole3D = load(() => import("../components_claude/BlackHole3D"));
 const MechanicalPlanetarium3D = load(() => import("../components_claude/MechanicalPlanetarium3D"));
 const InfiniteDataOcean3D = load(() => import("../components_claude/InfiniteDataOcean3D"));
 const NeuralNetworkUniverse3D = load(() => import("../components_claude/NeuralNetworkUniverse3D"));
 const ParticleCollider3D = load(() => import("../components_claude/ParticleCollider3D"));
 const EndlessLightTunnel3D = load(() => import("../components_claude/EndlessLightTunnel3D"));
-const StarryNight3D = load(() => import("../components_claude/StarryNight3D"));
-const RainWindow3D = load(() => import("../components_claude/RainWindow3D"));
 const SolarFlare3D = load(() => import("../components_claude/SolarFlare3D"));
 const BioluminescentTide3D = load(() => import("../components_claude/BioluminescentTide3D"));
 const PrismPulse3D = load(() => import("../components_claude/PrismPulse3D"));
@@ -33,7 +28,6 @@ const InfiniteDataOcean = load(() => import("../components_chat/InfiniteDataOcea
 const NeuralNetworkUniverse = load(() => import("../components_chat/NeuralNetworkUniverse"));
 const MechanicalPlanetarium = load(() => import("../components_chat/MechanicalPlanetarium"));
 const InfiniteLibrary = load(() => import("../components_chat/InfiniteLibrary"));
-const BlackHole = load(() => import("../components_chat/BlackHole"));
 const BlueprintWorld = load(() => import("../components_chat/BlueprintWorld"));
 const ParticleCollider = load(() => import("../components_chat/ParticleCollider"));
 const SakuraFall = load(() => import("../components_chat/SakuraFall"));
@@ -51,6 +45,9 @@ const CircuitPulseClaude = load(() => import("../components_claude/CircuitPulse"
 const SakuraFallClaude = load(() => import("../components_claude/SakuraFall"));
 const ImpossibleOrigamiCathedralClaude = load(() => import("../components_claude/ImpossibleOrigamiCathedral"));
 const AlienDysonSwarm = load(() => import("../components_claude/AlienDysonSwarm"));
+const ProceduralOcean = load(() => import("../components_claude/ProceduralOcean"));
+const LivingCrystal = load(() => import("../components_claude/LivingCrystal"));
+const TheMonolith = load(() => import("../components_chat/TheMonolith"));
 
 // The single source of truth for the gallery, its order, and every detail route.
 export const animations = [
@@ -70,51 +67,6 @@ export const animations = [
       { key: "frames", label: "Architectural frames", min: 24, max: 64, step: 4, default: 56 },
       { key: "dust", label: "Rushing particles", min: 40, max: 140, step: 10, default: 120 },
       { key: "debris", label: "Physics debris", min: 8, max: 36, step: 2, default: 20 },
-    ],
-  },
-  {
-    id: "starry-night",
-    provider: "chatgpt",
-    title: "Starry Night",
-    category: "Sky / Parallax",
-    description: "A hundred and fifty twinkling stars, drifting clouds, and slow meteors layered over a silhouetted ridge and its still reflection.",
-    accent: "#88bfff",
-    accentRgb: "136 191 255",
-    component: StarryNight,
-    variantComponent: StarryNight3D,
-    variantLabel: "ChatGPT",
-    variantBLabel: "Claude",
-    controls: [
-      { key: "density", label: "Star density", min: 35, max: 150, step: 5, default: 150 },
-      { key: "clouds", label: "Cloud cover", min: 20, max: 100, step: 5, default: 72, suffix: "%" },
-    ],
-  },
-  {
-    id: "rain-window",
-    provider: "chatgpt",
-    title: "After the Rain",
-    category: "Weather / Glass",
-    description: "Streaking raindrops race down an unseen pane of glass while a blurred city glow smears behind the condensation.",
-    accent: "#69d7ff",
-    accentRgb: "105 215 255",
-    component: RainWindow,
-    variantComponent: RainWindow3D,
-    variantLabel: "ChatGPT",
-    variantBLabel: "Claude",
-    chatControls: [
-      { key: "chatRain", label: "Rain intensity", min: 10, max: 100, step: 1, default: 76, suffix: "%" },
-      { key: "chatClouds", label: "Storm cloud cover", min: 15, max: 100, step: 1, default: 82, suffix: "%" },
-      { key: "chatWind", label: "Crosswind", min: 0.2, max: 2, step: 0.1, default: 0.9, suffix: "×" },
-      { key: "chatGlass", label: "Window droplets", min: 10, max: 100, step: 1, default: 68, suffix: "%" },
-      { key: "chatHaze", label: "Rain haze", min: 0, max: 100, step: 1, default: 58, suffix: "%" },
-      { key: "chatLightningRate", label: "Lightning frequency", min: 1, max: 10, step: 1, default: 6 },
-      { key: "chatLightning", label: "Lightning", type: "toggle", default: true },
-    ],
-    claudeControls: [
-      { key: "claudeRain", label: "Rain intensity", min: 10, max: 100, step: 1, default: 68, suffix: "%" },
-      { key: "claudeClouds", label: "Storm cloud cover", min: 15, max: 100, step: 1, default: 72, suffix: "%" },
-      { key: "claudeGlass", label: "Glass distortion", min: 10, max: 100, step: 1, default: 66, suffix: "%" },
-      { key: "claudeLightning", label: "Lightning", type: "toggle", default: true },
     ],
   },
   {
@@ -185,16 +137,16 @@ export const animations = [
   {
     id: "glass-harmonics",
     provider: "chatgpt",
-    title: "Glass Harmonics",
-    category: "Sound / Matter",
-    description: "Resonant glass membranes make invisible sound visible as waves of pressure, refraction, and suspended liquid bells.",
+    title: "Orbital Halos",
+    category: "Geometry / Levitation",
+    description: "Translucent luminous rings drift, precess, and gather into a weightless field of suspended orbital geometry.",
     accent: "#78e9ff",
     accentRgb: "120 233 255",
     component: GlassHarmonics,
     variantComponent: GlassHarmonics3D,
     variantLabel: "ChatGPT",
     variantBLabel: "Claude",
-    controls: [{ key: "plates", label: "Resonant plates", min: 6, max: 18, step: 1, default: 16 }],
+    controls: [{ key: "plates", label: "Floating rings", min: 6, max: 24, step: 1, default: 16 }],
   },
   {
     id: "dreaming-city",
@@ -208,7 +160,8 @@ export const animations = [
     variantComponent: DreamingCity3D,
     variantLabel: "ChatGPT",
     variantBLabel: "Claude",
-    controls: [{ key: "towers", label: "Dreaming towers", min: 8, max: 22, step: 1, default: 20 }],
+    chatControls: [{ key: "towers", label: "Dreaming towers", min: 20, max: 400, step: 10, default: 140 }],
+    claudeControls: [{ key: "towers", label: "Dreaming towers", min: 12, max: 120, step: 4, default: 60 }],
   },
   {
     id: "cathedral-of-light",
@@ -253,7 +206,10 @@ export const animations = [
     variantComponent: NeuralNetworkUniverse3D,
     variantLabel: "ChatGPT",
     variantBLabel: "Claude",
-    controls: [{ key: "nodes", label: "Thinking nodes", min: 50, max: 170, step: 10, default: 150 }],
+    controls: [
+      { key: "nodes", label: "Thinking nodes", min: 50, max: 170, step: 10, default: 150 },
+      { key: "pulseRate", label: "Signal activity", min: 0.2, max: 3, step: 0.1, default: 0.9, suffix: "×" },
+    ],
   },
   {
     id: "mechanical-planetarium",
@@ -283,24 +239,8 @@ export const animations = [
     variantLabel: "ChatGPT",
     variantBLabel: "Claude",
     controls: [
-      { key: "shelves", label: "Shelf bays", min: 10, max: 300, step: 10, default: 120 },
-      { key: "books", label: "Books on the shelves", min: 200, max: 10000, step: 200, default: 4000 },
-    ],
-  },
-  {
-    id: "black-hole",
-    provider: "chatgpt",
-    title: "Black Hole",
-    category: "Gravity / Event Horizon",
-    description: "Curved light, stretched stars, layered accretion rings, and a slowly breathing horizon turn gravitational collapse into something beautiful.",
-    accent: "#ffbb6f", accentRgb: "255 187 111",
-    component: BlackHole,
-    variantComponent: BlackHole3D,
-    variantLabel: "ChatGPT",
-    variantBLabel: "Claude",
-    controls: [
-      { key: "rings", label: "Lensing rings", min: 8, max: 26, step: 2, default: 22 },
-      { key: "stars", label: "Falling stars", min: 50, max: 170, step: 10, default: 150 },
+      { key: "shelves", label: "Near shelf bays", min: 10, max: 130, step: 10, default: 90 },
+      { key: "books", label: "Books on the shelves", min: 200, max: 14000, step: 200, default: 6000 },
     ],
   },
   {
@@ -528,6 +468,60 @@ export const animations = [
       { key: "starIntensity", label: "Star intensity", min: 40, max: 200, step: 5, default: 110, suffix: "%" },
       { key: "orbitSpeed", label: "Orbital rate", min: 0.1, max: 2, step: 0.1, default: 0.6, suffix: "×" },
       { key: "droneTraffic", label: "Drone traffic", min: 0, max: 40, step: 2, default: 16 },
+    ],
+  },
+  {
+    id: "procedural-ocean",
+    provider: "claude",
+    collection: "advanced",
+    title: "Procedural Ocean",
+    category: "WebGPU / Weather Systems",
+    description: "A near-black predawn sea builds through wind, rain, and swell into a full storm before warm light breaks through the clearing clouds.",
+    accent: "#5fb3c9",
+    accentRgb: "95 179 201",
+    component: ProceduralOcean,
+    controls: [
+      { key: "windStrength", label: "Wind intensity", min: 20, max: 150, step: 5, default: 70, suffix: "%" },
+      { key: "swellHeight", label: "Swell height", min: 20, max: 180, step: 5, default: 100, suffix: "%" },
+      { key: "rainDensity", label: "Rain density", min: 0, max: 100, step: 5, default: 60, suffix: "%" },
+      { key: "lightningRate", label: "Lightning frequency", min: 0, max: 100, step: 5, default: 55, suffix: "%" },
+      { key: "foamAmount", label: "Foam & spray", min: 10, max: 150, step: 5, default: 80, suffix: "%" },
+    ],
+  },
+  {
+    id: "living-crystal",
+    provider: "claude",
+    collection: "advanced",
+    title: "Living Crystal",
+    category: "WebGPU / Procedural Growth",
+    description: "One translucent shard branches into an architectural crystal on its own — cursor steers new growth, clicks send energy through it, and mature limbs can be fractured and watched as they regrow.",
+    accent: "#8fd8ff",
+    accentRgb: "143 216 255",
+    component: LivingCrystal,
+    controls: [
+      { key: "growthSpeed", label: "Growth rate", min: 0.3, max: 2, step: 0.1, default: 1, suffix: "×" },
+      { key: "branchDensity", label: "Branch density", min: 6, max: 20, step: 1, default: 12 },
+      { key: "energyIntensity", label: "Energy intensity", min: 40, max: 200, step: 5, default: 100, suffix: "%" },
+      { key: "fractureRate", label: "Fracture frequency", min: 0, max: 100, step: 5, default: 50, suffix: "%" },
+      { key: "dustAmount", label: "Crystal dust", min: 10, max: 100, step: 5, default: 35 },
+    ],
+  },
+  {
+    id: "the-monolith",
+    provider: "chatgpt",
+    collection: "advanced",
+    title: "The Monolith",
+    category: "OLED / Procedural Awakening",
+    description: "An obsidian monument turns in true black, fractures with internal light, opens under scroll, and releases a reversible storm of luminous matter.",
+    accent: "#7ebcff",
+    accentRgb: "126 188 255",
+    component: TheMonolith,
+    controls: [
+      { key: "rotationRate", label: "Monolith rotation", min: 0.1, max: 2, step: 0.1, default: 0.5, suffix: "×" },
+      { key: "crackEnergy", label: "Crack energy", min: 20, max: 180, step: 5, default: 100, suffix: "%" },
+      { key: "coreEnergy", label: "Inner light", min: 20, max: 200, step: 5, default: 100, suffix: "%" },
+      { key: "particleCount", label: "Released particles", min: 500, max: 5000, step: 500, default: 3000 },
+      { key: "particleSpread", label: "Release spread", min: 0.4, max: 2, step: 0.1, default: 1, suffix: "×" },
     ],
   },
 ].map((animation, index) => ({ ...animation, index }));

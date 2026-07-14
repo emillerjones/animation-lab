@@ -49,14 +49,39 @@ function Sun({ onReady, energy }) {
   );
 }
 
-function CoronaRing({ index }) {
+function CoronaRing({ index, total }) {
   const ref = useRef();
   const speed = useSpeed();
-  useFrame((_, delta) => { if (ref.current) ref.current.rotation.z += delta * (0.1 + index * 0.02) * speed; });
+  const flare = useMemo(() => {
+    const theta = seeded(index, 951) * Math.PI * 2;
+    const phi = 0.55 + seeded(index, 952) * 2.0;
+    const normal = new THREE.Vector3(Math.sin(phi) * Math.cos(theta), Math.cos(phi), Math.sin(phi) * Math.sin(theta)).normalize();
+    const quaternion = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
+    quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(normal, seeded(index, 953) * Math.PI));
+    const halfSpan = 0.25 + seeded(index, 954) * 0.25;
+    const height = 0.42 + seeded(index, 955) * 0.46;
+    return {
+      position: normal.multiplyScalar(2.18),
+      quaternion,
+      curve: new THREE.CubicBezierCurve3(
+        new THREE.Vector3(-halfSpan, -0.035, 0),
+        new THREE.Vector3(-halfSpan * 0.55, height, 0),
+        new THREE.Vector3(halfSpan * 0.55, height, 0),
+        new THREE.Vector3(halfSpan, -0.035, 0),
+      ),
+    };
+  }, [index]);
+  useFrame((state) => {
+    if (!ref.current) return;
+    const cycle = (state.clock.elapsedTime * speed * 0.085 + index / total) % 1;
+    const eruption = cycle > 0.68 ? Math.sin(((cycle - 0.68) / 0.32) * Math.PI) ** 2 : 0;
+    ref.current.scale.set(1, 0.08 + eruption, 1);
+    ref.current.material.opacity = eruption * 0.86;
+  });
   return (
-    <mesh ref={ref} rotation={[seeded(index, 951) * 3, seeded(index, 952) * 3, 0]}>
-      <torusGeometry args={[3 + index * 0.3, 0.028, 6, 120, Math.PI * (0.5 + seeded(index, 953))]} />
-      <meshBasicMaterial color="#fff0c8" transparent opacity={0.9} blending={THREE.AdditiveBlending} toneMapped={false} />
+    <mesh ref={ref} position={flare.position} quaternion={flare.quaternion}>
+      <tubeGeometry args={[flare.curve, 36, 0.028, 6, false]} />
+      <meshBasicMaterial color="#fff0c8" transparent opacity={0} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
     </mesh>
   );
 }
@@ -64,7 +89,7 @@ function CoronaRing({ index }) {
 export default function SolarFlare3D({ settings = {} }) {
   const [sun, setSun] = useState(null);
   const energy = settings.energy ?? 100;
-  const flareCount = Math.max(4, Math.min(16, Math.round(energy / 8)));
+  const flareCount = Math.max(3, Math.min(7, Math.round(energy / 20)));
 
   return (
     <section className="atmosphere solar-flare-3d">
@@ -79,7 +104,7 @@ export default function SolarFlare3D({ settings = {} }) {
         <ambientLight intensity={0.05} />
         <group position={[1.2, 0.4, 0]}>
           <Sun onReady={setSun} energy={energy} />
-          {Array.from({ length: flareCount }).map((_, index) => <CoronaRing key={index} index={index} />)}
+          {Array.from({ length: flareCount }).map((_, index) => <CoronaRing key={index} index={index} total={flareCount} />)}
           <pointLight color="#ffb14c" intensity={26} distance={30} />
         </group>
       </CanvasStage>

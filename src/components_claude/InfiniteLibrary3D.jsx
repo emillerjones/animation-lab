@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { MeshReflectorMaterial } from "@react-three/drei";
 import * as THREE from "three";
@@ -11,6 +11,8 @@ const SIDE_X = 4.6;
 const BAY_DEPTH = 1.7;
 const SHELF_LEVELS = 6;
 const LEVEL_HEIGHT = 0.52;
+const FAR_BAY_COUNT = 600;
+const FAR_PANEL_HEIGHT = SHELF_LEVELS * LEVEL_HEIGHT;
 
 function ShelfStructure({ bayCount, accent }) {
   const plankRef = useRef();
@@ -31,7 +33,10 @@ function ShelfStructure({ bayCount, accent }) {
     return { planks: plankList, panels: panelList };
   }, [bayCount]);
 
-  useFrame(() => {
+  // Static geometry — the matrices never change after layout, so they're written once
+  // (useEffect) instead of every frame (useFrame). Re-uploading an unchanged instance
+  // buffer 60x/sec was the main cost of pushing the bay-count slider high.
+  useEffect(() => {
     if (!plankRef.current || !panelRef.current) return;
     planks.forEach((plank, index) => {
       dummy.position.set(plank.x, plank.y, plank.z);
@@ -47,7 +52,7 @@ function ShelfStructure({ bayCount, accent }) {
       panelRef.current.setMatrixAt(index, dummy.matrix);
     });
     panelRef.current.instanceMatrix.needsUpdate = true;
-  });
+  }, [planks, panels]);
 
   return (
     <group>
@@ -63,10 +68,48 @@ function ShelfStructure({ bayCount, accent }) {
   );
 }
 
-function BookInstances({ count, bayCount, accent }) {
+// Cheap stand-ins for the shelving well beyond the detailed near tier: one flat
+// side-panel silhouette per bay-side (2 instances/bay vs. the near tier's 16),
+// laid out once and never touched again. Fog and distance do the rest of the
+// work of selling "this keeps going," without paying for full plank geometry
+// or per-bay lighting out there.
+function FarShelfSilhouettes({ startZ, accent }) {
+  const meshRef = useRef();
+
+  const panels = useMemo(() => {
+    const list = [];
+    for (let bay = 0; bay < FAR_BAY_COUNT; bay += 1) {
+      const z = startZ - bay * BAY_DEPTH;
+      [-1, 1].forEach((side) => {
+        list.push({ x: side * (SIDE_X + 0.72), z });
+      });
+    }
+    return list;
+  }, [startZ]);
+
+  useEffect(() => {
+    if (!meshRef.current) return;
+    panels.forEach((panel, index) => {
+      dummy.position.set(panel.x, FAR_PANEL_HEIGHT / 2, panel.z);
+      dummy.scale.set(1, 1, 1);
+      dummy.updateMatrix();
+      meshRef.current.setMatrixAt(index, dummy.matrix);
+    });
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  }, [panels]);
+
+  return (
+    <instancedMesh ref={meshRef} args={[undefined, undefined, panels.length]}>
+      <boxGeometry args={[0.05, FAR_PANEL_HEIGHT, BAY_DEPTH * 0.94]} />
+      <meshStandardMaterial color="#1c140c" roughness={0.9} emissive={accent} emissiveIntensity={0.03} />
+    </instancedMesh>
+  );
+}
+
+function BookInstances({ count, slotBayCount, accent }) {
   const meshRef = useRef();
   const speed = useSpeed();
-  const slotCount = bayCount * 2 * SHELF_LEVELS;
+  const slotCount = slotBayCount * 2 * SHELF_LEVELS;
 
   const books = useMemo(() => Array.from({ length: count }, (_, index) => {
     const slot = index % slotCount;
@@ -120,16 +163,28 @@ function ReflectiveAisle({ depth }) {
   );
 }
 
+// Real-time point lights are the expensive part of this scene, not the instanced
+// geometry — capped at a fixed count regardless of bay count so the slider can't
+// accidentally spawn dozens of dynamic lights.
 function LampRow({ bayCount, accent }) {
-  return Array.from({ length: Math.ceil(bayCount / 3) }, (_, index) => (
-    <pointLight key={index} color={accent} intensity={9} distance={9} position={[0, SHELF_LEVELS * LEVEL_HEIGHT + 0.6, -index * 3 * BAY_DEPTH]} />
+  const lampCount = Math.min(12, Math.max(3, Math.ceil(bayCount / 12)));
+  const depth = bayCount * BAY_DEPTH;
+  return Array.from({ length: lampCount }, (_, index) => (
+    <pointLight
+      key={index}
+      color={accent}
+      intensity={9}
+      distance={9}
+      position={[0, SHELF_LEVELS * LEVEL_HEIGHT + 0.6, -(index / Math.max(1, lampCount - 1)) * depth]}
+    />
   ));
 }
 
 export default function InfiniteLibrary3D({ settings = {} }) {
-  const bayCount = Math.max(10, Math.min(300, settings.shelves ?? 120));
-  const bookCount = Math.max(200, Math.min(10000, settings.books ?? 4000));
-  const depth = bayCount * BAY_DEPTH;
+  const bayCount = Math.max(10, Math.min(130, settings.shelves ?? 90));
+  const bookCount = Math.max(200, Math.min(14000, settings.books ?? 6000));
+  const nearDepth = bayCount * BAY_DEPTH;
+  const totalDepth = (bayCount + FAR_BAY_COUNT) * BAY_DEPTH;
 
   return (
     <section className="atmosphere infinite-library-3d">
@@ -139,14 +194,15 @@ export default function InfiniteLibrary3D({ settings = {} }) {
         <ambientLight intensity={0.15} />
         <pointLight color="#e0ba79" intensity={30} distance={20} position={[0, 3, 0]} />
         <LampRow bayCount={bayCount} accent="#e0ba79" />
-        <ReflectiveAisle depth={depth} />
+        <ReflectiveAisle depth={totalDepth} />
         <ShelfStructure bayCount={bayCount} accent="#e0ba79" />
-        <BookInstances count={bookCount} bayCount={bayCount} accent="#e0ba79" />
+        <FarShelfSilhouettes startZ={-nearDepth} accent="#e0ba79" />
+        <BookInstances count={bookCount} slotBayCount={bayCount + FAR_BAY_COUNT} accent="#e0ba79" />
       </CanvasStage>
       <div className="experiment-copy">
         <p>21B — Perspective study, genuinely endless</p>
         <h1>Shelves that<br />actually recede.</h1>
-        <span>Real shelving bays packed with thousands of books, reflected in a real aisle floor that runs on into the dark.</span>
+        <span>Full shelving bays up close, thousands of books threaded through them, and a much longer silhouette of shelving fading into the fog far beyond where the detail stops.</span>
       </div>
     </section>
   );

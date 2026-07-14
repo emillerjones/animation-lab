@@ -8,8 +8,8 @@ import { WEBGL_DPR_MAX, WEBGL_MSAA_SAMPLES } from "../rendering/quality";
 import { seeded } from "../utils/procedural";
 import "./CathedralOfLight.css";
 
-const GOLD = new THREE.Color().setRGB(2.8, 1.42, 0.42);
-const PALE_GOLD = new THREE.Color().setRGB(3.8, 2.5, 1.15);
+const GOLD = new THREE.Color().setRGB(1.7, 0.86, 0.28);
+const PALE_GOLD = new THREE.Color().setRGB(2.35, 1.5, 0.72);
 
 function addSegment(target, a, b) {
   target.push(a.x, a.y, a.z, b.x, b.y, b.z);
@@ -33,8 +33,6 @@ function addBoxEdges(target, x, y, z, width, height, depth) {
 }
 
 function addPointedArch(target, z, halfWidth, spring, apex) {
-  addSegment(target, new THREE.Vector3(-halfWidth, 0, z), new THREE.Vector3(-halfWidth, spring, z));
-  addSegment(target, new THREE.Vector3(halfWidth, 0, z), new THREE.Vector3(halfWidth, spring, z));
   const left = new THREE.QuadraticBezierCurve3(
     new THREE.Vector3(-halfWidth, spring, z),
     new THREE.Vector3(-halfWidth * 0.78, apex - 1.2, z),
@@ -62,36 +60,34 @@ function buildCathedral(scene, bayCount, dustCount) {
   const details = [];
   const floorLines = [];
   const firstZ = 16;
-  const spacing = 8.5;
+  const endZ = -178;
+  const spacing = (firstZ - endZ) / Math.max(1, bayCount - 1);
 
   for (let bay = 0; bay < bayCount; bay += 1) {
     const z = firstZ - bay * spacing;
-    addPointedArch(structure, z, 10.5, 13.2, 23.2);
-    addPointedArch(details, z - 0.08, 7.1, 12.1, 19.4);
+    addPointedArch(structure, z, 10.5, 18.5, 25.5);
 
-    [-14, -10.5, 10.5, 14].forEach((x, column) => {
-      const height = column === 0 || column === 3 ? 20.5 : 18.5;
+    [-10.5, 10.5].forEach((x) => {
+      const height = 18.5;
       addBoxEdges(structure, x, 0, z, .72, height, .72);
       addBoxEdges(details, x, 0, z, 1.8, 1.05, 1.8);
       addBoxEdges(details, x, height - .7, z, 1.3, .72, 1.3);
       if (bay % 2 === 0) addBoxEdges(details, x, 5.2, z, 1.1, 1.1, 1.1);
     });
 
-    addSegment(details, new THREE.Vector3(-14, 20.5, z), new THREE.Vector3(-10.5, 18.5, z));
-    addSegment(details, new THREE.Vector3(10.5, 18.5, z), new THREE.Vector3(14, 20.5, z));
-    addSegment(details, new THREE.Vector3(0, 23.2, z), new THREE.Vector3(0, 26.5, z));
+    addSegment(details, new THREE.Vector3(0, 25.5, z), new THREE.Vector3(0, 28.2, z));
   }
 
   for (let x = -16; x <= 16; x += 2) {
-    addSegment(floorLines, new THREE.Vector3(x, .025, 24), new THREE.Vector3(x * .35, .025, firstZ - bayCount * spacing));
+    addSegment(floorLines, new THREE.Vector3(x, .025, 24), new THREE.Vector3(x * .35, .025, endZ - 12));
   }
-  for (let z = 24; z >= firstZ - bayCount * spacing; z -= spacing / 2) {
+  for (let z = 24; z >= endZ - 12; z -= Math.max(3.6, spacing / 2)) {
     addSegment(floorLines, new THREE.Vector3(-17, .025, z), new THREE.Vector3(17, .025, z));
   }
 
-  const primaryMaterial = new THREE.LineBasicMaterial({ color: GOLD, transparent: true, opacity: .72, blending: THREE.AdditiveBlending });
-  const detailMaterial = new THREE.LineBasicMaterial({ color: PALE_GOLD, transparent: true, opacity: .33, blending: THREE.AdditiveBlending });
-  const floorMaterial = new THREE.LineBasicMaterial({ color: GOLD, transparent: true, opacity: .24, blending: THREE.AdditiveBlending });
+  const primaryMaterial = new THREE.LineBasicMaterial({ color: GOLD, transparent: true, opacity: .6, blending: THREE.AdditiveBlending });
+  const detailMaterial = new THREE.LineBasicMaterial({ color: PALE_GOLD, transparent: true, opacity: .26, blending: THREE.AdditiveBlending });
+  const floorMaterial = new THREE.LineBasicMaterial({ color: GOLD, transparent: true, opacity: .17, blending: THREE.AdditiveBlending });
   architecture.add(lineSegments(structure, primaryMaterial));
   architecture.add(lineSegments(details, detailMaterial));
   architecture.add(lineSegments(floorLines, floorMaterial));
@@ -109,13 +105,13 @@ function buildCathedral(scene, bayCount, dustCount) {
 
   const columnGeometry = new THREE.BoxGeometry(.66, 1, .66);
   const columnMaterial = new THREE.MeshStandardMaterial({ color: 0x100a03, metalness: .9, roughness: .26, emissive: 0x1d0d01, emissiveIntensity: .6 });
-  const columns = new THREE.InstancedMesh(columnGeometry, columnMaterial, bayCount * 4);
+  const columns = new THREE.InstancedMesh(columnGeometry, columnMaterial, bayCount * 2);
   const matrix = new THREE.Matrix4();
   let instance = 0;
   for (let bay = 0; bay < bayCount; bay += 1) {
     const z = firstZ - bay * spacing;
-    [-14, -10.5, 10.5, 14].forEach((x, column) => {
-      const height = column === 0 || column === 3 ? 20.5 : 18.5;
+    [-10.5, 10.5].forEach((x) => {
+      const height = 18.5;
       matrix.compose(new THREE.Vector3(x, height / 2, z), new THREE.Quaternion(), new THREE.Vector3(1, height, 1));
       columns.setMatrixAt(instance, matrix);
       instance += 1;
@@ -127,7 +123,7 @@ function buildCathedral(scene, bayCount, dustCount) {
     new THREE.CylinderGeometry(.07, .32, 35, 12, 1, true),
     new THREE.MeshBasicMaterial({ color: PALE_GOLD, transparent: true, opacity: .72, blending: THREE.AdditiveBlending, depthWrite: false }),
   );
-  lightBeam.position.set(0, 17, firstZ - bayCount * spacing + 12);
+  lightBeam.position.set(0, 17, endZ - 5);
   architecture.add(lightBeam);
 
   const lightVolume = new THREE.Mesh(
@@ -137,8 +133,30 @@ function buildCathedral(scene, bayCount, dustCount) {
   lightVolume.position.copy(lightBeam.position);
   architecture.add(lightVolume);
 
-  const altar = new THREE.PointLight(0xffbe58, 85, 95, 1.3);
-  altar.position.set(0, 5, lightBeam.position.z + 1);
+  const portal = new THREE.Group();
+  portal.position.set(0, 0, endZ + 0.5);
+  const portalPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(7.2, 13.5),
+    new THREE.MeshBasicMaterial({ color: PALE_GOLD, transparent: true, opacity: .16, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }),
+  );
+  portalPlane.position.y = 6.75;
+  portal.add(portalPlane);
+  const rose = new THREE.Mesh(
+    new THREE.TorusGeometry(4.2, .13, 10, 72),
+    new THREE.MeshBasicMaterial({ color: PALE_GOLD, transparent: true, opacity: .82, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }),
+  );
+  rose.position.y = 14.5;
+  portal.add(rose);
+  const roseCore = new THREE.Mesh(
+    new THREE.CircleGeometry(3.95, 64),
+    new THREE.MeshBasicMaterial({ color: 0xffd98a, transparent: true, opacity: .075, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }),
+  );
+  roseCore.position.set(0, 14.5, .02);
+  portal.add(roseCore);
+  architecture.add(portal);
+
+  const altar = new THREE.PointLight(0xffbe58, 68, 115, 1.3);
+  altar.position.set(0, 6, endZ + 3);
   architecture.add(altar);
 
   const particles = Math.max(180, dustCount * 5);
@@ -149,7 +167,7 @@ function buildCathedral(scene, bayCount, dustCount) {
     dustBaseX[index] = (seeded(index, 411) - .5) * 33;
     dustPositions[index * 3] = dustBaseX[index];
     dustPositions[index * 3 + 1] = seeded(index, 412) * 27;
-    dustPositions[index * 3 + 2] = 24 - seeded(index, 413) * (bayCount * spacing + 30);
+    dustPositions[index * 3 + 2] = 24 - seeded(index, 413) * (24 - endZ + 30);
     dustSeeds[index] = seeded(index, 414);
   }
   const dustGeometry = new THREE.BufferGeometry();
@@ -178,7 +196,7 @@ export default function CathedralOfLight({ settings = {} }) {
     renderer.setSize(host.clientWidth, host.clientHeight, false);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.18;
+    renderer.toneMappingExposure = 1.08;
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x010101);
@@ -189,7 +207,7 @@ export default function CathedralOfLight({ settings = {} }) {
     camera.lookAt(0, 9.4, -55);
 
     scene.add(new THREE.AmbientLight(0x6b3b14, .34));
-    const warmLight = new THREE.PointLight(0xffc16a, 52, 74, 1.5);
+    const warmLight = new THREE.PointLight(0xffc16a, 40, 74, 1.5);
     warmLight.position.set(0, 17, 5);
     scene.add(warmLight);
 
@@ -198,7 +216,7 @@ export default function CathedralOfLight({ settings = {} }) {
     composer.renderTarget1.samples = WEBGL_MSAA_SAMPLES;
     composer.renderTarget2.samples = WEBGL_MSAA_SAMPLES;
     composer.addPass(new RenderPass(scene, camera));
-    const bloom = new UnrealBloomPass(new THREE.Vector2(host.clientWidth, host.clientHeight), 1.45, .72, .12);
+    const bloom = new UnrealBloomPass(new THREE.Vector2(host.clientWidth, host.clientHeight), 1.05, .62, .18);
     composer.addPass(bloom);
     const smaa = new SMAAPass(host.clientWidth * renderer.getPixelRatio(), host.clientHeight * renderer.getPixelRatio());
     composer.addPass(smaa);

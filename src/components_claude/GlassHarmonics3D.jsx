@@ -26,7 +26,7 @@ function GlassPlate({ index, accent }) {
 }
 
 export default function GlassHarmonics3D({ settings = {} }) {
-  const count = Math.max(6, Math.min(18, settings.plates ?? 16));
+  const count = Math.max(6, Math.min(24, settings.plates ?? 16));
   return (
     <section className="atmosphere glass-harmonics-3d">
       <CanvasStage camera={{ position: [1.6, 0.6, 8], fov: 46 }} speed={settings.speed ?? 1} bloom={{ intensity: 0.9 }}>
@@ -37,9 +37,9 @@ export default function GlassHarmonics3D({ settings = {} }) {
         </group>
       </CanvasStage>
       <div className="experiment-copy">
-        <p>13B — Matter study, with real waves</p>
-        <h1>Sound, made<br />visible in glass.</h1>
-        <span>Real transmissive membranes ring with genuine expanding ripples, timed like actual resonance.</span>
+        <p>08B — Orbital geometry</p>
+        <h1>Halos without<br />a horizon.</h1>
+        <span>Transmissive rings float, tilt, and breathe through a field where gravity has released its hold.</span>
       </div>
     </section>
   );

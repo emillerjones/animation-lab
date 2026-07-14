@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Component, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { animations } from "./data/animations";
 import HomePage from "./components/HomePage";
 import "./App.css";
@@ -36,6 +36,30 @@ function getProviderControls(animation, provider) {
 function readSession(key) {
   try { return JSON.parse(sessionStorage.getItem(key)) ?? {}; }
   catch { return {}; }
+}
+
+class AnimationErrorBoundary extends Component {
+  state = { error: null };
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  componentDidCatch(error, details) {
+    console.error(`Animation failed: ${this.props.title}`, error, details);
+  }
+
+  render() {
+    if (!this.state.error) return this.props.children;
+    return (
+      <section className="animation-error" role="alert">
+        <span>Scene interrupted</span>
+        <h1>{this.props.title}</h1>
+        <p>This animation hit a rendering error. The rest of the library is still available.</p>
+        <button type="button" onClick={() => window.location.reload()}>Reload scene</button>
+      </section>
+    );
+  }
 }
 
 function AnimationStage({ animation, settings, variant, onSettingChange, onVariantChange }) {
@@ -101,9 +125,11 @@ function AnimationStage({ animation, settings, variant, onSettingChange, onVaria
         </div>
       )}
 
-      <Suspense fallback={<div className="animation-loading"><i />Loading experiment</div>}>
-        <ActiveComponent key={`${animation.id}-${variant}`} settings={activeSettings} />
-      </Suspense>
+      <AnimationErrorBoundary key={`${animation.id}-${variant}`} title={animation.title}>
+        <Suspense fallback={<div className="animation-loading"><i />Loading experiment</div>}>
+          <ActiveComponent settings={activeSettings} />
+        </Suspense>
+      </AnimationErrorBoundary>
 
       <details className={`motion-controls ${hasVariantControls ? "motion-controls--paired" : ""}`} open={controlsOpen} onToggle={(event) => setControlsOpen(event.currentTarget.open)}>
         <summary>Motion controls <span aria-hidden="true">⌁</span></summary>

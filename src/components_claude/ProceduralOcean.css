@@ -1,0 +1,5 @@
+@import "../experiment-base.css";
+.procedural-ocean { background: #05070c; }
+.procedural-ocean__stage { position: absolute; inset: 0; z-index: 0; background: #05070c; }
+.procedural-ocean__stage canvas { display: block; outline: none; touch-action: none; }
+.procedural-ocean .experiment-copy { z-index: 20; }

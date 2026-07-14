@@ -239,21 +239,15 @@ function SpectralFan({ body, dispersion }) {
 function CrystalRig({ die, envMap, dispersion, speed, onDraggingChange }) {
   const body = useRef();
   const drag = useRef(null);
+  const initialized = useRef(false);
 
-  useFrame((_, delta) => {
-    if (!body.current || drag.current) return;
-    body.current.addTorque({ x: 0.08 * speed, y: 0.22 * speed, z: 0.045 * speed }, true);
-    const velocity = body.current.angvel();
-    const maxVelocity = 1.1 * Math.max(0.4, speed);
-    if (Math.hypot(velocity.x, velocity.y, velocity.z) > maxVelocity) {
-      body.current.setAngvel({
-        x: THREE.MathUtils.clamp(velocity.x, -maxVelocity, maxVelocity),
-        y: THREE.MathUtils.clamp(velocity.y, -maxVelocity, maxVelocity),
-        z: THREE.MathUtils.clamp(velocity.z, -maxVelocity, maxVelocity),
-      }, true);
-    }
-    void delta;
+  useFrame(() => {
+    if (!body.current || initialized.current) return;
+    body.current.setAngvel({ x: 0.025 * speed, y: 0.09 * speed, z: 0.015 * speed }, true);
+    initialized.current = true;
   });
+
+  useEffect(() => { initialized.current = false; }, [die]);
 
   useEffect(() => () => {
     document.body.style.cursor = "";
@@ -262,7 +256,7 @@ function CrystalRig({ die, envMap, dispersion, speed, onDraggingChange }) {
   const beginDrag = (event) => {
     event.stopPropagation();
     event.target.setPointerCapture(event.pointerId);
-    drag.current = { x: event.clientX, y: event.clientY };
+    drag.current = { x: event.clientX, y: event.clientY, moved: false };
     body.current?.setAngvel({ x: 0, y: 0, z: 0 }, true);
     document.body.style.cursor = "grabbing";
     onDraggingChange(true);
@@ -273,11 +267,11 @@ function CrystalRig({ die, envMap, dispersion, speed, onDraggingChange }) {
     event.stopPropagation();
     const deltaX = event.clientX - drag.current.x;
     const deltaY = event.clientY - drag.current.y;
-    drag.current = { x: event.clientX, y: event.clientY };
-    body.current.applyTorqueImpulse({
-      x: deltaY * 0.045,
-      y: deltaX * 0.045,
-      z: (deltaX - deltaY) * 0.008,
+    drag.current = { x: event.clientX, y: event.clientY, moved: drag.current.moved || Math.abs(deltaX) + Math.abs(deltaY) > 1 };
+    body.current.setAngvel({
+      x: THREE.MathUtils.clamp(deltaY * 0.035, -2.4, 2.4),
+      y: THREE.MathUtils.clamp(deltaX * 0.035, -2.4, 2.4),
+      z: THREE.MathUtils.clamp((deltaX - deltaY) * 0.006, -0.65, 0.65),
     }, true);
   };
 
@@ -300,7 +294,7 @@ function CrystalRig({ die, envMap, dispersion, speed, onDraggingChange }) {
         colliders={false}
         gravityScale={0}
         linearDamping={8}
-        angularDamping={2.8}
+        angularDamping={0.55}
         enabledTranslations={[false, false, false]}
       >
         <BallCollider args={[1.45]} sensor />
@@ -315,12 +309,14 @@ function CrystalRig({ die, envMap, dispersion, speed, onDraggingChange }) {
           <DieGeometry die={die} />
           <MeshRefractionMaterial
             envMap={envMap}
-            bounces={5}
-            ior={1.48}
-            fresnel={0.78}
-            aberrationStrength={0.018 + dispersion * 0.055}
+            bounces={8}
+            ior={1.45}
+            fresnel={0.42}
+            aberrationStrength={0.028 + dispersion * 0.072}
             fastChroma={false}
-            color="#f3fdff"
+            color="#d9f8ff"
+            transparent
+            opacity={0.76}
             toneMapped={false}
           />
           <Edges scale={1.002} threshold={8} color="#d9f8ff" />
