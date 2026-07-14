@@ -1,0 +1,3 @@
+@import "../experiment-base.css";
+.starry-night-3d { background: #030510; }
+.starry-night-3d .experiment-copy { z-index: 20; }

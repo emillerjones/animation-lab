@@ -1,0 +1,110 @@
+@import "../experiment-base.css";
+
+.prism-pulse-lab {
+  background: #010208;
+  --experiment-accent: #77dcff;
+}
+
+.prism-pulse-lab__canvas,
+.prism-pulse-lab__veil {
+  position: absolute !important;
+  inset: 0;
+}
+
+.prism-pulse-lab__canvas {
+  z-index: 1;
+  touch-action: none;
+}
+
+.prism-pulse-lab__veil {
+  z-index: 4;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgb(1 2 8 / 82%) 0%, rgb(1 2 8 / 46%) 27%, transparent 52%),
+    radial-gradient(circle at 66% 47%, transparent 0 18%, rgb(6 3 20 / 13%) 44%, rgb(1 2 8 / 62%) 100%),
+    linear-gradient(180deg, rgb(0 0 0 / 28%), transparent 24% 72%, rgb(0 0 0 / 48%));
+}
+
+.prism-pulse-lab .experiment-copy {
+  left: 9vw;
+  z-index: 10;
+  width: min(620px, 43vw);
+  pointer-events: none;
+}
+
+.prism-pulse-lab .experiment-copy h1 {
+  font-size: clamp(62px, 7.3vw, 118px);
+  text-shadow: 0 4px 42px rgb(0 0 0 / 82%);
+}
+
+.prism-pulse-lab .experiment-copy > span {
+  color: rgb(228 241 255 / 62%);
+}
+
+.prism-pulse-lab__hint {
+  position: absolute;
+  z-index: 12;
+  right: clamp(34px, 8vw, 140px);
+  bottom: 7.5vh;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: rgb(225 245 255 / 52%);
+  font-size: 9px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  pointer-events: none;
+  transition: color .25s ease;
+}
+
+.prism-pulse-lab__hint i {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgb(169 229 255 / 34%);
+  border-radius: 50%;
+  box-shadow: 0 0 25px rgb(100 210 255 / 14%);
+}
+
+.prism-pulse-lab__hint i::before {
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgb(255 255 255 / 65%);
+  border-radius: 50%;
+  content: "";
+}
+
+.prism-pulse-lab.is-dragging .prism-pulse-lab__hint {
+  color: rgb(235 250 255 / 82%);
+}
+
+.workspace--sidebar .prism-pulse-lab .experiment-copy {
+  left: 312px;
+  width: min(520px, 36vw);
+}
+
+@media (max-width: 900px) {
+  .prism-pulse-lab .experiment-copy,
+  .workspace--sidebar .prism-pulse-lab .experiment-copy {
+    top: auto;
+    right: auto;
+    bottom: 9vh;
+    left: 8vw;
+    width: min(580px, 84vw);
+    transform: none;
+  }
+
+  .prism-pulse-lab .experiment-copy h1 {
+    font-size: clamp(52px, 14vw, 88px);
+  }
+
+  .prism-pulse-lab__hint {
+    top: 15vh;
+    right: 7vw;
+    bottom: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prism-pulse-lab__hint { display: none; }
+}

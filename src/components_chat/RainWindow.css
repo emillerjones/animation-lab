@@ -1,0 +1,124 @@
+@import "../experiment-base.css";
+
+.gpu-experience--rain-window .gpu-experience__veil {
+  background:
+    linear-gradient(90deg, rgb(0 3 8 / 62%), transparent 44%),
+    radial-gradient(circle at 70% 28%, rgb(111 194 255 / 8%), transparent 32%),
+    linear-gradient(0deg, rgb(0 4 9 / 52%), transparent 30%);
+}
+
+.gpu-experience--rain-window .gpu-experience__copy {
+  text-shadow: 0 3px 32px #000, 0 0 70px rgb(40 154 222 / 12%);
+}
+
+.storm-window-frame {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  border: clamp(11px, 1.15vw, 21px) solid #101315;
+  box-shadow: inset 0 0 0 2px rgb(154 172 179 / 11%), inset 0 0 55px rgb(0 0 0 / 72%), 0 0 70px #000;
+  pointer-events: none;
+}
+
+.storm-window-frame::before,
+.storm-window-frame::after {
+  position: absolute;
+  background: linear-gradient(90deg, #080a0b, #22292c 45%, #0b0e0f);
+  box-shadow: 0 0 0 1px rgb(190 211 218 / 7%), 0 8px 22px rgb(0 0 0 / 75%);
+  content: "";
+}
+
+.storm-window-frame::before { top: 0; bottom: 0; left: 68%; width: clamp(9px, .75vw, 14px); }
+.storm-window-frame::after { right: 0; bottom: 26%; left: 0; height: clamp(8px, .65vw, 12px); }
+
+.storm-glass-haze {
+  position: absolute;
+  z-index: 5;
+  inset: 1.2vw;
+  opacity: calc(var(--haze) * .58);
+  background:
+    radial-gradient(ellipse at 78% 70%, rgb(180 203 211 / 25%), transparent 28%),
+    radial-gradient(ellipse at 28% 12%, rgb(154 181 193 / 18%), transparent 30%),
+    linear-gradient(115deg, rgb(208 225 231 / 8%), transparent 34% 70%, rgb(193 216 224 / 7%));
+  filter: blur(18px);
+  pointer-events: none;
+}
+
+.glass-droplets {
+  position: absolute;
+  z-index: 6;
+  inset: 1.3vw;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.glass-droplets i {
+  position: absolute;
+  top: var(--drop-y);
+  left: var(--drop-x);
+  width: var(--drop-size);
+  height: var(--drop-size);
+  border: 1px solid rgb(225 244 251 / 45%);
+  border-radius: 50% 50% 56% 44%;
+  opacity: var(--drop-opacity);
+  background: radial-gradient(circle at 32% 26%, rgb(255 255 255 / 72%), rgb(159 202 219 / 22%) 38%, rgb(3 10 15 / 18%) 72%);
+  box-shadow: inset -1px -2px 3px rgb(2 8 12 / 48%), 0 1px 4px rgb(206 237 247 / 24%);
+  animation: glass-drop var(--drop-duration) cubic-bezier(.48,.02,.67,1) var(--drop-delay) infinite;
+  will-change: transform;
+}
+
+.glass-droplets i::before {
+  position: absolute;
+  right: 40%;
+  bottom: 55%;
+  width: 1px;
+  height: var(--drop-trail);
+  border-radius: 99px;
+  background: linear-gradient(transparent, rgb(211 235 243 / 18%) 65%, rgb(226 243 248 / 38%));
+  content: "";
+}
+
+@keyframes glass-drop {
+  0%, 14% { transform: translate3d(0, 0, 0) scale(.88); }
+  22% { transform: translate3d(1px, 3vh, 0) scale(1); }
+  58% { transform: translate3d(-1px, 13vh, 0) scale(.94); }
+  100% { transform: translate3d(1px, 38vh, 0) scale(.82); }
+}
+
+.rain-foreground {
+  position: absolute;
+  z-index: 7;
+  inset: -24vh -5vw 0;
+  overflow: hidden;
+  pointer-events: none;
+  transform: skewX(-4deg);
+  mask-image: linear-gradient(90deg, rgb(0 0 0 / 72%), #000 24% 78%, rgb(0 0 0 / 68%));
+}
+
+.rain-foreground i {
+  position: absolute;
+  top: calc(var(--rain-length) * -1);
+  left: var(--rain-x);
+  width: var(--rain-width);
+  height: var(--rain-length);
+  border-radius: 999px;
+  opacity: var(--rain-opacity);
+  background: linear-gradient(transparent, rgb(216 245 255 / 22%) 24%, #e7f8ff 100%);
+  box-shadow: 0 0 5px rgb(139 218 255 / 38%);
+  filter: blur(.15px);
+  animation: foreground-rain var(--rain-duration) linear var(--rain-delay) infinite;
+  will-change: transform;
+}
+
+@keyframes foreground-rain {
+  to { transform: translate3d(calc(-5vw * var(--storm-wind)), calc(124vh + var(--rain-length)), 0); }
+}
+
+@media (max-width: 760px) {
+  .rain-foreground { inset-inline: -12vw; }
+  .rain-foreground i:nth-child(3n) { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rain-foreground { opacity: .42; }
+}

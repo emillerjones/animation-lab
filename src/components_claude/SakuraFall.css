@@ -1,0 +1,9 @@
+﻿@import "../experiment-base.css";
+.sakura-fall { --experiment-accent: #ff9ecb; background: linear-gradient(180deg, #ffe3ee 0 20%, #ffb8d6 45%, #6b3a52 100%); }
+.sakura-fall::after { content: ""; position: absolute; inset: 0; z-index: 12; background: linear-gradient(90deg, rgb(50 22 36 / 62%) 0 34%, transparent 64%), linear-gradient(transparent 55%, rgb(40 16 28 / 50%)); }
+.sakura-fall__branch { position: absolute; top: -6%; right: -4%; width: 46%; height: 40%; z-index: 3; background: radial-gradient(ellipse at 70% 20%, rgb(90 40 40 / 70%), transparent 65%); filter: blur(1px); }
+.sakura-fall__petals { position: absolute; inset: 0; z-index: 6; }
+.sakura-fall__petals i { position: absolute; left: var(--x); top: -5%; width: var(--size); height: calc(var(--size) * .8); background: radial-gradient(circle at 30% 30%, #fff, #ffb8d6 70%); border-radius: 0 70% 0 70%; opacity: .9; animation: petal-fall var(--duration) linear var(--delay) infinite; }
+@keyframes petal-fall { to { transform: translate(var(--sway), 115vh) rotate(var(--rotate)); opacity: .2; } }
+@media (max-width: 700px) { .sakura-fall__branch { width: 70%; } }
+

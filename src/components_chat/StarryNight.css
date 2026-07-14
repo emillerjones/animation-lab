@@ -1,0 +1,3 @@
+.gpu-experience--starry-night .gpu-experience__veil {
+  background: linear-gradient(90deg, rgb(0 2 12 / 66%), transparent 45%), radial-gradient(circle at 72% 24%, rgb(255 236 190 / 10%), transparent 24%), linear-gradient(0deg, #01030c88, transparent 35%);
+}

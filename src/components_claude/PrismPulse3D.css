@@ -1,0 +1,3 @@
+@import "../experiment-base.css";
+.prism-pulse-3d { background: #070308; }
+.prism-pulse-3d .experiment-copy { z-index: 20; }

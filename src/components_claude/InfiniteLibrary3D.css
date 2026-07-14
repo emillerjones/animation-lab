@@ -1,0 +1,3 @@
+@import "../experiment-base.css";
+.infinite-library-3d { background: #06050a; }
+.infinite-library-3d .experiment-copy { z-index: 20; }

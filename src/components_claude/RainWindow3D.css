@@ -1,0 +1,3 @@
+@import "../experiment-base.css";
+.rain-window-3d { background: #030509; }
+.rain-window-3d .experiment-copy { z-index: 20; }

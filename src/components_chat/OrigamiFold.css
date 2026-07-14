@@ -1,0 +1,18 @@
+.gpu-experience--origami-fold .gpu-experience__veil {
+  background:
+    linear-gradient(90deg, rgb(8 7 5 / 84%) 0 29%, transparent 58%),
+    linear-gradient(0deg, rgb(8 6 4 / 66%), transparent 46%),
+    radial-gradient(ellipse at 69% 42%, rgb(241 213 173 / 8%), transparent 44%),
+    radial-gradient(circle, transparent 30%, rgb(5 4 3 / 56%) 115%);
+}
+
+.gpu-experience--origami-fold .gpu-experience__copy h1 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  letter-spacing: -.068em;
+  text-shadow: 0 5px 42px #050403, 0 0 90px rgb(241 213 173 / 9%);
+}
+
+.gpu-experience--origami-fold .gpu-experience__copy > span {
+  color: rgb(255 246 231 / 68%);
+}

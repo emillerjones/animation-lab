@@ -1,0 +1,10 @@
+﻿@import "../experiment-base.css";
+.circuit-pulse { --experiment-accent: #4dffb8; background: #050b09; }
+.circuit-pulse::after { content: ""; position: absolute; inset: 0; z-index: 12; background: linear-gradient(90deg, rgb(2 6 5 / 74%) 0 34%, transparent 64%); }
+.circuit-pulse__board { position: absolute; inset: 0; z-index: 1; opacity: .5; background-image: repeating-linear-gradient(0deg, rgb(77 255 184 / 12%) 0 1px, transparent 1px 60px), repeating-linear-gradient(90deg, rgb(77 255 184 / 12%) 0 1px, transparent 1px 90px); }
+.circuit-pulse__pulses { position: absolute; inset: 0; z-index: 4; }
+.circuit-pulse__pulses i { position: absolute; top: var(--y); left: -3%; width: 6px; height: 6px; border-radius: 50%; background: #d4fff0; box-shadow: 0 0 10px 3px #4dffb8; animation: pulse-travel var(--duration) linear var(--delay) infinite; }
+@keyframes pulse-travel { from { left: -3%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } to { left: 100%; opacity: 0; } }
+.circuit-pulse__core { position: absolute; left: 50%; top: 50%; width: min(14vw, 160px); aspect-ratio: 1; border-radius: 10px; background: linear-gradient(160deg, #0d1f18, #03110c); box-shadow: 0 0 40px 14px rgb(77 255 184 / 25%), inset 0 0 0 2px rgb(77 255 184 / 40%); transform: translate(-50%, -50%); z-index: 5; animation: core-pulse 2s ease-in-out infinite alternate; }
+@keyframes core-pulse { to { box-shadow: 0 0 60px 22px rgb(77 255 184 / 40%), inset 0 0 0 2px rgb(77 255 184 / 70%); } }
+

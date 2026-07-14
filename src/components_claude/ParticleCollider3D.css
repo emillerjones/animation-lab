@@ -1,0 +1,3 @@
+@import "../experiment-base.css";
+.particle-collider-3d { background: #030603; }
+.particle-collider-3d .experiment-copy { z-index: 20; }

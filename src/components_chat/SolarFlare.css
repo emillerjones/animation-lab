@@ -1,0 +1,3 @@
+.gpu-experience--solar-flare .gpu-experience__veil {
+  background: linear-gradient(90deg, rgb(8 2 0 / 72%), transparent 48%), radial-gradient(circle at 70% 48%, rgb(255 133 42 / 10%), transparent 34%), radial-gradient(circle, transparent 38%, #070100 115%);
+}

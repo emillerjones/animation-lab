@@ -1,0 +1,277 @@
+.storm-made-of-glass {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  isolation: isolate;
+  color: #e9fbfd;
+  background: #010305;
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+}
+
+.storm-made-of-glass__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.storm-made-of-glass__vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 62% 46%, transparent 16%, rgb(1 4 7 / 12%) 45%, rgb(0 1 2 / 78%) 100%),
+    linear-gradient(90deg, rgb(0 1 2 / 84%) 0%, rgb(0 2 4 / 42%) 26%, transparent 51%, transparent 84%, rgb(0 1 2 / 43%) 100%),
+    linear-gradient(0deg, rgb(0 1 2 / 58%), transparent 31%, transparent 79%, rgb(0 1 2 / 34%));
+  transition: background 1.2s ease;
+}
+
+.storm-made-of-glass__caustics {
+  position: absolute;
+  z-index: 3;
+  inset: -20%;
+  pointer-events: none;
+  opacity: 0.12;
+  background:
+    repeating-radial-gradient(ellipse at 62% 49%, transparent 0 7%, rgb(143 232 244 / 9%) 7.3%, transparent 8.2% 13%),
+    conic-gradient(from 180deg at 62% 49%, transparent, rgb(127 218 231 / 8%), transparent 30%, rgb(224 252 255 / 5%), transparent 64%);
+  filter: blur(8px);
+  mix-blend-mode: screen;
+  animation: storm-glass-caustics 14s ease-in-out infinite alternate;
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.storm-made-of-glass.is-compressed .storm-made-of-glass__caustics {
+  opacity: 0.28;
+  transform: scale(0.74) rotate(8deg);
+}
+
+.storm-made-of-glass.is-fractured .storm-made-of-glass__caustics {
+  opacity: 0.36;
+  transform: scale(1.35) rotate(-12deg);
+}
+
+.storm-made-of-glass.is-fractured .storm-made-of-glass__vignette {
+  background:
+    radial-gradient(circle at 62% 46%, transparent 5%, rgb(1 4 7 / 6%) 47%, rgb(0 1 2 / 72%) 100%),
+    linear-gradient(90deg, rgb(0 1 2 / 82%), transparent 49%, transparent 84%, rgb(0 1 2 / 38%));
+}
+
+.storm-made-of-glass__grain {
+  position: absolute;
+  inset: -70%;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.75'/%3E%3C/svg%3E");
+  animation: storm-glass-grain 0.2s steps(2) infinite;
+}
+
+.storm-made-of-glass__copy {
+  position: absolute;
+  z-index: 6;
+  top: 50%;
+  left: clamp(5.8rem, 12.5vw, 14.5rem);
+  width: min(33rem, 37vw);
+  transform: translateY(-46%);
+  pointer-events: none;
+  transition: opacity 1s ease, transform 1.1s cubic-bezier(.2, .72, .18, 1), filter 1s ease;
+}
+
+.workspace--sidebar .storm-made-of-glass__copy {
+  left: clamp(340px, 23vw, 430px);
+  width: min(33rem, calc(100vw - 730px));
+}
+
+.storm-made-of-glass__copy p {
+  margin: 0 0 1.7rem;
+  color: #71c8d5;
+  font: 650 0.65rem/1.2 Inter, ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.3em;
+}
+
+.storm-made-of-glass__copy h1 {
+  margin: 0;
+  max-width: 9.5ch;
+  color: #e8f8fa;
+  font: 300 clamp(3.5rem, 6.2vw, 7.6rem)/0.88 Inter, ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.075em;
+  text-wrap: balance;
+  text-shadow: 0 2px 34px rgb(0 0 0 / 78%), 0 0 28px rgb(91 199 215 / 6%);
+}
+
+.storm-made-of-glass__copy span {
+  display: block;
+  max-width: 27rem;
+  margin-top: 1.9rem;
+  color: rgb(216 239 242 / 55%);
+  font: 430 0.78rem/1.72 Inter, ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.055em;
+}
+
+.storm-made-of-glass.is-fractured .storm-made-of-glass__copy {
+  opacity: 0.15;
+  filter: blur(5px);
+  transform: translate(-3.5rem, -46%) scale(1.04);
+}
+
+.storm-made-of-glass__status {
+  position: absolute;
+  z-index: 6;
+  top: clamp(6.2rem, 13vh, 10rem);
+  right: clamp(1.7rem, 4.2vw, 5.2rem);
+  display: grid;
+  width: min(19rem, 25vw);
+  justify-items: end;
+  pointer-events: none;
+  text-align: right;
+}
+
+.storm-made-of-glass__status small {
+  color: rgb(142 219 229 / 51%);
+  font: 650 0.56rem/1.2 Inter, ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.29em;
+}
+
+.storm-made-of-glass__status strong {
+  margin-top: 0.6rem;
+  color: #c8f4f8;
+  font: 450 clamp(0.9rem, 1.35vw, 1.25rem)/1.2 Inter, ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.1em;
+}
+
+.storm-made-of-glass__status i {
+  position: relative;
+  width: 100%;
+  height: 1px;
+  margin-top: 1rem;
+  overflow: hidden;
+  background: rgb(145 225 235 / 15%);
+}
+
+.storm-made-of-glass__status i::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #254f59, #76d3de, #f0feff);
+  box-shadow: 0 0 14px #91eef8;
+  transform: scaleX(var(--storm-progress));
+  transform-origin: right;
+  transition: transform 0.12s linear;
+}
+
+.storm-made-of-glass__status span {
+  margin-top: 0.75rem;
+  color: rgb(255 255 255 / 26%);
+  font: 600 0.54rem/1.2 Inter, ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.2em;
+}
+
+.storm-made-of-glass__hint {
+  position: absolute;
+  z-index: 6;
+  right: clamp(1.7rem, 4.2vw, 5.2rem);
+  bottom: clamp(6.8rem, 11vh, 9rem);
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  color: rgb(205 240 244 / 34%);
+  font: 550 0.52rem/1.72 Inter, ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.18em;
+  text-align: right;
+  pointer-events: none;
+}
+
+.storm-made-of-glass__hint i {
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid rgb(128 218 230 / 31%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgb(132 230 242 / 28%);
+  animation: storm-glass-pulse 2.4s ease-out infinite;
+}
+
+.storm-made-of-glass__error {
+  position: absolute;
+  z-index: 10;
+  inset: 50% auto auto 50%;
+  padding: 1rem 1.3rem;
+  border: 1px solid rgb(129 223 234 / 31%);
+  color: #bceff4;
+  background: rgb(1 5 7 / 91%);
+  font: 650 0.66rem/1.7 Inter, ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.13em;
+  text-align: center;
+  text-transform: uppercase;
+  transform: translate(-50%, -50%);
+}
+
+.storm-made-of-glass__error small {
+  color: rgb(255 255 255 / 42%);
+  letter-spacing: 0.03em;
+  text-transform: none;
+}
+
+@keyframes storm-glass-caustics {
+  0% { transform: rotate(-4deg) scale(0.96); }
+  100% { transform: rotate(6deg) scale(1.07); }
+}
+
+@keyframes storm-glass-grain {
+  0% { transform: translate3d(-2%, 1%, 0); }
+  33% { transform: translate3d(2%, -2%, 0); }
+  66% { transform: translate3d(1%, 2%, 0); }
+  100% { transform: translate3d(-1%, -1%, 0); }
+}
+
+@keyframes storm-glass-pulse {
+  0% { box-shadow: 0 0 0 0 rgb(132 230 242 / 28%); opacity: 0.92; }
+  72% { box-shadow: 0 0 0 0.72rem rgb(132 230 242 / 0%); opacity: 0.45; }
+  100% { box-shadow: 0 0 0 0 rgb(132 230 242 / 0%); opacity: 0.88; }
+}
+
+@media (max-width: 900px) {
+  .workspace--sidebar .storm-made-of-glass__copy {
+    left: 1.5rem;
+    width: min(30rem, calc(100vw - 3rem));
+  }
+  .storm-made-of-glass__copy {
+    top: auto;
+    bottom: 7.2rem;
+    left: 1.5rem;
+    width: min(31rem, calc(100vw - 3rem));
+    transform: none;
+  }
+
+  .storm-made-of-glass__copy h1 {
+    font-size: clamp(3rem, 12vw, 5.2rem);
+  }
+
+  .storm-made-of-glass__copy span,
+  .storm-made-of-glass__hint {
+    display: none;
+  }
+
+  .storm-made-of-glass.is-fractured .storm-made-of-glass__copy {
+    opacity: 0;
+    transform: translateY(3rem);
+  }
+
+  .storm-made-of-glass__status {
+    top: 6.4rem;
+    right: 1.4rem;
+    width: min(14rem, 48vw);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .storm-made-of-glass__grain,
+  .storm-made-of-glass__caustics,
+  .storm-made-of-glass__hint i {
+    animation: none;
+  }
+}

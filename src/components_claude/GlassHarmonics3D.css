@@ -1,0 +1,3 @@
+@import "../experiment-base.css";
+.glass-harmonics-3d { background: #030608; }
+.glass-harmonics-3d .experiment-copy { z-index: 20; }

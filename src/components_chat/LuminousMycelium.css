@@ -1,0 +1,3 @@
+.gpu-experience--luminous-mycelium .gpu-experience__veil {
+  background: linear-gradient(90deg, rgb(0 8 2 / 72%), transparent 48%), radial-gradient(circle at 70% 58%, rgb(157 255 130 / 9%), transparent 38%), linear-gradient(0deg, #010703aa, transparent 34%);
+}

@@ -1,0 +1,3 @@
+@import "../experiment-base.css";
+.infinite-data-ocean-3d { background: #020608; }
+.infinite-data-ocean-3d .experiment-copy { z-index: 20; }

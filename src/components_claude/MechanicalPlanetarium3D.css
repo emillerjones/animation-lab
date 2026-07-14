@@ -1,0 +1,3 @@
+@import "../experiment-base.css";
+.mechanical-planetarium-3d { background: #05040a; }
+.mechanical-planetarium-3d .experiment-copy { z-index: 20; }

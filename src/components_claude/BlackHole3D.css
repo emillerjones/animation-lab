@@ -1,0 +1,3 @@
+@import "../experiment-base.css";
+.black-hole-3d { background: #000; }
+.black-hole-3d .experiment-copy { z-index: 20; }

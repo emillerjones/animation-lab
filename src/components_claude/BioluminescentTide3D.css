@@ -1,0 +1,3 @@
+@import "../experiment-base.css";
+.bioluminescent-tide-3d { background: #010907; }
+.bioluminescent-tide-3d .experiment-copy { z-index: 20; }
