@@ -4,6 +4,7 @@ import { MeshReflectorMaterial } from "@react-three/drei";
 import * as THREE from "three";
 import CanvasStage, { useSpeed } from "./CanvasStage";
 import { seeded } from "../utils/procedural";
+import AnimationReadout from "./AnimationReadout";
 import "./InfiniteDataOcean3D.css";
 
 function ReflectiveFloor() {
@@ -97,8 +98,11 @@ function OceanScene({ settings }) {
 }
 
 export default function InfiniteDataOcean3D({ settings = {} }) {
+  const segments = Math.max(24, Math.min(72, Math.round((settings.lines ?? 42) * 1.4)));
+  const nodeCount = Math.max(30, Math.min(180, settings.vertices ?? 160));
+
   return (
-    <section className="atmosphere infinite-data-ocean-3d">
+    <section className="atmosphere infinite-data-ocean-3d" style={{ "--experiment-accent": "#5ef3ff" }}>
       <CanvasStage camera={{ position: [0, 2.2, 9], fov: 48 }} orbitEnabled speed={settings.speed ?? 1} bloom={{ intensity: 0.8 }}>
         <color attach="background" args={["#010204"]} />
         <fogExp2 attach="fog" args={["#010204", 0.014]} />
@@ -110,6 +114,11 @@ export default function InfiniteDataOcean3D({ settings = {} }) {
         <h1>Data, reflected<br />in black glass.</h1>
         <span>A breathing signal grid floats above a real mirrored floor instead of a flat wireframe pretending at depth.</span>
       </div>
+      <AnimationReadout
+        eyebrow="Live data field"
+        value={`${nodeCount.toLocaleString()} GLOWING VERTICES`}
+        stats={[{ value: segments, label: "WAVE LINES" }]}
+      />
     </section>
   );
 }

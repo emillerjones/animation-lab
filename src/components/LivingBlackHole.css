@@ -77,47 +77,6 @@
   transform: translate(-5rem, -45%) scale(1.08);
 }
 
-.living-black-hole__telemetry {
-  position: absolute;
-  right: clamp(1.5rem, 4vw, 5rem);
-  bottom: clamp(7.5rem, 13vh, 10rem);
-  z-index: 5;
-  display: grid;
-  grid-template-columns: auto 7rem;
-  gap: 0.55rem 1rem;
-  align-items: center;
-  color: rgb(255 225 194 / 68%);
-  font: 600 0.58rem/1 system-ui, sans-serif;
-  letter-spacing: 0.24em;
-  text-align: right;
-}
-
-.living-black-hole__telemetry i {
-  position: relative;
-  display: block;
-  width: 7rem;
-  height: 1px;
-  overflow: hidden;
-  background: rgb(255 255 255 / 17%);
-}
-
-.living-black-hole__telemetry i::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, #ff672d, #fff0c4);
-  transform: scaleX(var(--progress));
-  transform-origin: left;
-  box-shadow: 0 0 12px #ff7b37;
-}
-
-.living-black-hole__telemetry small {
-  grid-column: 1 / -1;
-  color: rgb(255 255 255 / 31%);
-  font: inherit;
-  letter-spacing: 0.18em;
-}
-
 .living-black-hole__gesture {
   position: absolute;
   z-index: 5;
@@ -201,11 +160,6 @@
 
   .living-black-hole.is-crossing .living-black-hole__copy {
     transform: translateY(3rem) scale(1.05);
-  }
-
-  .living-black-hole__telemetry {
-    right: 1.5rem;
-    bottom: 2rem;
   }
 }
 

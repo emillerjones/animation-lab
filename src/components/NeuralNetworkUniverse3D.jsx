@@ -11,6 +11,7 @@ import { getProject } from "@theatre/core";
 import CanvasStage, { useSpeed } from "./CanvasStage";
 import useDragOrbit from "../hooks/useDragOrbit";
 import { seeded } from "../utils/procedural";
+import AnimationReadout from "./AnimationReadout";
 import "./NeuralNetworkUniverse3D.css";
 
 const theatreProject = getProject("Neural Network Universe");
@@ -405,8 +406,12 @@ function NetworkScene({ settings }) {
 }
 
 export default function NeuralNetworkUniverse3D({ settings = {} }) {
+  const count = Math.max(30, Math.min(170, settings.nodes ?? 150));
+  const pulseRateMul = settings.pulseRate ?? 0.9;
+  const graph = useMemo(() => buildLayers(count), [count]);
+
   return (
-    <section className="atmosphere neural-network-universe-3d">
+    <section className="atmosphere neural-network-universe-3d" style={{ "--experiment-accent": "#b286ff" }}>
       <CanvasStage camera={{ position: [0, 2, 15], fov: 50 }} speed={settings.speed ?? 1} bloom={{ intensity: 1.2 }}>
         <ambientLight intensity={0.08} />
         <NetworkScene settings={settings} />
@@ -416,6 +421,14 @@ export default function NeuralNetworkUniverse3D({ settings = {} }) {
         <h1>A mind, laid<br />out in layers.</h1>
         <span>Nested shells of physically simulated nodes drift on real inertia while the camera circles the whole structure — click a node and watch an actual cascading forward pass ripple outward through the graph.</span>
       </div>
+      <AnimationReadout
+        eyebrow="Live neural field"
+        value={`${count} THINKING NODES`}
+        stats={[
+          { value: graph.edges.length, label: "SYNAPSES" },
+          { value: `${pulseRateMul.toFixed(1)}×`, label: "SIGNAL RATE" },
+        ]}
+      />
     </section>
   );
 }

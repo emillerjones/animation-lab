@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Edges } from "@react-three/drei";
 import * as THREE from "three";
+import AnimationReadout from "./AnimationReadout";
 import GpuExperience from "./webgl/GpuExperience";
 import { Dust, range } from "./webgl/GpuPrimitives";
 import "./EndlessLightTunnel.css";
@@ -64,5 +65,27 @@ function EndlessLightTunnelWorld({ settings, accent }) {
 }
 
 export default function EndlessLightTunnel({ settings = {} }) {
-  return <GpuExperience scene="endless-light-tunnel" World={EndlessLightTunnelWorld} settings={settings} accent="#ffd08a" background="#050301" eyebrow="01 — Architecture at velocity" title={"Forward is\nthe only direction."} description="A reflective corridor, endless frames, and rushing particles collapse into one continuous flight through light." cta="Begin the crossing" />;
+  const frameMetric = settings.frames ?? settings.depth ?? Math.round((settings.density ?? 78) / 3);
+  const frameCount = Math.min(64, Math.max(18, Math.round(frameMetric * 1.15)));
+  const dustCount = Math.round(Math.max(120, (settings.dust ?? settings.particles ?? settings.density ?? 80) * 3));
+  return (
+    <GpuExperience
+      scene="endless-light-tunnel"
+      World={EndlessLightTunnelWorld}
+      settings={settings}
+      accent="#ffd08a"
+      background="#050301"
+      eyebrow="01 — Architecture at velocity"
+      title={"Forward is\nthe only direction."}
+      description="A reflective corridor, endless frames, and rushing particles collapse into one continuous flight through light."
+      cta="Begin the crossing"
+      foreground={
+        <AnimationReadout
+          eyebrow="Live scene"
+          value={`${frameCount} FRAMES`}
+          stats={[{ value: dustCount.toLocaleString(), label: "Particles" }]}
+        />
+      }
+    />
+  );
 }

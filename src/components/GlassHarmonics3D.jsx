@@ -2,6 +2,7 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { MeshTransmissionMaterial } from "@react-three/drei";
 import * as THREE from "three";
+import AnimationReadout from "./AnimationReadout";
 import CanvasStage, { useSpeed } from "./CanvasStage";
 import { seeded } from "../utils/procedural";
 import "./GlassHarmonics3D.css";
@@ -44,7 +45,7 @@ function GlassPlate({ index }) {
 export default function GlassHarmonics3D({ settings = {} }) {
   const count = Math.max(6, Math.min(24, settings.plates ?? 16));
   return (
-    <section className="atmosphere glass-harmonics-3d">
+    <section className="atmosphere glass-harmonics-3d" style={{ "--experiment-accent": "#78e9ff" }}>
       <CanvasStage camera={{ position: [1.6, 0.6, 8], fov: 46 }} orbitEnabled orbitFocus={[1.6, 0.4, 0]} speed={settings.speed ?? 1} bloom={{ intensity: 0.9 }}>
         <ambientLight intensity={0.2} />
         <pointLight color="#78e9ff" intensity={35} distance={20} position={[1.6, 1, 3]} />
@@ -57,6 +58,7 @@ export default function GlassHarmonics3D({ settings = {} }) {
         <h1>Halos without<br />a horizon.</h1>
         <span>Transmissive rings float, tilt, and breathe through a field where gravity has released its hold.</span>
       </div>
+      <AnimationReadout eyebrow="Orbital field" value={`${count} RINGS`} />
     </section>
   );
 }

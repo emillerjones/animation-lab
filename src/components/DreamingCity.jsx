@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { seeded } from "../utils/procedural";
+import AnimationReadout from "./AnimationReadout";
 import GpuExperience from "./webgl/GpuExperience";
 import { Dust } from "./webgl/GpuPrimitives";
 import "./DreamingCity.css";
@@ -68,5 +69,26 @@ function DreamingCityWorld({ settings, accent }) {
 }
 
 export default function DreamingCity({ settings = {} }) {
-  return <GpuExperience scene="dreaming-city" World={DreamingCityWorld} settings={settings} accent="#ffc978" background="#050301" eyebrow="07 — Impossible urbanism" title={"The city\ndreams upward."} description="Hundreds of instanced towers stretch through a reflective grid where streets move and gravity has no fixed direction." cta="Enter the dreaming city" />;
+  const towerCount = Math.max(20, Math.min(400, Math.round(settings.towers ?? 140)));
+  const dustCount = Math.min(520, 160 + towerCount);
+  return (
+    <GpuExperience
+      scene="dreaming-city"
+      World={DreamingCityWorld}
+      settings={settings}
+      accent="#ffc978"
+      background="#050301"
+      eyebrow="07 — Impossible urbanism"
+      title={"The city\ndreams upward."}
+      description="Hundreds of instanced towers stretch through a reflective grid where streets move and gravity has no fixed direction."
+      cta="Enter the dreaming city"
+      foreground={
+        <AnimationReadout
+          eyebrow="Live skyline"
+          value={`${towerCount.toLocaleString()} TOWERS`}
+          stats={[{ value: dustCount.toLocaleString(), label: "Drifting motes" }]}
+        />
+      }
+    />
+  );
 }

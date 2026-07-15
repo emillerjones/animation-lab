@@ -5,6 +5,7 @@ import { GodRays, ChromaticAberration, Noise } from "@react-three/postprocessing
 import { BlendFunction, KernelSize } from "postprocessing";
 import * as THREE from "three";
 import CanvasStage, { useSpeed } from "./CanvasStage";
+import AnimationReadout from "./AnimationReadout";
 import useDragOrbit from "../hooks/useDragOrbit";
 import { seeded } from "../utils/procedural";
 import "./AlienDysonSwarm.css";
@@ -514,6 +515,9 @@ function Swarm({ settings, onSunReady }) {
 
 export default function AlienDysonSwarm({ settings = {} }) {
   const [sun, setSun] = useState(null);
+  const structureCount = Math.round(settings.swarmDensity ?? 16);
+  const satelliteCount = Math.round(settings.debrisDensity ?? 40000);
+  const droneCount = Math.round(settings.droneTraffic ?? 16);
 
   return (
     <section className="atmosphere alien-dyson-swarm">
@@ -531,6 +535,14 @@ export default function AlienDysonSwarm({ settings = {} }) {
       >
         <Swarm settings={settings} onSunReady={setSun} />
       </CanvasStage>
+      <AnimationReadout
+        eyebrow="Swarm census"
+        value={`${structureCount.toLocaleString()} MAJOR STRUCTURES`}
+        stats={[
+          { value: satelliteCount.toLocaleString(), label: "SMALL SATELLITES" },
+          { value: droneCount.toLocaleString(), label: "TRANSIT DRONES" },
+        ]}
+      />
       <div className="experiment-copy">
         <p>23 — An engineered star, tens of thousands of years old</p>
         <h1>Alien Dyson<br />Swarm.</h1>

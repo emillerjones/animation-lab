@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Edges, Line, RoundedBox } from "@react-three/drei";
 import { Bloom, EffectComposer, SMAA } from "@react-three/postprocessing";
@@ -6,6 +6,7 @@ import * as THREE from "three";
 import useDragOrbit from "../hooks/useDragOrbit";
 import { seeded } from "../utils/procedural";
 import { WEBGL_DPR, WEBGL_MSAA_SAMPLES } from "../rendering/quality";
+import AnimationReadout from "./AnimationReadout";
 import "./TheMonolith.css";
 
 const particleVertex = `
@@ -214,11 +215,22 @@ function ProgressDriver({ progressRef, targetRef }) {
   return null;
 }
 
+function ProgressReporter({ progressRef, onProgress }) {
+  const frameRef = useRef(0);
+  useFrame(() => {
+    frameRef.current += 1;
+    if (frameRef.current % 6 === 0) onProgress(progressRef.current);
+  });
+  return null;
+}
+
 export default function TheMonolith({ settings = {} }) {
   const sectionRef = useRef(null);
   const progressRef = useRef(0.18);
   const targetRef = useRef(0.18);
   const pulseRef = useRef(0);
+  const [awakening, setAwakening] = useState(0.18);
+  const particleCount = Math.round(settings.particleCount ?? 3000);
 
   // React attaches its synthetic onWheel listener as passive, so calling preventDefault
   // from a JSX onWheel prop throws ("Unable to preventDefault inside passive event
@@ -246,6 +258,7 @@ export default function TheMonolith({ settings = {} }) {
         <color attach="background" args={["#000000"]} />
         <fogExp2 attach="fog" args={["#000000", 0.035]} />
         <ProgressDriver progressRef={progressRef} targetRef={targetRef} />
+        <ProgressReporter progressRef={progressRef} onProgress={setAwakening} />
         <MonolithWorld settings={settings} progressRef={progressRef} pulseRef={pulseRef} />
       </Canvas>
 
@@ -256,6 +269,13 @@ export default function TheMonolith({ settings = {} }) {
         <button type="button" onClick={awaken}>Break the seal<i>→</i></button>
       </div>
       <div className="monolith-experience__scroll"><i /><span>Scroll to open · reverse to seal</span></div>
+
+      <AnimationReadout
+        eyebrow="MONOLITH STATE"
+        value={`${Math.round(awakening * 100)}% AWAKENED`}
+        progress={awakening}
+        stats={[{ value: particleCount.toLocaleString(), label: "PARTICLES QUEUED" }]}
+      />
     </section>
   );
 }

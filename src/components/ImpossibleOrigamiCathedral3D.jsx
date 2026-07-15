@@ -7,6 +7,7 @@ import {
 import { getProject } from "@theatre/core";
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from "three-mesh-bvh";
 import { seeded } from "../utils/procedural";
+import AnimationReadout from "./AnimationReadout";
 import "./ImpossibleOrigamiCathedral3D.css";
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
@@ -211,13 +212,14 @@ function ClickProxies({ proxyRefs }) {
   ));
 }
 
-function CathedralScene({ speedRef, onIntroStarted }) {
+function CathedralScene({ speedRef, onIntroStarted, onProgress }) {
   const { camera } = useThree();
   const rectMeshRef = useRef();
   const triMeshRef = useRef();
   const dustMeshRef = useRef();
   const coverRef = useRef();
   const introStartedRef = useRef(false);
+  const lastReportedPercent = useRef(-1);
   const scrollProgressRef = useRef(0);
   const dragRef = useRef({ yaw: 0, pitch: 0 });
   const proxyRefs = useRef([]);
@@ -316,6 +318,11 @@ function CathedralScene({ speedRef, onIntroStarted }) {
     if (introT > 0.01 && !introStartedRef.current) {
       introStartedRef.current = true;
       onIntroStarted();
+    }
+    const percent = Math.floor(introT * 100);
+    if (percent !== lastReportedPercent.current) {
+      lastReportedPercent.current = percent;
+      onProgress(introT);
     }
     glow.value = 0.6 + eased * 0.6 + (introT >= 1 ? Math.sin(state.clock.elapsedTime * speed * 0.3) * 0.15 : 0);
 
@@ -452,9 +459,10 @@ export default function ImpossibleOrigamiCathedral({ settings = {} }) {
   const speedRef = useRef(settings.speed ?? 1);
   speedRef.current = settings.speed ?? 1;
   const [introStarted, setIntroStarted] = useState(false);
+  const [foldProgress, setFoldProgress] = useState(0);
 
   return (
-    <section className="atmosphere impossible-origami-cathedral">
+    <section className="atmosphere impossible-origami-cathedral" style={{ "--experiment-accent": "#f0c986" }}>
       <div className="impossible-origami-cathedral__stage">
         <Canvas
           gl={createWebGPURenderer}
@@ -464,9 +472,18 @@ export default function ImpossibleOrigamiCathedral({ settings = {} }) {
         >
           <color attach="background" args={["#040302"]} />
           <fogExp2 attach="fog" args={["#040302", 0.012]} />
-          <CathedralScene speedRef={speedRef} onIntroStarted={() => setIntroStarted(true)} />
+          <CathedralScene speedRef={speedRef} onIntroStarted={() => setIntroStarted(true)} onProgress={setFoldProgress} />
         </Canvas>
       </div>
+      <AnimationReadout
+        eyebrow="Cathedral status"
+        value={foldProgress >= 1 ? "FULLY FOLDED" : `${Math.round(foldProgress * 100)}% FOLDED`}
+        progress={foldProgress}
+        stats={[
+          { value: RECT_PANELS.length + TRI_PANELS.length, label: "FOLDED PANELS" },
+          { value: "220", label: "PAPER MOTES" },
+        ]}
+      />
       <div className="experiment-copy">
         <p>17 — Sacred geometry, folded from a single sheet</p>
         <h1>The Impossible<br />Origami Cathedral.</h1>

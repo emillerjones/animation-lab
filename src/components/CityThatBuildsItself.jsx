@@ -5,6 +5,7 @@ import { color, mix, pass, sin, time, uniform, uv } from "three/tsl";
 import { bloom } from "three/addons/tsl/display/BloomNode.js";
 import { createDragOrbit } from "../utils/dragOrbit";
 import { WEBGL_DPR_MAX } from "../rendering/quality";
+import AnimationReadout from "./AnimationReadout";
 import "./CityThatBuildsItself.css";
 
 const CITY_SIDE = 19;
@@ -356,6 +357,8 @@ function buildCity(canvas, host, settingsRef, report) {
           progress: state.progress,
           stage: "URBAN ECOSYSTEM / RENEWING",
           districts: Math.round(visibleCountFor(density)),
+          rainCount: Math.floor(rain.geometry.userData.speeds.length * rainDensity),
+          density: Math.round(density * 100),
         });
       }
       post.render();
@@ -384,6 +387,8 @@ export default function CityThatBuildsItself({ settings = {} }) {
     progress: 0,
     stage: "URBAN ECOSYSTEM / AWAKENING",
     districts: 0,
+    rainCount: 0,
+    density: 78,
   });
 
   settingsRef.current = settings;
@@ -419,6 +424,15 @@ export default function CityThatBuildsItself({ settings = {} }) {
         <b>∞</b>
         <span>DISTRICT<br />LIMIT</span>
       </div>
+
+      <AnimationReadout
+        eyebrow="CITY STATUS"
+        value={`${telemetry.districts.toLocaleString()} TOWERS`}
+        stats={[
+          { value: telemetry.rainCount.toLocaleString(), label: "RAIN PARTICLES" },
+          { value: `${telemetry.density}%`, label: "CITY DENSITY" },
+        ]}
+      />
 
       {telemetry.error && (
         <div className="city-builds-itself__error" role="status">

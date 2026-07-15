@@ -5,6 +5,7 @@ import * as THREE from "three";
 import GpuExperience from "./webgl/GpuExperience";
 import { seeded } from "../utils/procedural";
 import { range } from "./webgl/GpuPrimitives";
+import AnimationReadout from "./AnimationReadout";
 import "./OrigamiFold.css";
 
 function useWingGeometry(){return useMemo(()=>{const geometry=new THREE.BufferGeometry();geometry.setAttribute("position",new THREE.Float32BufferAttribute([0,0,0,3.5,0,.25,.75,0,2.35,0,0,0,.75,0,2.35,.14,0,.82],3));geometry.computeVertexNormals();return geometry;},[]);}
@@ -13,6 +14,9 @@ function PaperCurrent({flow,accent}){const sheet=useRef();useFrame((state)=>{if(
 function OrigamiWorld({settings,accent}){const count=Math.max(6,Math.min(18,settings.facets??14)),flow=settings.flow??.8;return <group><PaperCurrent flow={flow*(settings.speed??1)} accent={accent} />{range(9).map((index)=><mesh key={index} position={[-10+index*3.5,-.8+seeded(index,251)*.9,-28-seeded(index,252)*15]} scale={[2.2+seeded(index,253)*2.7,3.1+seeded(index,254)*4.8,2.4]} rotation={[0,seeded(index,255)*.6,0]}><coneGeometry args={[1,1,4]} /><meshStandardMaterial color={index%3?"#b9aa96":"#e8dccb"} roughness={1} flatShading /></mesh>)}{range(count).map((index)=><Crane key={index} position={[(seeded(index,256)-.42)*22,1+seeded(index,257)*9,-5-seeded(index,258)*28]} scale={.36+seeded(index,259)*.46} phase={seeded(index,260)*Math.PI*2} accent={index%5===0?accent:"#d6baa0"} />)}<mesh position={[7.5,7.2,-39]}><circleGeometry args={[3.7,64]} /><meshBasicMaterial color="#f4dfbf" transparent opacity={.76} /></mesh><pointLight position={[6,7,-18]} color="#ffe0b7" intensity={32} distance={45} /><Sparkles count={70} scale={[28,14,45]} color={accent} size={.7} speed={.08} opacity={.28} /></group>;}
 
 export default function OrigamiFold({ settings = {} }) {
+  const count = Math.max(6, Math.min(18, Math.round(settings.facets ?? 14)));
+  const flow = settings.flow ?? 0.8;
+
   return (
     <GpuExperience
       scene="origami-fold"
@@ -25,6 +29,13 @@ export default function OrigamiFold({ settings = {} }) {
       description="One illuminated sheet becomes a river, a mountain range, and a flock of cranes moving together on an invisible current."
       cta="Release the fold"
       wheelInteraction
+      foreground={(
+        <AnimationReadout
+          eyebrow="Live current"
+          value={`${count} FLOATING FORMS`}
+          stats={[{ value: `${flow.toFixed(1)}×`, label: "PAPER CURRENT" }]}
+        />
+      )}
     />
   );
 }

@@ -4,6 +4,7 @@ import * as THREE from "three";
 import CanvasStage, { useSpeed } from "./CanvasStage";
 import useDragOrbit from "../hooks/useDragOrbit";
 import { seeded } from "../utils/procedural";
+import AnimationReadout from "./AnimationReadout";
 import "./MechanicalPlanetarium3D.css";
 
 // Real orbital periods span a 165:1 ratio (Mercury to Neptune) — too extreme to watch directly,
@@ -104,8 +105,10 @@ function SolarSystemScene({ settings }) {
 }
 
 export default function MechanicalPlanetarium3D({ settings = {} }) {
+  const visibleCount = Math.max(1, Math.min(PLANETS.length, Math.round(settings.rings ?? PLANETS.length)));
+
   return (
-    <section className="atmosphere mechanical-planetarium-3d">
+    <section className="atmosphere mechanical-planetarium-3d" style={{ "--experiment-accent": "#e0b56a" }}>
       <CanvasStage camera={{ position: [0, 3.6, 10], fov: 42 }} speed={settings.speed ?? 1} shadows bloom={{ intensity: 0.7 }}>
         <ambientLight intensity={0.15} />
         <SolarSystemScene settings={settings} />
@@ -115,6 +118,11 @@ export default function MechanicalPlanetarium3D({ settings = {} }) {
         <h1>Eight worlds,<br />in the right order.</h1>
         <span>Mercury through Neptune, correctly ordered and correctly paced — Neptune takes 165 times longer to orbit than Mercury, just like the real thing.</span>
       </div>
+      <AnimationReadout
+        eyebrow="Live orrery"
+        value={`${visibleCount} ORBITING BODIES`}
+        stats={[{ value: visibleCount, label: "BRASS RINGS" }]}
+      />
     </section>
   );
 }

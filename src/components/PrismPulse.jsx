@@ -24,6 +24,7 @@ import {
 } from "three.quarks";
 import * as THREE from "three";
 import { WEBGL_DPR, WEBGL_MSAA_SAMPLES } from "../rendering/quality";
+import AnimationReadout from "./AnimationReadout";
 import "./PrismPulse.css";
 
 const DICE = ["D4", "D6", "D8", "D12", "D20"];
@@ -368,6 +369,8 @@ function PrismScene({ settings, onDraggingChange }) {
 export default function PrismPulse({ settings = {} }) {
   const [dragging, setDragging] = useState(false);
   const die = DICE[THREE.MathUtils.clamp(Math.round(settings.die ?? 2), 0, DICE.length - 1)];
+  const motes = Math.round(settings.motes ?? 44);
+  const dispersion = Math.round(THREE.MathUtils.clamp((settings.dispersion ?? 68) / 100, 0, 1) * 100);
 
   return (
     <section className={`atmosphere prism-pulse-lab ${dragging ? "is-dragging" : ""}`} style={{ "--experiment-accent": "#77dcff" }}>
@@ -397,6 +400,11 @@ export default function PrismPulse({ settings = {} }) {
         <i />
         <span>{dragging ? "Release to carry the momentum" : "Drag the crystal to turn it"}</span>
       </div>
+      <AnimationReadout
+        eyebrow="Refractive optics"
+        value={`${motes} PHOTON MOTES`}
+        stats={[{ value: die, label: "Geometry" }, { value: `${dispersion}%`, label: "Dispersion" }]}
+      />
     </section>
   );
 }

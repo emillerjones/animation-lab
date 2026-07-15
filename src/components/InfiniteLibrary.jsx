@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { seeded } from "../utils/procedural";
 import GpuExperience from "./webgl/GpuExperience";
 import { Dust, range } from "./webgl/GpuPrimitives";
+import AnimationReadout from "./AnimationReadout";
 import "./InfiniteLibrary.css";
 
 const SHELF_ROWS = 5;
@@ -242,5 +243,27 @@ function InfiniteLibraryWorld({ settings, accent }) {
 }
 
 export default function InfiniteLibrary({ settings = {} }) {
-  return <GpuExperience scene="infinite-library" World={InfiniteLibraryWorld} settings={settings} accent="#e4b56f" background="#050301" eyebrow="12 — Endless archive" title={"Every aisle\nholds another world."} description="Book-filled galleries, timber vaults, and pools of reading light repeat beyond sight." />;
+  const shelves = Math.max(10, Math.min(130, Math.round(settings.shelves ?? 90)));
+  const books = Math.max(200, Math.min(14000, Math.round(settings.books ?? 6000)));
+  const visibleBooks = Math.min(books, shelves * SHELF_ROWS * BOOK_SLOTS);
+
+  return (
+    <GpuExperience
+      scene="infinite-library"
+      World={InfiniteLibraryWorld}
+      settings={settings}
+      accent="#e4b56f"
+      background="#050301"
+      eyebrow="12 — Endless archive"
+      title={"Every aisle\nholds another world."}
+      description="Book-filled galleries, timber vaults, and pools of reading light repeat beyond sight."
+      foreground={(
+        <AnimationReadout
+          eyebrow="Live archive"
+          value={`${visibleBooks.toLocaleString()} BOOKS SHELVED`}
+          stats={[{ value: shelves, label: "SHELF BAYS" }]}
+        />
+      )}
+    />
+  );
 }

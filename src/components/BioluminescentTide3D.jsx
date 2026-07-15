@@ -2,6 +2,7 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { MeshReflectorMaterial } from "@react-three/drei";
 import * as THREE from "three";
+import AnimationReadout from "./AnimationReadout";
 import CanvasStage, { useSpeed } from "./CanvasStage";
 import { seeded } from "../utils/procedural";
 import "./BioluminescentTide3D.css";
@@ -83,8 +84,9 @@ export default function BioluminescentTide3D({ settings = {} }) {
   const hue = (settings.hue ?? 166) / 360;
   const glowColor = useMemo(() => new THREE.Color().setHSL(hue, 0.9, 0.58), [hue]);
   const waterTint = useMemo(() => new THREE.Color().setHSL(hue, 0.55, 0.045), [hue]);
+  const glowHex = useMemo(() => `#${glowColor.getHexString()}`, [glowColor]);
   return (
-    <section className="atmosphere bioluminescent-tide-3d">
+    <section className="atmosphere bioluminescent-tide-3d" style={{ "--experiment-accent": glowHex }}>
       <CanvasStage camera={{ position: [0, 1.2, 8], fov: 48 }} orbitEnabled speed={settings.speed ?? 1} bloom={{ intensity: 1.2 }}>
         <ambientLight intensity={0.05} />
         <Plankton count={count} color={glowColor} />
@@ -97,6 +99,7 @@ export default function BioluminescentTide3D({ settings = {} }) {
         <h1>Glow, actually<br />afloat.</h1>
         <span>Plankton drift over a real reflective tide instead of a flat animated gradient standing in for water.</span>
       </div>
+      <AnimationReadout eyebrow="Organism" value={`${count.toLocaleString()} PLANKTON`} />
     </section>
   );
 }

@@ -1,6 +1,7 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import AnimationReadout from "./AnimationReadout";
 import CanvasStage, { useSpeed } from "./CanvasStage";
 import { seeded } from "../utils/procedural";
 import "./LuminousMycelium3D.css";
@@ -99,7 +100,7 @@ export default function LuminousMycelium3D({ settings = {} }) {
   const { nodes, edges, degree } = useMemo(() => buildNetwork(count), [count]);
 
   return (
-    <section className="atmosphere luminous-mycelium-3d">
+    <section className="atmosphere luminous-mycelium-3d" style={{ "--experiment-accent": "#9dff82" }}>
       <CanvasStage camera={{ position: [1.4, 0.4, 9], fov: 46 }} orbitEnabled orbitFocus={[1.4, 0.4, -1]} speed={settings.speed ?? 1} bloom={{ intensity: 1 }}>
         <ambientLight intensity={0.1} />
         <group position={[1.4, 0.4, -1]}>
@@ -114,6 +115,11 @@ export default function LuminousMycelium3D({ settings = {} }) {
         <h1>Light that<br />actually travels.</h1>
         <span>Real pulses of signal move along each connection, the way a fungal network actually communicates.</span>
       </div>
+      <AnimationReadout
+        eyebrow="Live network"
+        value={`${count} NODES`}
+        stats={[{ value: edges.length, label: "Signal paths" }]}
+      />
     </section>
   );
 }

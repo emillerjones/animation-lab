@@ -8,6 +8,7 @@ import {
 import { getProject } from "@theatre/core";
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from "three-mesh-bvh";
 import { seeded } from "../utils/procedural";
+import AnimationReadout from "./AnimationReadout";
 import "./ProceduralOcean.css";
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
@@ -341,7 +342,7 @@ function RippleBursts({ ripplesRef }) {
   );
 }
 
-function OceanScene({ settings, speedRef, onSunReady }) {
+function OceanScene({ settings, speedRef, onSunReady, onTelemetry }) {
   const { camera, gl } = useThree();
   const windUniform = useMemo(() => uniform(0.7), []);
   const swellUniform = useMemo(() => uniform(1), []);
@@ -370,6 +371,7 @@ function OceanScene({ settings, speedRef, onSunReady }) {
   const manualProgressRef = useRef(false);
   const dragRef = useRef({ yaw: 0, pitch: 0 });
   const lightningRef = useRef({ nextStrike: 3, flash: 0 });
+  const telemetryFrameRef = useRef(0);
   const sunRef = useRef();
   const skyColorObj = useMemo(() => new THREE.Color(), []);
   const calmColor = useMemo(() => new THREE.Color("#101b2c"), []);
@@ -448,6 +450,17 @@ function OceanScene({ settings, speedRef, onSunReady }) {
     const intensity = Math.pow(Math.max(0, Math.sin(Math.min(progress, 1) * Math.PI)), 0.8);
     stormRef.current.progress = progress;
     stormRef.current.intensity = intensity;
+
+    telemetryFrameRef.current += 1;
+    if (onTelemetry && telemetryFrameRef.current % 6 === 0) {
+      const rainIntensity = (settings.rainDensity / 100) * Math.max(0.15, intensity);
+      const sprayIntensity = (settings.foamAmount / 100) * Math.max(0.12, intensity);
+      onTelemetry({
+        progress,
+        rainCount: Math.round(2200 * rainIntensity),
+        sprayCount: Math.round(400 * sprayIntensity),
+      });
+    }
 
     const windStrength = (settings.windStrength / 100) * (0.42 + intensity * 0.85);
     const swellHeight = (settings.swellHeight / 100) * (0.6 + intensity * 0.75);
@@ -532,6 +545,7 @@ async function createWebGPURenderer(props) {
 export default function ProceduralOcean({ settings = {} }) {
   const speedRef = useRef(settings.speed ?? 1);
   speedRef.current = settings.speed ?? 1;
+  const [telemetry, setTelemetry] = useState({ progress: 0.3, rainCount: 0, sprayCount: 0 });
   const resolvedSettings = {
     windStrength: settings.windStrength ?? 70,
     swellHeight: settings.swellHeight ?? 100,
@@ -550,7 +564,7 @@ export default function ProceduralOcean({ settings = {} }) {
           frameloop="always"
         >
           <fogExp2 attach="fog" args={["#05070c", 0.012]} />
-          <OceanScene settings={resolvedSettings} speedRef={speedRef} />
+          <OceanScene settings={resolvedSettings} speedRef={speedRef} onTelemetry={setTelemetry} />
         </Canvas>
       </div>
       <div className="experiment-copy">
@@ -558,6 +572,15 @@ export default function ProceduralOcean({ settings = {} }) {
         <h1>Procedural<br />Ocean.</h1>
         <span>A predawn sea builds through wind, rain, and swell on its own as warm light breaks through. Scroll to steer the weather yourself, drag to look around, click the water to send out a ripple.</span>
       </div>
+      <AnimationReadout
+        eyebrow="OCEAN STATE"
+        value={`${Math.round(telemetry.progress * 100)}% STORM CYCLE`}
+        progress={telemetry.progress}
+        stats={[
+          { value: telemetry.rainCount.toLocaleString(), label: "RAIN PARTICLES" },
+          { value: telemetry.sprayCount.toLocaleString(), label: "FOAM PARTICLES" },
+        ]}
+      />
     </section>
   );
 }

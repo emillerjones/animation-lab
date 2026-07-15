@@ -7,6 +7,7 @@ import { SMAAPass } from "three/examples/jsm/postprocessing/SMAAPass.js";
 import { Reflector } from "three/examples/jsm/objects/Reflector.js";
 import { WEBGL_DPR_MAX, WEBGL_MSAA_SAMPLES } from "../rendering/quality";
 import { seeded } from "../utils/procedural";
+import AnimationReadout from "./AnimationReadout";
 import "./CathedralOfLight.css";
 
 const GOLD = new THREE.Color().setRGB(1.7, 0.86, 0.28);
@@ -199,6 +200,7 @@ export default function CathedralOfLight({ settings = {} }) {
   const arches = Math.round(settings.arches ?? 30);
   const dust = Math.round(settings.dust ?? 110);
   const variant2 = Boolean(settings.variant2);
+  const dustParticles = Math.max(180, dust * 5);
 
   useEffect(() => { speedRef.current = settings.speed ?? 1; }, [settings.speed]);
 
@@ -326,6 +328,11 @@ export default function CathedralOfLight({ settings = {} }) {
         <span>An endless nave drawn in gold, dust, reflection, and a single line of intent.</span>
       </div>
       <div className="cathedral-webgl__hint" aria-hidden="true"><i />Move to drift · scroll to approach</div>
+      <AnimationReadout
+        eyebrow={variant2 ? "Sacred geometry · variant 2" : "Sacred geometry"}
+        value={`${arches} ARCHES`}
+        stats={[{ value: dustParticles.toLocaleString(), label: "Dust motes" }]}
+      />
     </section>
   );
 }

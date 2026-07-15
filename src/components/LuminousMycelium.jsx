@@ -3,6 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import { Line } from "@react-three/drei";
 import * as THREE from "three";
 import { seeded } from "../utils/procedural";
+import AnimationReadout from "./AnimationReadout";
 import GpuExperience from "./webgl/GpuExperience";
 import { Dust } from "./webgl/GpuPrimitives";
 import "./LuminousMycelium.css";
@@ -83,5 +84,18 @@ function LuminousMyceliumWorld({ settings, accent }) {
 }
 
 export default function LuminousMycelium({ settings = {} }) {
-  return <GpuExperience scene="luminous-mycelium" World={LuminousMyceliumWorld} settings={settings} accent="#9dff82" background="#010803" eyebrow="04 — Subterranean intelligence" title={"A forest beneath\nthe forest."} description="Branching mycelium carries visible signals through the soil, feeding luminous fruiting bodies as the underground network wakes." />;
+  const mushroomCount = Math.max(6, Math.min(30, Math.round(settings.mushrooms ?? 14)));
+  return (
+    <GpuExperience
+      scene="luminous-mycelium"
+      World={LuminousMyceliumWorld}
+      settings={settings}
+      accent="#9dff82"
+      background="#010803"
+      eyebrow="04 — Subterranean intelligence"
+      title={"A forest beneath\nthe forest."}
+      description="Branching mycelium carries visible signals through the soil, feeding luminous fruiting bodies as the underground network wakes."
+      foreground={<AnimationReadout eyebrow="Live network" value={`${mushroomCount} MUSHROOMS`} />}
+    />
+  );
 }

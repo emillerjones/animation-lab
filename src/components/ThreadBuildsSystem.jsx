@@ -1,10 +1,11 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { MeshReflectorMaterial, MeshTransmissionMaterial, RoundedBox } from "@react-three/drei";
 import { Bloom, EffectComposer, SMAA } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { seeded } from "../utils/procedural";
 import { WEBGL_DPR, WEBGL_MSAA_SAMPLES } from "../rendering/quality";
+import AnimationReadout from "./AnimationReadout";
 import "./ThreadBuildsSystem.css";
 
 const MOBILE_QUERY = "(max-width: 700px)";
@@ -249,9 +250,10 @@ function IncomingThread({ progressRef }) {
   );
 }
 
-function OrbitalWorld({ settings, pointerRef, mobile, reducedMotion }) {
+function OrbitalWorld({ settings, pointerRef, mobile, reducedMotion, onProgress }) {
   const rootRef = useRef();
   const progressRef = useRef(reducedMotion ? 1 : 0);
+  const frameRef = useRef(0);
   const density = settings.systemDensity ?? 72;
   const particleCount = Math.round((settings.particleDensity ?? 78) * (mobile ? 38 : 70));
   const artifactCount = Math.round(5 + density * 0.07);
@@ -267,6 +269,8 @@ function OrbitalWorld({ settings, pointerRef, mobile, reducedMotion }) {
       rootRef.current.rotation.y += delta * 0.012 * orbitRate * (settings.speed ?? 1);
       rootRef.current.rotation.z = Math.sin(state.clock.elapsedTime * 0.075) * 0.015;
     }
+    frameRef.current += 1;
+    if (onProgress && frameRef.current % 6 === 0) onProgress(progressRef.current);
   });
 
   return (
@@ -301,6 +305,10 @@ export default function ThreadBuildsSystem({ settings = {} }) {
   const pointerRef = useRef({ x: 0, y: 0 });
   const reducedMotion = useMemo(() => window.matchMedia?.(REDUCED_QUERY).matches ?? false, []);
   const mobile = useMemo(() => window.matchMedia?.(MOBILE_QUERY).matches ?? false, []);
+  const [progress, setProgress] = useState(reducedMotion ? 1 : 0);
+  const density = settings.systemDensity ?? 72;
+  const particleCount = Math.round((settings.particleDensity ?? 78) * (mobile ? 38 : 70));
+  const artifactCount = Math.round(5 + density * 0.07);
 
   const handlePointerMove = (event) => {
     if (event.pointerType === "touch" && Math.abs(event.movementY) > Math.abs(event.movementX)) return;
@@ -323,7 +331,7 @@ export default function ThreadBuildsSystem({ settings = {} }) {
           gl.toneMappingExposure = 1.05;
         }}
       >
-        <OrbitalWorld settings={settings} pointerRef={pointerRef} mobile={mobile} reducedMotion={reducedMotion} />
+        <OrbitalWorld settings={settings} pointerRef={pointerRef} mobile={mobile} reducedMotion={reducedMotion} onProgress={setProgress} />
       </Canvas>
 
       <div className="thread-system__copy">
@@ -333,6 +341,16 @@ export default function ThreadBuildsSystem({ settings = {} }) {
       </div>
 
       <div className="thread-system__legend" aria-hidden="true"><i /><span>Move to shift the instrument</span></div>
+
+      <AnimationReadout
+        eyebrow="SYSTEM STATUS"
+        value={`${Math.round(progress * 100)}% ASSEMBLED`}
+        progress={progress}
+        stats={[
+          { value: artifactCount.toLocaleString(), label: "ORBITING BODIES" },
+          { value: particleCount.toLocaleString(), label: "FIELD PARTICLES" },
+        ]}
+      />
     </section>
   );
 }

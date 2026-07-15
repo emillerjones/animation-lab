@@ -4,6 +4,7 @@ import { MeshReflectorMaterial } from "@react-three/drei";
 import * as THREE from "three";
 import CanvasStage, { useSpeed } from "./CanvasStage";
 import { seeded } from "../utils/procedural";
+import AnimationReadout from "./AnimationReadout";
 import "./InfiniteLibrary3D.css";
 
 const dummy = new THREE.Object3D();
@@ -693,7 +694,7 @@ export default function InfiniteLibrary3D({ settings = {} }) {
   const totalDepth = (bayCount + FAR_BAY_COUNT) * BAY_DEPTH;
 
   return (
-    <section className="atmosphere infinite-library-3d">
+    <section className="atmosphere infinite-library-3d" style={{ "--experiment-accent": "#e0ba79" }}>
       <CanvasStage camera={{ position: [0, 1.4, 9], fov: 52 }} orbitEnabled shadows speed={settings.speed ?? 1} bloom={{ intensity: 0.6 }}>
         <color attach="background" args={["#050309"]} />
         <fogExp2 attach="fog" args={["#050309", 0.01]} />
@@ -718,6 +719,11 @@ export default function InfiniteLibrary3D({ settings = {} }) {
         <h1>A hall that<br />actually recedes.</h1>
         <span>Full shelving bays under a vaulted, gold-ribbed ceiling forty feet up, thousands of books threaded through the shelves, and a much longer silhouette fading into the fog far beyond where the detail stops.</span>
       </div>
+      <AnimationReadout
+        eyebrow="Live corridor"
+        value={`${bookCount.toLocaleString()} BOOKS ON THE SHELVES`}
+        stats={[{ value: bayCount, label: "SHELF BAYS" }]}
+      />
     </section>
   );
 }

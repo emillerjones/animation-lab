@@ -18,6 +18,7 @@ import {
   uv,
 } from "three/tsl";
 import { WEBGL_DPR } from "../rendering/quality";
+import AnimationReadout from "./AnimationReadout";
 import "./ImpossibleOrigamiCathedral.css";
 
 const theatreProject = getProject("Origami Cathedral GPT", {
@@ -459,7 +460,7 @@ function LightShafts({ progressRef, glow }) {
   );
 }
 
-function CathedralScene({ settings, interactionRef, onFormed }) {
+function CathedralScene({ settings, interactionRef, onFormed, onProgress }) {
   const complexity = THREE.MathUtils.clamp(settings.foldComplexity ?? 78, 40, 100);
   const paperGlow = THREE.MathUtils.clamp(settings.paperGlow ?? 92, 20, 150) / 100;
   const dust = THREE.MathUtils.clamp(settings.dust ?? 70, 20, 100) / 100;
@@ -473,6 +474,7 @@ function CathedralScene({ settings, interactionRef, onFormed }) {
   const sheet = useRef();
   const progressRef = useRef(0);
   const formedRef = useRef(false);
+  const lastReportedPercent = useRef(-1);
   const activeStationRef = useRef(-1);
   const [activeStation, setActiveStation] = useState(-1);
   const { material, glow } = usePaperMaterial(paperGlow);
@@ -498,6 +500,11 @@ function CathedralScene({ settings, interactionRef, onFormed }) {
     const intro = saturate(elapsed / choreography.value.duration);
     const easedIntro = smoother(intro);
     progressRef.current = intro;
+    const percent = Math.floor(intro * 100);
+    if (percent !== lastReportedPercent.current) {
+      lastReportedPercent.current = percent;
+      onProgress(intro);
+    }
     theatreSheet.sequence.position = intro * choreography.value.duration;
 
     if (intro >= 0.999 && !formedRef.current) {
@@ -639,6 +646,9 @@ export default function ImpossibleOrigamiCathedral({ settings = {} }) {
 
   const [formed, setFormed] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [foldProgress, setFoldProgress] = useState(0);
+  const stationCount = Math.round(7 + THREE.MathUtils.clamp(settings.foldComplexity ?? 78, 40, 100) * 0.07);
+  const dustCount = Math.floor(900 + (THREE.MathUtils.clamp(settings.dust ?? 70, 20, 100) / 100) * 3600);
 
   const handleWheel = useCallback((event) => {
     const interaction = interactionRef.current;
@@ -701,10 +711,20 @@ export default function ImpossibleOrigamiCathedral({ settings = {} }) {
             settings={settings}
             interactionRef={interactionRef}
             onFormed={() => setFormed(true)}
+            onProgress={setFoldProgress}
           />
         </Suspense>
       </Canvas>
 
+      <AnimationReadout
+        eyebrow="Cathedral status"
+        value={formed ? "FULLY FOLDED" : `${Math.round(foldProgress * 100)}% FOLDED`}
+        progress={foldProgress}
+        stats={[
+          { value: stationCount.toLocaleString(), label: "VAULT SECTIONS" },
+          { value: dustCount.toLocaleString(), label: "PAPER FRAGMENTS" },
+        ]}
+      />
       <div className="origami-cathedral-pro__veil" />
       <div className="origami-cathedral-pro__title" aria-hidden="true">
         <span>The Impossible</span>

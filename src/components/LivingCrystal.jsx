@@ -7,6 +7,7 @@ import {
 import { getProject } from "@theatre/core";
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from "three-mesh-bvh";
 import { seeded } from "../utils/procedural";
+import AnimationReadout from "./AnimationReadout";
 import "./LivingCrystal.css";
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
@@ -389,7 +390,7 @@ function CrystalScene({ settings, speedRef, onStats }) {
     fpsRef.current.frames += 1;
     fpsRef.current.time += rawDelta;
     if (fpsRef.current.time >= 0.5) {
-      onStats({ fps: Math.round(fpsRef.current.frames / fpsRef.current.time) });
+      onStats({ fps: Math.round(fpsRef.current.frames / fpsRef.current.time), growth: growthValueRef.current });
       fpsRef.current.frames = 0;
       fpsRef.current.time = 0;
     }
@@ -543,7 +544,7 @@ async function createWebGPURenderer(props) {
 export default function LivingCrystal({ settings = {} }) {
   const speedRef = useRef(settings.speed ?? 1);
   speedRef.current = settings.speed ?? 1;
-  const [stats, setStats] = useState({ fps: 60, gpu: "—", crystals: 0, particles: 0, triangles: 0 });
+  const [stats, setStats] = useState({ fps: 60, gpu: "—", crystals: 0, particles: 0, triangles: 0, growth: 0.56 });
 
   const onStats = (patch) => setStats((current) => ({ ...current, ...patch }));
 
@@ -585,6 +586,16 @@ export default function LivingCrystal({ settings = {} }) {
       </div>
 
       <div className="living-crystal__scroll-prompt"><i /><span>Scroll to grow · reverse to retract</span></div>
+
+      <AnimationReadout
+        eyebrow="CRYSTAL STATE"
+        value={`${Math.round(stats.growth * 100)}% GROWN`}
+        progress={stats.growth}
+        stats={[
+          { value: stats.crystals.toLocaleString(), label: "BRANCHES" },
+          { value: stats.particles.toLocaleString(), label: "DUST MOTES" },
+        ]}
+      />
     </section>
   );
 }

@@ -281,16 +281,23 @@ function useMuseumAssets() {
         }),
         trim: new THREE.MeshStandardMaterial({ map: bronzeMap, bumpMap: bronzeMap, bumpScale: 0.025, color: "#e2b875", roughness: 0.27, metalness: 0.82, emissive: "#5a2c0d", emissiveIntensity: 0.12 }),
         back: new THREE.MeshStandardMaterial({
-          map: stoneMap,
-          bumpMap: stoneMap,
-          bumpScale: 0.08,
-          color: "#aaa99d",
-          roughness: 0.5,
+          map: steelMap,
+          bumpMap: steelMap,
+          bumpScale: 0.045,
+          color: "#7a8285",
+          roughness: 0.48,
           metalness: 0.42,
-          emissive: "#8f6840",
-          emissiveIntensity: 0.65,
         }),
-        hub: new THREE.MeshStandardMaterial({ map: steelMap, bumpMap: steelMap, bumpScale: 0.02, color: "#596264", roughness: 0.27, metalness: 0.88 }),
+        hub: new THREE.MeshStandardMaterial({
+          map: steelMap,
+          bumpMap: steelMap,
+          bumpScale: 0.02,
+          color: "#596264",
+          roughness: 0.27,
+          metalness: 0.88,
+          emissive: "#f4ecd6",
+          emissiveIntensity: 0.55,
+        }),
       },
       textures: [bronzeMap, steelMap, woodMap, stoneMap, ceramicMap],
     };
@@ -1272,9 +1279,12 @@ function GalleryShell({ speed, materials }) {
                 <CuboidCollider args={[0.62, 0.34, GALLERY_DEPTH * 0.47]} friction={1.35} />
                 <mesh castShadow receiveShadow>
                   <boxGeometry args={[1.24, 0.68, GALLERY_DEPTH * 0.94]} />
-                  <primitive object={index === 0 ? materials.luminousRib : materials.ribs} attach="material" />
+                  {/* Two lit ribs, opposite each other (index 0 and index 12, 180 degrees
+                      apart) — one alone read as an isolated accent; a matching rib on the
+                      far side of the drum makes the light feel like it belongs to the room. */}
+                  <primitive object={index === 0 || index === 12 ? materials.luminousRib : materials.ribs} attach="material" />
                 </mesh>
-                {index === 0 && [-18, 0, 18].map((z, lightIndex) => (
+                {(index === 0 || index === 12) && [-18, 0, 18].map((z, lightIndex) => (
                   <pointLight
                     key={z}
                     position={[0, -0.9, z]}
@@ -1304,22 +1314,27 @@ function GalleryShell({ speed, materials }) {
           <circleGeometry args={[GALLERY_HALF_WIDTH, 96]} />
           <primitive object={materials.back} attach="material" />
         </mesh>
+        {/* The back plate reads as a light fixture, not just a light-colored wall, only if
+            these actually throw light out to the 6 rib tips converging on it (radius ~10.8) —
+            at the old intensity/decay they faded to nothing well before reaching that far. */}
         {[-5.2, 0, 5.2].map((x, index) => (
           <pointLight
             key={x}
             position={[x, index === 1 ? 1.4 : -1.2, 1.1]}
             color={index === 1 ? "#ffe3b0" : "#d7b07a"}
-            intensity={index === 1 ? 11 : 6}
-            distance={30}
-            decay={1.9}
+            intensity={index === 1 ? 34 : 18}
+            distance={32}
+            decay={1.65}
             castShadow={index === 1}
             shadow-mapSize={[512, 512]}
             shadow-bias={-0.0015}
           />
         ))}
+        {/* Hexagonal, not round — a circle looks identical at every angle, so it would never
+            read as spinning with the drum. Six flat sides make the rotation obvious. */}
         {[2.3, 5.1, 8.1].map((radius) => (
           <mesh key={radius} position={[0, 0, 0.06]}>
-            <torusGeometry args={[radius, 0.12, 8, 80]} />
+            <torusGeometry args={[radius, 0.12, 8, 6]} />
             <primitive object={materials.trim} attach="material" />
           </mesh>
         ))}
@@ -1327,6 +1342,10 @@ function GalleryShell({ speed, materials }) {
           <cylinderGeometry args={[1.35, 1.35, 0.28, 32]} />
           <primitive object={materials.hub} attach="material" />
         </mesh>
+        {/* A real light, not just an emissive texture — tuned to reach the walls (radius
+            ~10.8) so the hub actually contributes to the room instead of only glowing
+            itself. This is the fix for the drum interior reading as generally too dark. */}
+        <pointLight position={[0, 0, 0.6]} color="#f4ecd6" intensity={30} distance={42} decay={1.6} />
       </group>
     </RigidBody>
   );
@@ -1527,6 +1546,9 @@ export default function GravityMuseum({ settings = {} }) {
     dragDepth: 0,
   });
   const [stage, setStage] = useState("SUSPENDED");
+  const objectCount = Math.round(THREE.MathUtils.clamp(settings.artifactDensity ?? 76, 24, 140));
+  const lightCount = THREE.MathUtils.clamp(Math.round(settings.lightObjects ?? 3), 0, 8);
+  const sandCount = Math.min(6000, Math.max(0, Math.round(settings.physicalSand ?? 1200)));
 
   const updatePointer = useCallback((event) => {
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -1586,6 +1608,9 @@ export default function GravityMuseum({ settings = {} }) {
         <span>Current law</span>
         <strong>{stage}</strong>
         <i />
+        <span>{objectCount.toLocaleString()} OBJECTS</span>
+        <span>{lightCount.toLocaleString()} LIGHT SOURCES</span>
+        <span>{sandCount.toLocaleString()} SAND GRAINS</span>
       </div>
       <div className="gravity-museum-pro__hint" aria-hidden="true">
         CLICK AND DRAG AN OBJECT · RELEASE TO DROP

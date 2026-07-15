@@ -20,6 +20,7 @@ import {
 } from "three/tsl";
 import { bloom } from "three/addons/tsl/display/BloomNode.js";
 import { WEBGL_DPR_MAX } from "../rendering/quality";
+import AnimationReadout from "./AnimationReadout";
 import "./LivingBlackHole.css";
 
 const MAX_STARS = 72000;
@@ -641,7 +642,9 @@ function buildScene(canvas, host, settingsRef, report) {
         report({
           progress: state.progress,
           distortion: state.distortion,
-          particles: Math.floor(MAX_STARS * stellarDensity) + Math.floor(DISK_PARTICLES * THREE.MathUtils.clamp(0.35 + accretionIntensity * 0.55, 0.25, 1)) + dynamicStars.length,
+          stars: Math.floor(MAX_STARS * stellarDensity),
+          diskParticles: Math.floor(DISK_PARTICLES * THREE.MathUtils.clamp(0.35 + accretionIntensity * 0.55, 0.25, 1)),
+          injectedStars: dynamicStars.length,
           stage: state.progress > 0.79 ? "EVENT HORIZON" : state.progress > 0.36 ? "APPROACH" : "DEEP FIELD",
         });
       }
@@ -683,7 +686,9 @@ export default function LivingBlackHole({ settings = {} }) {
   const [telemetry, setTelemetry] = useState({
     progress: 0,
     distortion: 0,
-    particles: MAX_STARS + DISK_PARTICLES,
+    stars: MAX_STARS,
+    diskParticles: DISK_PARTICLES,
+    injectedStars: 0,
     stage: "DEEP FIELD",
   });
 
@@ -709,11 +714,16 @@ export default function LivingBlackHole({ settings = {} }) {
         <span>Scroll toward the horizon. Hold to feed the singularity.</span>
       </div>
 
-      <div className="living-black-hole__telemetry" aria-hidden="true">
-        <span>{telemetry.stage}</span>
-        <i style={{ "--progress": telemetry.progress }} />
-        <small>{Math.round(telemetry.particles / 1000)}K PROCEDURAL BODIES</small>
-      </div>
+      <AnimationReadout
+        eyebrow="Horizon telemetry"
+        value={telemetry.stage}
+        progress={telemetry.progress}
+        stats={[
+          { value: telemetry.stars.toLocaleString(), label: "BACKGROUND STARS" },
+          { value: telemetry.diskParticles.toLocaleString(), label: "DISK PARTICLES" },
+          { value: telemetry.injectedStars.toLocaleString(), label: "STARS YOU FED IN" },
+        ]}
+      />
 
       <div className="living-black-hole__gesture" aria-hidden="true">
         <i />
