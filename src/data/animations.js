@@ -2,48 +2,34 @@ import { lazy } from "react";
 
 const load = (path) => lazy(() => path());
 
-const EndlessLightTunnel = load(() => import("../components_chat/EndlessLightTunnel"));
-const BioluminescentTide = load(() => import("../components_chat/BioluminescentTide"));
-const PrismPulse = load(() => import("../components_chat/PrismPulse"));
-const LuminousMycelium = load(() => import("../components_chat/LuminousMycelium"));
-const GlassHarmonics = load(() => import("../components_chat/GlassHarmonics"));
-const DreamingCity = load(() => import("../components_chat/DreamingCity"));
-const CathedralOfLight = load(() => import("../components_chat/CathedralOfLight"));
-const CathedralAscent3D = load(() => import("../components_claude/CathedralAscent3D"));
-const MechanicalPlanetarium3D = load(() => import("../components_claude/MechanicalPlanetarium3D"));
-const InfiniteDataOcean3D = load(() => import("../components_claude/InfiniteDataOcean3D"));
-const NeuralNetworkUniverse3D = load(() => import("../components_claude/NeuralNetworkUniverse3D"));
-const EndlessLightTunnel3D = load(() => import("../components_claude/EndlessLightTunnel3D"));
-const BioluminescentTide3D = load(() => import("../components_claude/BioluminescentTide3D"));
-const PrismPulse3D = load(() => import("../components_claude/PrismPulse3D"));
-const LuminousMycelium3D = load(() => import("../components_claude/LuminousMycelium3D"));
-const GlassHarmonics3D = load(() => import("../components_claude/GlassHarmonics3D"));
-const DreamingCity3D = load(() => import("../components_claude/DreamingCity3D"));
-const InfiniteLibrary3D = load(() => import("../components_claude/InfiniteLibrary3D"));
-const BlueprintWorld3D = load(() => import("../components_claude/BlueprintWorld3D"));
-const InfiniteDataOcean = load(() => import("../components_chat/InfiniteDataOcean"));
-const NeuralNetworkUniverse = load(() => import("../components_chat/NeuralNetworkUniverse"));
-const MechanicalPlanetarium = load(() => import("../components_chat/MechanicalPlanetarium"));
-const InfiniteLibrary = load(() => import("../components_chat/InfiniteLibrary"));
-const BlueprintWorld = load(() => import("../components_chat/BlueprintWorld"));
-const SakuraFall = load(() => import("../components_chat/SakuraFall"));
-const OrigamiFold = load(() => import("../components_chat/OrigamiFold"));
-const CircuitPulse = load(() => import("../components_chat/CircuitPulse"));
-const LivingBlackHole = load(() => import("../components_chat/LivingBlackHole"));
-const ImpossibleOrigamiCathedralAdvanced = load(() => import("../components_chat/ImpossibleOrigamiCathedral"));
-const GravityMuseum = load(() => import("../components_chat/GravityMuseum"));
-const MechanicalSolarSystem = load(() => import("../components_chat/MechanicalSolarSystem"));
-const StormMadeOfGlass = load(() => import("../components_chat/StormMadeOfGlass"));
-const CityThatBuildsItself = load(() => import("../components_chat/CityThatBuildsItself"));
-const ColossusAwakens = load(() => import("../components_chat/ColossusAwakens"));
+const EndlessLightTunnel = load(() => import("../components/EndlessLightTunnel"));
+const PrismPulse = load(() => import("../components/PrismPulse"));
+const LuminousMycelium = load(() => import("../components/LuminousMycelium"));
+const DreamingCity = load(() => import("../components/DreamingCity"));
+const CathedralOfLight = load(() => import("../components/CathedralOfLight"));
+const MechanicalPlanetarium3D = load(() => import("../components/MechanicalPlanetarium3D"));
+const InfiniteDataOcean3D = load(() => import("../components/InfiniteDataOcean3D"));
+const NeuralNetworkUniverse3D = load(() => import("../components/NeuralNetworkUniverse3D"));
+const BioluminescentTide3D = load(() => import("../components/BioluminescentTide3D"));
+const LuminousMycelium3D = load(() => import("../components/LuminousMycelium3D"));
+const GlassHarmonics3D = load(() => import("../components/GlassHarmonics3D"));
+const InfiniteLibrary3D = load(() => import("../components/InfiniteLibrary3D"));
+const InfiniteLibrary = load(() => import("../components/InfiniteLibrary"));
+const OrigamiFold = load(() => import("../components/OrigamiFold"));
+const LivingBlackHole = load(() => import("../components/LivingBlackHole"));
+const ImpossibleOrigamiCathedralAdvanced = load(() => import("../components/ImpossibleOrigamiCathedral"));
+const GravityMuseum = load(() => import("../components/GravityMuseum"));
+const MechanicalSolarSystem = load(() => import("../components/MechanicalSolarSystem"));
+const StormMadeOfGlass = load(() => import("../components/StormMadeOfGlass"));
+const CityThatBuildsItself = load(() => import("../components/CityThatBuildsItself"));
+const ColossusAwakens = load(() => import("../components/ColossusAwakens"));
 
-const CircuitPulseClaude = load(() => import("../components_claude/CircuitPulse"));
-const SakuraFallClaude = load(() => import("../components_claude/SakuraFall"));
-const ImpossibleOrigamiCathedralClaude = load(() => import("../components_claude/ImpossibleOrigamiCathedral"));
-const AlienDysonSwarm = load(() => import("../components_claude/AlienDysonSwarm"));
-const ProceduralOcean = load(() => import("../components_claude/ProceduralOcean"));
-const LivingCrystal = load(() => import("../components_claude/LivingCrystal"));
-const TheMonolith = load(() => import("../components_chat/TheMonolith"));
+const SakuraFallClaude = load(() => import("../components/SakuraFall"));
+const ImpossibleOrigamiCathedralClaude = load(() => import("../components/ImpossibleOrigamiCathedral3D"));
+const AlienDysonSwarm = load(() => import("../components/AlienDysonSwarm"));
+const ProceduralOcean = load(() => import("../components/ProceduralOcean"));
+const LivingCrystal = load(() => import("../components/LivingCrystal"));
+const TheMonolith = load(() => import("../components/TheMonolith"));
 
 // The single source of truth for the gallery, its order, and every detail route.
 export const animations = [
@@ -56,9 +42,6 @@ export const animations = [
     accent: "#e8c17a",
     accentRgb: "232 193 122",
     component: EndlessLightTunnel,
-    variantComponent: EndlessLightTunnel3D,
-    variantLabel: "ChatGPT",
-    variantBLabel: "Claude",
     controls: [
       { key: "frames", label: "Architectural frames", min: 24, max: 64, step: 4, default: 56 },
       { key: "dust", label: "Rushing particles", min: 40, max: 140, step: 10, default: 120 },
@@ -67,16 +50,13 @@ export const animations = [
   },
   {
     id: "bioluminescent-tide",
-    provider: "chatgpt",
+    provider: "claude",
     title: "Bioluminescent Tide",
     category: "Ocean / Organism",
     description: "Glowing plankton wash and swirl with the tide, lighting up dark water in trails of blue-green bioluminescence.",
     accent: "#38ffd1",
     accentRgb: "56 255 209",
-    component: BioluminescentTide,
-    variantComponent: BioluminescentTide3D,
-    variantLabel: "ChatGPT",
-    variantBLabel: "Claude",
+    component: BioluminescentTide3D,
     controls: [
       { key: "density", label: "Plankton density", min: 15, max: 70, step: 5, default: 60 },
       { key: "hue", label: "Glow hue", min: 0, max: 360, step: 5, default: 166 },
@@ -91,16 +71,12 @@ export const animations = [
     accent: "#ff6f91",
     accentRgb: "255 111 145",
     component: PrismPulse,
-    variantComponent: PrismPulse3D,
-    variantLabel: "ChatGPT",
-    variantBLabel: "Claude",
-    chatControls: [
+    controls: [
       { key: "die", label: "Crystal geometry", min: 0, max: 5, step: 1, default: 2, values: ["D4", "D6", "D8", "D10", "D12", "D20"] },
       { key: "dispersion", label: "Spectral dispersion", min: 0, max: 100, step: 1, default: 68, suffix: "%" },
       { key: "light", label: "Incident light", min: 20, max: 100, step: 1, default: 76, suffix: "%" },
       { key: "motes", label: "Photon motes", min: 12, max: 72, step: 4, default: 44 },
     ],
-    claudeControls: [{ key: "planes", label: "Prism planes", min: 4, max: 12, step: 1, default: 12 }],
   },
   {
     id: "luminous-mycelium",
@@ -111,23 +87,28 @@ export const animations = [
     accent: "#9dff82",
     accentRgb: "157 255 130",
     component: LuminousMycelium,
-    variantComponent: LuminousMycelium3D,
-    variantLabel: "ChatGPT",
-    variantBLabel: "Claude",
+    controls: [{ key: "nodes", label: "Network nodes", min: 4, max: 144, step: 4, default: 64 }],
+  },
+  {
+    id: "luminous-signal",
+    provider: "claude",
+    title: "Luminous Signal",
+    category: "Biology / Signal",
+    description: "Real pulses of signal move along each connection, waking luminous nodes as they travel, the way a fungal network actually communicates.",
+    accent: "#9dff82",
+    accentRgb: "157 255 130",
+    component: LuminousMycelium3D,
     controls: [{ key: "nodes", label: "Network nodes", min: 4, max: 144, step: 4, default: 64 }],
   },
   {
     id: "glass-harmonics",
-    provider: "chatgpt",
+    provider: "claude",
     title: "Orbital Halos",
     category: "Geometry / Levitation",
     description: "Translucent luminous rings drift, precess, and gather into a weightless field of suspended orbital geometry.",
     accent: "#78e9ff",
     accentRgb: "120 233 255",
-    component: GlassHarmonics,
-    variantComponent: GlassHarmonics3D,
-    variantLabel: "ChatGPT",
-    variantBLabel: "Claude",
+    component: GlassHarmonics3D,
     controls: [{ key: "plates", label: "Floating rings", min: 6, max: 24, step: 1, default: 16 }],
   },
   {
@@ -139,11 +120,7 @@ export const animations = [
     accent: "#ffc978",
     accentRgb: "255 201 120",
     component: DreamingCity,
-    variantComponent: DreamingCity3D,
-    variantLabel: "ChatGPT",
-    variantBLabel: "Claude",
-    chatControls: [{ key: "towers", label: "Dreaming towers", min: 20, max: 400, step: 10, default: 140 }],
-    claudeControls: [{ key: "towers", label: "Dreaming towers", min: 12, max: 120, step: 4, default: 60 }],
+    controls: [{ key: "towers", label: "Dreaming towers", min: 20, max: 400, step: 10, default: 140 }],
   },
   {
     id: "cathedral-of-light",
@@ -153,9 +130,6 @@ export const animations = [
     description: "A monumental gold-line cathedral assembles chamber by chamber from advancing arches, massive pillars, volumetric shafts, and suspended dust.",
     accent: "#e2b665", accentRgb: "226 182 101",
     component: CathedralOfLight,
-    variantComponent: CathedralAscent3D,
-    variantLabel: "ChatGPT",
-    variantBLabel: "Claude",
     controls: [
       { key: "arches", label: "Endless arches", min: 12, max: 34, step: 2, default: 30 },
       { key: "dust", label: "Sacred dust", min: 30, max: 130, step: 10, default: 110 },
@@ -163,15 +137,12 @@ export const animations = [
   },
   {
     id: "infinite-data-ocean",
-    provider: "chatgpt",
+    provider: "claude",
     title: "Infinite Data Ocean",
     category: "Data / Seascape",
     description: "An ocean constructed from breathing signal lines, shimmering vertices, bottomless reflections, and periodic traveling pulses.",
     accent: "#5ef3ff", accentRgb: "94 243 255",
-    component: InfiniteDataOcean,
-    variantComponent: InfiniteDataOcean3D,
-    variantLabel: "ChatGPT",
-    variantBLabel: "Claude",
+    component: InfiniteDataOcean3D,
     controls: [
       { key: "lines", label: "Wave lines", min: 16, max: 48, step: 4, default: 42 },
       { key: "vertices", label: "Glowing vertices", min: 50, max: 180, step: 10, default: 160 },
@@ -179,15 +150,12 @@ export const animations = [
   },
   {
     id: "neural-network-universe",
-    provider: "chatgpt",
+    provider: "claude",
     title: "Neural Network Universe",
     category: "Intelligence / Cosmos",
     description: "A responsive universe of living nodes and temporary synapses bends toward the pointer and propagates an activation wave when clicked.",
     accent: "#b286ff", accentRgb: "178 134 255",
-    component: NeuralNetworkUniverse,
-    variantComponent: NeuralNetworkUniverse3D,
-    variantLabel: "ChatGPT",
-    variantBLabel: "Claude",
+    component: NeuralNetworkUniverse3D,
     controls: [
       { key: "nodes", label: "Thinking nodes", min: 50, max: 170, step: 10, default: 150 },
       { key: "pulseRate", label: "Signal activity", min: 0.2, max: 3, step: 0.1, default: 0.9, suffix: "×" },
@@ -195,15 +163,12 @@ export const animations = [
   },
   {
     id: "mechanical-planetarium",
-    provider: "chatgpt",
+    provider: "claude",
     title: "Mechanical Planetarium",
     category: "Clockwork / Astronomy",
     description: "Brass rings, independent planetary orbits, guide lines, and a giant turning gear form an observatory from three centuries ahead.",
     accent: "#e0b56a", accentRgb: "224 181 106",
-    component: MechanicalPlanetarium,
-    variantComponent: MechanicalPlanetarium3D,
-    variantLabel: "ChatGPT",
-    variantBLabel: "Claude",
+    component: MechanicalPlanetarium3D,
     controls: [
       { key: "rings", label: "Orrery rings", min: 1, max: 8, step: 1, default: 8 },
       { key: "planets", label: "Orbiting bodies", min: 4, max: 11, step: 1, default: 9 },
@@ -213,46 +178,37 @@ export const animations = [
     id: "infinite-library",
     provider: "chatgpt",
     title: "Infinite Library",
-    category: "Archive / Perspective",
-    description: "Dense book-filled galleries repeat beneath timber vaults while invisible reading lamps cast warm pools of light down an endless aisle.",
-    accent: "#e0ba79", accentRgb: "224 186 121",
+    category: "Archive / Endless",
+    description: "Book-filled galleries, timber vaults, and pools of reading light repeat beyond sight.",
+    accent: "#e4b56f", accentRgb: "228 181 111",
     component: InfiniteLibrary,
-    variantComponent: InfiniteLibrary3D,
-    variantLabel: "ChatGPT",
-    variantBLabel: "Claude",
     controls: [
       { key: "shelves", label: "Near shelf bays", min: 10, max: 130, step: 10, default: 90 },
       { key: "books", label: "Books on the shelves", min: 200, max: 14000, step: 200, default: 6000 },
     ],
   },
   {
-    id: "blueprint-world",
-    provider: "chatgpt",
-    title: "Blueprint World",
-    category: "Engineering / Construction",
-    description: "Animated SVG drafting lines, measurements, labels, and rotating wireframe blocks continuously construct and erase an impossible structure.",
-    accent: "#78e8ff", accentRgb: "120 232 255",
-    component: BlueprintWorld,
-    variantComponent: BlueprintWorld3D,
-    variantLabel: "ChatGPT",
-    variantBLabel: "Claude",
+    id: "infinite-corridor",
+    provider: "claude",
+    title: "Infinite Corridor",
+    category: "Archive / Perspective",
+    description: "Full shelving bays under a vaulted, gold-ribbed ceiling forty feet up, thousands of books threaded through the shelves, and a much longer silhouette fading into the fog far beyond where the detail stops.",
+    accent: "#e0ba79", accentRgb: "224 186 121",
+    component: InfiniteLibrary3D,
     controls: [
-      { key: "measurements", label: "Measurements", min: 6, max: 18, step: 2, default: 16 },
-      { key: "blocks", label: "Constructing blocks", min: 6, max: 20, step: 2, default: 18 },
+      { key: "shelves", label: "Near shelf bays", min: 10, max: 130, step: 10, default: 90 },
+      { key: "books", label: "Books on the shelves", min: 200, max: 14000, step: 200, default: 6000 },
     ],
   },
   {
     id: "sakura-fall",
-    provider: "chatgpt",
+    provider: "claude",
     title: "Sakura Fall",
     category: "Nature / Hanami",
     description: "A moonlit Japanese garden where cherry blossoms drift past a vermilion torii, glowing lanterns, and their reflections in black water.",
     accent: "#ff9fc9",
     accentRgb: "255 159 201",
-    component: SakuraFall,
-    variantComponent: SakuraFallClaude,
-    variantLabel: "ChatGPT",
-    variantBLabel: "Claude",
+    component: SakuraFallClaude,
     controls: [
       { key: "petals", label: "Falling petals", min: 30, max: 150, step: 10, default: 110 },
       { key: "breeze", label: "Evening breeze", min: 0.4, max: 2, step: 0.1, default: 1 },
@@ -267,29 +223,9 @@ export const animations = [
     accent: "#f1d5ad",
     accentRgb: "241 213 173",
     component: OrigamiFold,
-    variantComponent: ImpossibleOrigamiCathedralClaude,
-    variantLabel: "ChatGPT",
-    variantBLabel: "Claude",
     controls: [
       { key: "facets", label: "Floating forms", min: 6, max: 18, step: 1, default: 14 },
       { key: "flow", label: "Paper current", min: 0.3, max: 1.8, step: 0.1, default: 0.8 },
-    ],
-  },
-  {
-    id: "circuit-pulse",
-    provider: "chatgpt",
-    title: "Circuit Pulse",
-    category: "Technology / Signal",
-    description: "A reflective circuit-board city routes luminous signals from a living central processor into rising data towers.",
-    accent: "#55ffc0",
-    accentRgb: "85 255 192",
-    component: CircuitPulse,
-    variantComponent: CircuitPulseClaude,
-    variantLabel: "ChatGPT",
-    variantBLabel: "Claude",
-    controls: [
-      { key: "pulses", label: "Traveling signals", min: 6, max: 30, step: 2, default: 24 },
-      { key: "branches", label: "Circuit branches", min: 12, max: 32, step: 2, default: 26 },
     ],
   },
   {
@@ -320,6 +256,9 @@ export const animations = [
     accent: "#f0c986",
     accentRgb: "240 201 134",
     component: ImpossibleOrigamiCathedralAdvanced,
+    variantComponent: ImpossibleOrigamiCathedralClaude,
+    variantLabel: "ChatGPT",
+    variantBLabel: "Claude",
     controls: [
       { key: "foldComplexity", label: "Fold complexity", min: 40, max: 100, step: 5, default: 78, suffix: "%" },
       { key: "paperGlow", label: "Internal paper light", min: 20, max: 150, step: 5, default: 92, suffix: "%" },

@@ -2,7 +2,7 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
-// Ports the drag-orbit feel from components_chat/MechanicalSolarSystem.jsx: unclamped yaw
+// Ports the drag-orbit feel from components/MechanicalSolarSystem.jsx: unclamped yaw
 // accumulation, clamped pitch, and a click/drag threshold so a tap doesn't register as a drag.
 export function createDragOrbit(host, {
   yawSpeed = 0.004,
