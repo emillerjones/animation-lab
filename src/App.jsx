@@ -8,16 +8,27 @@ function getAnimationId() {
   return match?.[1] ?? animations[0].id;
 }
 
+// The Gravity Museum illumination slider defaults to its max on mobile — phone screens
+// render noticeably darker, and that piece's lighting is already tuned as bright as it can
+// go on desktop before it starts blowing out, so mobile needs to start higher up the range
+// rather than just matching desktop's default.
+function resolveControlDefault(animation, control) {
+  if (animation.id === "gravity-museum" && control.key === "illumination" && isMobileViewport()) {
+    return control.max;
+  }
+  return control.default;
+}
+
 function getDefaults(animation) {
   const genericControls = animation.controls ?? [];
   const genericDefaults = animation.variantComponent
     ? genericControls.flatMap((control) => [
-      [`chat__${control.key}`, control.default],
-      [`claude__${control.key}`, control.default],
+      [`chat__${control.key}`, resolveControlDefault(animation, control)],
+      [`claude__${control.key}`, resolveControlDefault(animation, control)],
     ])
-    : genericControls.map((control) => [control.key, control.default]);
+    : genericControls.map((control) => [control.key, resolveControlDefault(animation, control)]);
   const providerDefaults = [...(animation.chatControls ?? []), ...(animation.claudeControls ?? [])]
-    .map((control) => [control.key, control.default]);
+    .map((control) => [control.key, resolveControlDefault(animation, control)]);
   return {
     speed: 1,
     ...Object.fromEntries([...genericDefaults, ...providerDefaults]),
