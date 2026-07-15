@@ -280,7 +280,16 @@ function useMuseumAssets() {
           emissiveIntensity: 4.5,
         }),
         trim: new THREE.MeshStandardMaterial({ map: bronzeMap, bumpMap: bronzeMap, bumpScale: 0.025, color: "#e2b875", roughness: 0.27, metalness: 0.82, emissive: "#5a2c0d", emissiveIntensity: 0.12 }),
-        back: new THREE.MeshStandardMaterial({ map: stoneMap, bumpMap: stoneMap, bumpScale: 0.08, color: "#7f8783", roughness: 0.5, metalness: 0.42 }),
+        back: new THREE.MeshStandardMaterial({
+          map: stoneMap,
+          bumpMap: stoneMap,
+          bumpScale: 0.08,
+          color: "#aaa99d",
+          roughness: 0.5,
+          metalness: 0.42,
+          emissive: "#8f6840",
+          emissiveIntensity: 0.65,
+        }),
         hub: new THREE.MeshStandardMaterial({ map: steelMap, bumpMap: steelMap, bumpScale: 0.02, color: "#596264", roughness: 0.27, metalness: 0.88 }),
       },
       textures: [bronzeMap, steelMap, woodMap, stoneMap, ceramicMap],
@@ -1295,6 +1304,19 @@ function GalleryShell({ speed, materials }) {
           <circleGeometry args={[GALLERY_HALF_WIDTH, 96]} />
           <primitive object={materials.back} attach="material" />
         </mesh>
+        {[-5.2, 0, 5.2].map((x, index) => (
+          <pointLight
+            key={x}
+            position={[x, index === 1 ? 1.4 : -1.2, 1.1]}
+            color={index === 1 ? "#ffe3b0" : "#d7b07a"}
+            intensity={index === 1 ? 11 : 6}
+            distance={30}
+            decay={1.9}
+            castShadow={index === 1}
+            shadow-mapSize={[512, 512]}
+            shadow-bias={-0.0015}
+          />
+        ))}
         {[2.3, 5.1, 8.1].map((radius) => (
           <mesh key={radius} position={[0, 0, 0.06]}>
             <torusGeometry args={[radius, 0.12, 8, 80]} />
