@@ -214,7 +214,7 @@ export const animations = [
     provider: "chatgpt",
     title: "Infinite Library",
     category: "Archive / Perspective",
-    description: "Repeating shelves glide toward the viewer through floating lamps and dust while wandering books quietly return themselves.",
+    description: "Dense book-filled galleries repeat beneath timber vaults while invisible reading lamps cast warm pools of light down an endless aisle.",
     accent: "#e0ba79", accentRgb: "224 186 121",
     component: InfiniteLibrary,
     variantComponent: InfiniteLibrary3D,
