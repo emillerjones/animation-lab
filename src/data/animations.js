@@ -87,7 +87,7 @@ export const animations = [
     accent: "#9dff82",
     accentRgb: "157 255 130",
     component: LuminousMycelium,
-    controls: [{ key: "mushrooms", label: "Mushrooms", min: 6, max: 30, step: 1, default: 14 }],
+    controls: [{ key: "mushrooms", label: "Mushrooms", min: 10, max: 10000, step: 10, default: 400 }],
   },
   {
     id: "luminous-signal",
