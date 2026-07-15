@@ -19,7 +19,8 @@ import { getProject } from "@theatre/core";
 import { acceleratedRaycast, computeBoundsTree } from "three-mesh-bvh";
 import * as THREE from "three/webgpu";
 import { WebGLRenderer } from "three";
-import { WebGLPathTracer } from "three-gpu-pathtracer";
+import { FullScreenQuad } from "three/examples/jsm/postprocessing/Pass.js";
+import { DenoiseMaterial, WebGLPathTracer } from "three-gpu-pathtracer";
 import useDragOrbit from "../hooks/useDragOrbit";
 import { WEBGL_DPR } from "../rendering/quality";
 import "./GravityMuseum.css";
@@ -120,7 +121,7 @@ function makeSurfaceTexture(kind, colors, repeat = [3, 3]) {
   canvas.width = 512;
   canvas.height = 512;
   const context = canvas.getContext("2d");
-  const gradient = context.createLinearGradient(0, 0, kind === "metal" ? 0 : 512, 512);
+  const gradient = context.createLinearGradient(0, 0, kind === "metal" || kind === "brushed-vertical" ? 0 : 512, 512);
   colors.forEach((color, index) => gradient.addColorStop(index / (colors.length - 1), color));
   context.fillStyle = gradient;
   context.fillRect(0, 0, 512, 512);
@@ -151,6 +152,62 @@ function makeSurfaceTexture(kind, colors, repeat = [3, 3]) {
       context.strokeStyle = `rgba(42, 46, 45, ${0.08 + seeded(vein, 513) * 0.18})`;
       context.lineWidth = 2 + seeded(vein, 514) * 7;
       context.stroke();
+    }
+  } else if (kind === "brushed-vertical") {
+    // Same brushed-metal idea as "metal" below, but rotated: streaks run along canvas Y,
+    // which maps to V on a cylinder (its length axis). Wrapped around the drum that reads
+    // as grain running front-to-back — converging toward the vanishing point like real
+    // machined tube — instead of rings around each circumference, which is what the
+    // horizontal version looks like once wrapped around something long and round.
+    for (let line = 0; line < 92; line += 1) {
+      const x = seeded(line, 601) * 512;
+      const y = seeded(line, 602) * 180 - 40;
+      context.strokeStyle = `rgba(255, 246, 222, ${0.025 + seeded(line, 603) * 0.11})`;
+      context.lineWidth = 0.5 + seeded(line, 604) * 1.6;
+      context.beginPath();
+      context.moveTo(x, y);
+      context.lineTo(x + (seeded(line, 606) - 0.5) * 2, y + 280 + seeded(line, 605) * 260);
+      context.stroke();
+    }
+    // A handful of soft dark patches break up the otherwise-uniform grain — worn/oxidized
+    // patina rather than a flawless repeating brush pattern.
+    for (let patch = 0; patch < 10; patch += 1) {
+      const px = seeded(patch, 611) * 512;
+      const py = seeded(patch, 612) * 512;
+      const pr = 40 + seeded(patch, 613) * 90;
+      const patchGradient = context.createRadialGradient(px, py, 0, px, py, pr);
+      patchGradient.addColorStop(0, `rgba(20, 22, 22, ${0.05 + seeded(patch, 614) * 0.08})`);
+      patchGradient.addColorStop(1, "rgba(20, 22, 22, 0)");
+      context.fillStyle = patchGradient;
+      context.fillRect(px - pr, py - pr, pr * 2, pr * 2);
+    }
+  } else if (kind === "turned-metal") {
+    // Concentric arcs centered on the canvas — CircleGeometry's UV is a plain orthographic
+    // projection of local x/y, so a ring centered on the texture lands centered on the
+    // physical disc too. Reads as a lathe-turned/spun-metal finish, distinct from the
+    // drum wall's lengthwise brushing.
+    const cx = 256;
+    const cy = 256;
+    for (let ring = 0; ring < 130; ring += 1) {
+      const r = 6 + ring * 2.8 + seeded(ring, 701) * 2;
+      if (r > 362) break;
+      context.strokeStyle = `rgba(255, 250, 235, ${0.02 + seeded(ring, 702) * 0.1})`;
+      context.lineWidth = 0.6 + seeded(ring, 703) * 2;
+      context.beginPath();
+      context.arc(cx, cy, r, 0, Math.PI * 2);
+      context.stroke();
+    }
+    for (let patch = 0; patch < 6; patch += 1) {
+      const angle = seeded(patch, 711) * Math.PI * 2;
+      const dist = seeded(patch, 712) * 220;
+      const px = cx + Math.cos(angle) * dist;
+      const py = cy + Math.sin(angle) * dist;
+      const pr = 50 + seeded(patch, 713) * 100;
+      const patchGradient = context.createRadialGradient(px, py, 0, px, py, pr);
+      patchGradient.addColorStop(0, `rgba(15, 16, 16, ${0.05 + seeded(patch, 714) * 0.07})`);
+      patchGradient.addColorStop(1, "rgba(15, 16, 16, 0)");
+      context.fillStyle = patchGradient;
+      context.fillRect(px - pr, py - pr, pr * 2, pr * 2);
     }
   } else {
     // Long brushed streaks read as machining marks under moving highlights, not TV noise.
@@ -202,6 +259,11 @@ function useMuseumAssets() {
     const woodMap = makeSurfaceTexture("wood", ["#3a1d0d", "#8b542a", "#4c2813"], [2, 5]);
     const stoneMap = makeSurfaceTexture("stone", ["#4c504d", "#96978f", "#626661"], [3, 3]);
     const ceramicMap = makeSurfaceTexture("stone", ["#bdb5a6", "#f0e6d1", "#cbc0ab"], [2, 2]);
+    // Repeat [8, 1]: 8 tiles around the circumference, but exactly 1 (no seam) along the
+    // length — a repeat seam running the depth of the drum would break the illusion of one
+    // continuous corridor stretching back to the plate.
+    const drumWallMap = makeSurfaceTexture("brushed-vertical", ["#494f51", "#a7afb1", "#5c6365"], [8, 1]);
+    const backPlateMap = makeSurfaceTexture("turned-metal", ["#565c5e", "#91999b", "#6b7274"], [1, 1]);
 
     const metal = new THREE.MeshStandardMaterial({
       map: bronzeMap,
@@ -267,7 +329,7 @@ function useMuseumAssets() {
       materials: [metal, glass, marble, stone, dice],
       backgroundMaterial,
       shellMaterials: {
-        drum: new THREE.MeshStandardMaterial({ map: steelMap, bumpMap: steelMap, bumpScale: 0.018, color: "#c4cbca", roughness: 0.3, metalness: 0.74 }),
+        drum: new THREE.MeshStandardMaterial({ map: drumWallMap, bumpMap: drumWallMap, bumpScale: 0.022, color: "#c4cbca", roughness: 0.3, metalness: 0.74, side: THREE.BackSide }),
         ribs: new THREE.MeshStandardMaterial({ map: woodMap, bumpMap: woodMap, bumpScale: 0.065, color: "#b77d42", roughness: 0.42, metalness: 0.28 }),
         luminousRib: new THREE.MeshStandardMaterial({
           map: ceramicMap,
@@ -281,12 +343,12 @@ function useMuseumAssets() {
         }),
         trim: new THREE.MeshStandardMaterial({ map: bronzeMap, bumpMap: bronzeMap, bumpScale: 0.025, color: "#e2b875", roughness: 0.27, metalness: 0.82, emissive: "#5a2c0d", emissiveIntensity: 0.12 }),
         back: new THREE.MeshStandardMaterial({
-          map: steelMap,
-          bumpMap: steelMap,
-          bumpScale: 0.045,
+          map: backPlateMap,
+          bumpMap: backPlateMap,
+          bumpScale: 0.03,
           color: "#7a8285",
-          roughness: 0.48,
-          metalness: 0.42,
+          roughness: 0.42,
+          metalness: 0.5,
         }),
         hub: new THREE.MeshStandardMaterial({
           map: steelMap,
@@ -299,7 +361,7 @@ function useMuseumAssets() {
           emissiveIntensity: 0.55,
         }),
       },
-      textures: [bronzeMap, steelMap, woodMap, stoneMap, ceramicMap],
+      textures: [bronzeMap, steelMap, woodMap, stoneMap, ceramicMap, drumWallMap, backPlateMap],
     };
   }, []);
 
@@ -1098,12 +1160,35 @@ function PathTracingController({ enabled }) {
     tracer.dynamicLowRes = true;
     tracer.lowResScale = 0.3;
     tracer.minSamples = 2;
+    tracer.fadeDuration = 0;
     tracer.rasterizeScene = true;
+
+    const denoiseMaterial = new DenoiseMaterial({
+      sigma: 4.2,
+      kSigma: 0.82,
+      threshold: 0.065,
+    });
+    const denoiseQuad = new FullScreenQuad(denoiseMaterial);
+    tracer.renderToCanvasCallback = (target, renderer) => {
+      const samples = Math.max(1, tracer.samples);
+      const convergence = THREE.MathUtils.clamp(Math.log2(samples) / 7, 0, 1);
+      denoiseMaterial.map = target.texture;
+      // Hide early Monte Carlo noise, then steadily return fine grain and dice detail.
+      denoiseMaterial.sigma = THREE.MathUtils.lerp(4.2, 1.15, convergence);
+      denoiseMaterial.kSigma = THREE.MathUtils.lerp(0.82, 0.7, convergence);
+      denoiseMaterial.threshold = THREE.MathUtils.lerp(0.065, 0.018, convergence);
+      const previousAutoClear = renderer.autoClear;
+      renderer.autoClear = false;
+      denoiseQuad.render(renderer);
+      renderer.autoClear = previousAutoClear;
+    };
     tracer.setScene(scene, camera);
     tracerRef.current = tracer;
     return () => {
       tracerRef.current = null;
       tracer.dispose();
+      denoiseQuad.dispose();
+      denoiseMaterial.dispose();
     };
   }, [camera, enabled, gl, scene]);
 
@@ -1269,27 +1354,36 @@ function GalleryShell({ speed, materials }) {
             position={[Math.sin(angle) * radius, Math.cos(angle) * radius, -GALLERY_DEPTH * 0.5 + 6]}
             rotation={[0, 0, -angle]}
           >
+            {/* Collision-only now — the visible wall is the single smooth cylinder below.
+                24 flat facets is plenty for tumbling physics to feel right; it was only the
+                visible faceting that read as wrong. */}
             <CuboidCollider args={[panelWidth * 0.5, 0.24, GALLERY_DEPTH * 0.5]} friction={1.15} restitution={0.12} />
-            <mesh receiveShadow>
-              <boxGeometry args={[panelWidth, 0.38, GALLERY_DEPTH]} />
-              <primitive object={materials.drum} attach="material" />
-            </mesh>
             {index % 4 === 0 && (
               <group position={[0, -0.62, 0]}>
-                <CuboidCollider args={[0.62, 0.34, GALLERY_DEPTH * 0.47]} friction={1.35} />
+                {/* Full GALLERY_DEPTH, not a shrunk fraction of it — the rib is centered on
+                    the same z as the plain wall segments, so this is the exact length that
+                    makes both ends flush: front lands exactly on the z=6 boundary the floor/
+                    walls use, back overlaps very slightly into the back plate instead of
+                    stopping short of it. */}
+                <CuboidCollider args={[0.62, 0.34, GALLERY_DEPTH * 0.5]} friction={1.35} />
                 <mesh castShadow receiveShadow>
-                  <boxGeometry args={[1.24, 0.68, GALLERY_DEPTH * 0.94]} />
+                  <boxGeometry args={[1.24, 0.68, GALLERY_DEPTH]} />
                   {/* Two lit ribs, opposite each other (index 0 and index 12, 180 degrees
                       apart) — one alone read as an isolated accent; a matching rib on the
                       far side of the drum makes the light feel like it belongs to the room. */}
                   <primitive object={index === 0 || index === 12 ? materials.luminousRib : materials.ribs} attach="material" />
                 </mesh>
-                {(index === 0 || index === 12) && [-18, 0, 18].map((z, lightIndex) => (
+                {/* The rib runs almost the full depth (tip lands ~1.7 units short of the
+                    back plate), but the old back-side light sat at z=-18 — still ~12 units
+                    short of that tip, and too dim at that range to reach the plate at all.
+                    Moved to z=-27, right near the actual tip, so the rib's light visibly
+                    lands on the plate instead of stopping partway down the tunnel. */}
+                {(index === 0 || index === 12) && [-27, 0, 20].map((z, lightIndex) => (
                   <pointLight
                     key={z}
                     position={[0, -0.9, z]}
                     color={lightIndex === 1 ? "#fff0c2" : "#ffc46b"}
-                    intensity={lightIndex === 1 ? 28 : 18}
+                    intensity={lightIndex === 1 ? 28 : lightIndex === 0 ? 26 : 18}
                     distance={24}
                     decay={1.8}
                     castShadow={lightIndex === 1}
@@ -1302,6 +1396,12 @@ function GalleryShell({ speed, materials }) {
           </group>
         );
       })}
+      {/* One smooth cylinder for the visible wall, decoupled from the 24 collision facets
+          above — a true round drum instead of a 24-sided polygon reading as faceted. */}
+      <mesh receiveShadow position={[0, 0, -GALLERY_DEPTH * 0.5 + 6]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[GALLERY_HALF_WIDTH, GALLERY_HALF_WIDTH, GALLERY_DEPTH, 128, 1, true]} />
+        <primitive object={materials.drum} attach="material" />
+      </mesh>
       {[-3, -22, -41].map((z) => (
         <mesh key={z} position={[0, 0, z]}>
           <torusGeometry args={[GALLERY_HALF_WIDTH - 0.35, 0.18, 8, 96]} />
@@ -1322,9 +1422,9 @@ function GalleryShell({ speed, materials }) {
             key={x}
             position={[x, index === 1 ? 1.4 : -1.2, 1.1]}
             color={index === 1 ? "#ffe3b0" : "#d7b07a"}
-            intensity={index === 1 ? 34 : 18}
-            distance={32}
-            decay={1.65}
+            intensity={index === 1 ? 28 : 15}
+            distance={24}
+            decay={1.8}
             castShadow={index === 1}
             shadow-mapSize={[512, 512]}
             shadow-bias={-0.0015}
@@ -1345,7 +1445,7 @@ function GalleryShell({ speed, materials }) {
         {/* A real light, not just an emissive texture — tuned to reach the walls (radius
             ~10.8) so the hub actually contributes to the room instead of only glowing
             itself. This is the fix for the drum interior reading as generally too dark. */}
-        <pointLight position={[0, 0, 0.6]} color="#f4ecd6" intensity={30} distance={42} decay={1.6} />
+        <pointLight position={[0, 0, 0.6]} color="#f4ecd6" intensity={20} distance={26} decay={1.8} />
       </group>
     </RigidBody>
   );
@@ -1462,14 +1562,14 @@ function MuseumScene({ settings, interactionRef, onStage }) {
   return (
     <>
       <color attach="background" args={["#343a3c"]} />
-      <ambientLight color="#fff4df" intensity={0.025} />
-      <hemisphereLight args={["#dce8ea", "#403a35", 0.045]} />
+      {/* Path tracing gets its overall brighter look mostly for free, from real bounce
+          light filling in everything the direct lights don't reach directly. Rasterization
+          has no bounce light at all, so ambient/hemisphere fill has to stand in for it —
+          bumped well past a "just visible" fill level to approximate that GI brightness. */}
+      <ambientLight color="#fff4df" intensity={0.14} />
+      <hemisphereLight args={["#dce8ea", "#403a35", 0.18]} />
       <GalleryKeyLight />
       <ImpactSparks impactRef={impactRef} amount={sparks} impactEnergy={impactEnergy} speed={speed} />
-      <mesh position={[GALLERY_X - 5.5, 9.8, 4.5]} rotation={[0.2, 0, -0.18]}>
-        <boxGeometry args={[4.8, 0.28, 1.2]} />
-        <meshStandardMaterial color="#f4e7cb" emissive="#ffe8b8" emissiveIntensity={1.8} toneMapped={false} />
-      </mesh>
 
       <Physics gravity={[0, 0, 0]} timeStep="vary" interpolate paused={Boolean(settings.pathTracing)}>
         <GravityDirector
