@@ -282,6 +282,7 @@ export const animations = [
       { key: "artifactDensity", label: "Number of objects", min: 24, max: 140, step: 4, default: 76 },
       { key: "lightObjects", label: "Light-emitting objects", min: 0, max: 8, step: 1, default: 3 },
       { key: "physicalSand", label: "Physical sand grains", min: 0, max: 6000, step: 250, default: 1500 },
+      { key: "illumination", label: "Overall illumination", min: 60, max: 220, step: 10, default: 100, suffix: "%" },
       { key: "pathTracing", label: "Path tracing", type: "toggle", default: false },
     ],
   },

@@ -1144,6 +1144,22 @@ function PhysicalWater() {
   );
 }
 
+// A single slider standing in for "how bright should this whole scene be" — scales
+// whatever base exposure the active renderer (WebGPU or the path tracer) already set,
+// rather than touching every individual light. Captures that base once per renderer
+// instance so repeated re-renders don't compound the multiplier onto itself.
+function ExposureController({ illumination }) {
+  const { gl } = useThree();
+  const baseExposureRef = useRef(null);
+  if (baseExposureRef.current === null) baseExposureRef.current = gl.toneMappingExposure;
+
+  useEffect(() => {
+    gl.toneMappingExposure = baseExposureRef.current * (illumination / 100);
+  }, [gl, illumination]);
+
+  return null;
+}
+
 function PathTracingController({ enabled }) {
   const { gl, scene, camera } = useThree();
   const tracerRef = useRef(null);
@@ -1568,6 +1584,7 @@ function MuseumScene({ settings, interactionRef, onStage }) {
           bumped well past a "just visible" fill level to approximate that GI brightness. */}
       <ambientLight color="#fff4df" intensity={0.14} />
       <hemisphereLight args={["#dce8ea", "#403a35", 0.18]} />
+      <ExposureController illumination={settings.illumination ?? 100} />
       <GalleryKeyLight />
       <ImpactSparks impactRef={impactRef} amount={sparks} impactEnergy={impactEnergy} speed={speed} />
 
