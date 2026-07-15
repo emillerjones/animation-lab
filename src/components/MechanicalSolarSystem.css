@@ -26,16 +26,6 @@
   height: 100%;
 }
 
-.mechanical-solar-system__vignette {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 61% 48%, transparent 13%, rgb(1 1 1 / 6%) 43%, rgb(0 0 0 / 67%) 100%),
-    linear-gradient(90deg, rgb(0 0 0 / 82%) 0%, rgb(0 0 0 / 42%) 24%, transparent 50%, transparent 84%, rgb(0 0 0 / 38%) 100%),
-    linear-gradient(0deg, rgb(0 0 0 / 48%), transparent 28%, transparent 78%, rgb(0 0 0 / 31%));
-}
 
 .mechanical-solar-system__grain {
   position: absolute;
@@ -74,7 +64,7 @@
   margin: 0;
   max-width: 10ch;
   color: #f4ead7;
-  font: 300 clamp(3.5rem, 6.2vw, 7.6rem)/0.88 Inter, ui-sans-serif, system-ui, sans-serif;
+  font: 300 clamp(2.52rem, 4.5vw, 5.47rem)/0.88 Inter, ui-sans-serif, system-ui, sans-serif;
   letter-spacing: -0.075em;
   text-wrap: balance;
   text-shadow: 0 2px 34px rgb(0 0 0 / 76%);
@@ -231,7 +221,7 @@
   }
 
   .mechanical-solar-system__copy h1 {
-    font-size: clamp(3rem, 12vw, 5.2rem);
+    font-size: clamp(2.16rem, 8.6vw, 3.74rem);
   }
 
   .mechanical-solar-system__copy span,

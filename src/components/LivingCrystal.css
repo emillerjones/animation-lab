@@ -15,7 +15,7 @@
   text-shadow: 0 2px 22px rgb(0 0 0 / 85%);
 }
 .living-crystal__copy.experiment-copy > p { margin: 0 0 15px; color: #9fdbff; font-size: 9px; letter-spacing: .28em; text-transform: uppercase; }
-.living-crystal__copy.experiment-copy h1 { margin: 0; color: #f4f8ff; font-size: clamp(46px, 5vw, 76px); font-weight: 350; letter-spacing: -.055em; line-height: .84; }
+.living-crystal__copy.experiment-copy h1 { margin: 0; color: #f4f8ff; font-size: clamp(34px, 3.6vw, 54px); font-weight: 350; letter-spacing: -.055em; line-height: .84; }
 .living-crystal__copy.experiment-copy > span { display: block; width: 100%; margin-top: 22px; color: rgb(236 245 255 / 68%); font-size: 13px; line-height: 1.7; }
 
 .living-crystal__legend {
@@ -70,7 +70,7 @@
 @media (max-width: 900px) {
   .living-crystal__legend { display: none; }
   .living-crystal__copy.experiment-copy { top: 9vh; left: 20px; width: min(330px, calc(100vw - 40px)); padding: 18px; }
-  .living-crystal__copy.experiment-copy h1 { font-size: clamp(42px, 13vw, 64px); }
+  .living-crystal__copy.experiment-copy h1 { font-size: clamp(30px, 9.4vw, 46px); }
   .living-crystal__hud { right: 20px; bottom: 20px; }
   .living-crystal__scroll-prompt { bottom: 24px; }
   .workspace--sidebar .animation-stage .living-crystal__copy.experiment-copy { left: 282px; width: min(320px, calc(100vw - 570px)); }

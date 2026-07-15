@@ -1,6 +1,6 @@
 import { Suspense, createContext, useContext, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { EffectComposer, Bloom, SMAA, Vignette } from "@react-three/postprocessing";
+import { EffectComposer, Bloom, SMAA } from "@react-three/postprocessing";
 import * as THREE from "three";
 import useDragOrbit from "../hooks/useDragOrbit";
 import { WEBGL_DPR, WEBGL_MSAA_SAMPLES } from "../rendering/quality";
@@ -55,7 +55,6 @@ export default function CanvasStage({
   orbitPitchLimits = [-0.55, 0.58],
   speed = 1,
   bloom,
-  vignette,
   extraEffects,
   shadows = false,
   children,
@@ -83,7 +82,6 @@ export default function CanvasStage({
                 intensity={bloom?.intensity ?? 1.1}
               />
               {extraEffects}
-              <Vignette eskil={false} offset={vignette?.offset ?? 0.25} darkness={vignette?.darkness ?? 0.9} />
               <SMAA />
             </EffectComposer>
           </Suspense>

@@ -22,7 +22,6 @@ const GravityMuseum = load(() => import("../components/GravityMuseum"));
 const MechanicalSolarSystem = load(() => import("../components/MechanicalSolarSystem"));
 const StormMadeOfGlass = load(() => import("../components/StormMadeOfGlass"));
 const CityThatBuildsItself = load(() => import("../components/CityThatBuildsItself"));
-const ColossusAwakens = load(() => import("../components/ColossusAwakens"));
 
 const SakuraFallClaude = load(() => import("../components/SakuraFall"));
 const ImpossibleOrigamiCathedralClaude = load(() => import("../components/ImpossibleOrigamiCathedral3D"));
@@ -30,6 +29,7 @@ const AlienDysonSwarm = load(() => import("../components/AlienDysonSwarm"));
 const ProceduralOcean = load(() => import("../components/ProceduralOcean"));
 const LivingCrystal = load(() => import("../components/LivingCrystal"));
 const TheMonolith = load(() => import("../components/TheMonolith"));
+const ThreadBuildsSystem = load(() => import("../components/ThreadBuildsSystem"));
 
 // The single source of truth for the gallery, its order, and every detail route.
 export const animations = [
@@ -72,7 +72,7 @@ export const animations = [
     accentRgb: "255 111 145",
     component: PrismPulse,
     controls: [
-      { key: "die", label: "Crystal geometry", min: 0, max: 5, step: 1, default: 2, values: ["D4", "D6", "D8", "D10", "D12", "D20"] },
+      { key: "die", label: "Crystal geometry", min: 0, max: 4, step: 1, default: 2, values: ["D4", "D6", "D8", "D12", "D20"] },
       { key: "dispersion", label: "Spectral dispersion", min: 0, max: 100, step: 1, default: 68, suffix: "%" },
       { key: "light", label: "Incident light", min: 20, max: 100, step: 1, default: 76, suffix: "%" },
       { key: "motes", label: "Photon motes", min: 12, max: 72, step: 4, default: 44 },
@@ -87,7 +87,7 @@ export const animations = [
     accent: "#9dff82",
     accentRgb: "157 255 130",
     component: LuminousMycelium,
-    controls: [{ key: "nodes", label: "Network nodes", min: 4, max: 144, step: 4, default: 64 }],
+    controls: [{ key: "mushrooms", label: "Mushrooms", min: 6, max: 30, step: 1, default: 14 }],
   },
   {
     id: "luminous-signal",
@@ -133,6 +133,7 @@ export const animations = [
     controls: [
       { key: "arches", label: "Endless arches", min: 12, max: 34, step: 2, default: 30 },
       { key: "dust", label: "Sacred dust", min: 30, max: 130, step: 10, default: 110 },
+      { key: "variant2", label: "Variant 2", type: "toggle", default: false },
     ],
   },
   {
@@ -278,11 +279,10 @@ export const animations = [
     accentRgb: "167 185 255",
     component: GravityMuseum,
     controls: [
-      { key: "artifactDensity", label: "Artifact density", min: 30, max: 100, step: 5, default: 72, suffix: "%" },
-      { key: "gravityForce", label: "Gravity force", min: 30, max: 180, step: 5, default: 100, suffix: "%" },
-      { key: "impactEnergy", label: "Impact energy", min: 20, max: 160, step: 5, default: 90, suffix: "%" },
-      { key: "sparks", label: "Impact particles", min: 10, max: 100, step: 5, default: 65, suffix: "%" },
-      { key: "disturbance", label: "Cursor disturbance", min: 0, max: 100, step: 5, default: 55, suffix: "%" },
+      { key: "artifactDensity", label: "Number of objects", min: 24, max: 140, step: 4, default: 76 },
+      { key: "lightObjects", label: "Light-emitting objects", min: 0, max: 8, step: 1, default: 3 },
+      { key: "physicalSand", label: "Physical sand grains", min: 0, max: 6000, step: 250, default: 1500 },
+      { key: "pathTracing", label: "Path tracing", type: "toggle", default: false },
     ],
   },
   {
@@ -340,24 +340,6 @@ export const animations = [
     ],
   },
   {
-    id: "colossus-awakens",
-    provider: "chatgpt",
-    collection: "advanced",
-    title: "The Colossus Awakens",
-    category: "Cinematic / Procedural Machine",
-    description: "An architectural machine rises beneath a reflective desert, studies the viewer through a living mechanical eye, and opens into an impossible internal world.",
-    accent: "#ff8247",
-    accentRgb: "255 130 71",
-    component: ColossusAwakens,
-    controls: [
-      { key: "awakeningRate", label: "Awakening rate", min: 0.3, max: 2, step: 0.1, default: 0.8, suffix: "×" },
-      { key: "sandDensity", label: "Metallic sand", min: 20, max: 100, step: 5, default: 72, suffix: "%" },
-      { key: "eyeEnergy", label: "Central eye energy", min: 20, max: 160, step: 5, default: 105, suffix: "%" },
-      { key: "mechanismDensity", label: "Mechanical density", min: 30, max: 100, step: 5, default: 82, suffix: "%" },
-      { key: "distortion", label: "Energy distortion", min: 0, max: 100, step: 5, default: 48, suffix: "%" },
-    ],
-  },
-  {
     id: "alien-dyson-swarm",
     provider: "claude",
     collection: "advanced",
@@ -368,8 +350,8 @@ export const animations = [
     accentRgb: "255 185 92",
     component: AlienDysonSwarm,
     controls: [
-      { key: "swarmDensity", label: "Swarm density", min: 20, max: 160, step: 10, default: 90 },
-      { key: "debrisDensity", label: "Debris density", min: 200, max: 3000, step: 100, default: 1600 },
+      { key: "swarmDensity", label: "Major structures", min: 4, max: 40, step: 2, default: 16 },
+      { key: "debrisDensity", label: "Small satellites", min: 2000, max: 300000, step: 2000, default: 40000 },
       { key: "starIntensity", label: "Star intensity", min: 40, max: 200, step: 5, default: 110, suffix: "%" },
       { key: "orbitSpeed", label: "Orbital rate", min: 0.1, max: 2, step: 0.1, default: 0.6, suffix: "×" },
       { key: "droneTraffic", label: "Drone traffic", min: 0, max: 40, step: 2, default: 16 },
@@ -427,6 +409,25 @@ export const animations = [
       { key: "coreEnergy", label: "Inner light", min: 20, max: 200, step: 5, default: 100, suffix: "%" },
       { key: "particleCount", label: "Released particles", min: 500, max: 5000, step: 500, default: 3000 },
       { key: "particleSpread", label: "Release spread", min: 0.4, max: 2, step: 0.1, default: 1, suffix: "×" },
+    ],
+  },
+  {
+    id: "thread-builds-system",
+    provider: "chatgpt",
+    collection: "advanced",
+    title: "The Thread Finds Its Center",
+    category: "Orbital Systems / Living Infrastructure",
+    description: "A stream of luminous matter gathers scattered records, folded forms, glass, and machinery into one calm orbital instrument.",
+    accent: "#d5a85b",
+    accentRgb: "213 168 91",
+    component: ThreadBuildsSystem,
+    controls: [
+      { key: "constructionRate", label: "Construction rate", min: 0.5, max: 2, step: 0.1, default: 1, suffix: "×" },
+      { key: "systemDensity", label: "Orbiting bodies", min: 35, max: 100, step: 5, default: 72, suffix: "%" },
+      { key: "particleDensity", label: "Particle density", min: 20, max: 100, step: 5, default: 78, suffix: "%" },
+      { key: "orbitRate", label: "Orbital rate", min: 0.2, max: 1.6, step: 0.1, default: 0.72, suffix: "×" },
+      { key: "coreEnergy", label: "Central light", min: 20, max: 140, step: 5, default: 76, suffix: "%" },
+      { key: "pointerInfluence", label: "Pointer influence", min: 0, max: 100, step: 5, default: 42, suffix: "%" },
     ],
   },
 ].map((animation, index) => ({ ...animation, index }));

@@ -671,7 +671,6 @@ export default function MechanicalSolarSystem({ settings = {} }) {
       aria-label="Interactive procedural mechanical solar system"
     >
       <canvas ref={canvasRef} className="mechanical-solar-system__canvas" />
-      <div className="mechanical-solar-system__vignette" aria-hidden="true" />
       <div className="mechanical-solar-system__grain" aria-hidden="true" />
 
       <div className="mechanical-solar-system__copy">

@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Edges, Line, RoundedBox } from "@react-three/drei";
 import { Bloom, EffectComposer, SMAA } from "@react-three/postprocessing";
@@ -215,14 +215,25 @@ function ProgressDriver({ progressRef, targetRef }) {
 }
 
 export default function TheMonolith({ settings = {} }) {
+  const sectionRef = useRef(null);
   const progressRef = useRef(0.18);
   const targetRef = useRef(0.18);
   const pulseRef = useRef(0);
 
-  const handleWheel = (event) => {
-    event.preventDefault();
-    targetRef.current = THREE.MathUtils.clamp(targetRef.current + event.deltaY * 0.00075, 0, 1);
-  };
+  // React attaches its synthetic onWheel listener as passive, so calling preventDefault
+  // from a JSX onWheel prop throws ("Unable to preventDefault inside passive event
+  // listener invocation") and silently fails to stop the page from scrolling underneath —
+  // a native listener with passive:false is the only way to actually block it.
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return undefined;
+    const handleWheel = (event) => {
+      event.preventDefault();
+      targetRef.current = THREE.MathUtils.clamp(targetRef.current + event.deltaY * 0.00075, 0, 1);
+    };
+    section.addEventListener("wheel", handleWheel, { passive: false });
+    return () => section.removeEventListener("wheel", handleWheel);
+  }, []);
 
   const awaken = () => {
     targetRef.current = 1;
@@ -230,7 +241,7 @@ export default function TheMonolith({ settings = {} }) {
   };
 
   return (
-    <section className="atmosphere monolith-experience" onWheel={handleWheel}>
+    <section className="atmosphere monolith-experience" ref={sectionRef}>
       <Canvas className="monolith-experience__canvas" dpr={WEBGL_DPR} camera={{ fov: 42, near: 0.1, far: 80, position: [0, 0.5, 11] }} gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }} onCreated={({ gl }) => { gl.outputColorSpace = THREE.SRGBColorSpace; gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.05; }}>
         <color attach="background" args={["#000000"]} />
         <fogExp2 attach="fog" args={["#000000", 0.035]} />

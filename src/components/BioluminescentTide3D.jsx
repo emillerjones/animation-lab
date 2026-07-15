@@ -46,8 +46,35 @@ function ReflectiveWater({ tint }) {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.6, 0]}>
       <planeGeometry args={[40, 40]} />
-      <MeshReflectorMaterial blur={[300, 100]} resolution={512} mixBlur={1.3} mixStrength={25} roughness={0.85} depthScale={0.8} color={tint} metalness={0.3} />
+      <MeshReflectorMaterial blur={[80, 40]} resolution={1024} mixBlur={0.4} mixStrength={2} roughness={0.35} depthScale={0.5} color={tint} metalness={0.2} />
     </mesh>
+  );
+}
+
+// The orbit center the plankton circle around was empty — a soft pulsing bioluminescent
+// core (bright center + translucent halo, like a jellyfish bell) gives their motion
+// something to actually orbit, and reflects in the water below along with everything else.
+function TideCore({ color }) {
+  const coreRef = useRef();
+  const haloRef = useRef();
+  const speed = useSpeed();
+  useFrame((state) => {
+    const t = state.clock.elapsedTime * speed;
+    const pulse = 1 + Math.sin(t * 1.4) * 0.12;
+    if (coreRef.current) coreRef.current.scale.setScalar(pulse);
+    if (haloRef.current) haloRef.current.scale.setScalar(pulse * 1.6 + Math.sin(t * 0.9) * 0.1);
+  });
+  return (
+    <group position={[0, 0.15, 0]}>
+      <mesh ref={haloRef}>
+        <sphereGeometry args={[0.22, 24, 24]} />
+        <meshBasicMaterial color={color} transparent opacity={0.12} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+      </mesh>
+      <mesh ref={coreRef}>
+        <sphereGeometry args={[0.1, 24, 24]} />
+        <meshBasicMaterial color={color} transparent opacity={0.9} blending={THREE.AdditiveBlending} toneMapped={false} />
+      </mesh>
+    </group>
   );
 }
 
@@ -61,6 +88,7 @@ export default function BioluminescentTide3D({ settings = {} }) {
       <CanvasStage camera={{ position: [0, 1.2, 8], fov: 48 }} orbitEnabled speed={settings.speed ?? 1} bloom={{ intensity: 1.2 }}>
         <ambientLight intensity={0.05} />
         <Plankton count={count} color={glowColor} />
+        <TideCore color={glowColor} />
         <ReflectiveWater tint={waterTint} />
         <pointLight color={glowColor} intensity={18} distance={14} />
       </CanvasStage>

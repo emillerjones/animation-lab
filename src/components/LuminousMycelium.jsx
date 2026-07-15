@@ -23,10 +23,10 @@ function FruitingBody({ position, scale, accent }) {
   );
 }
 
-function LuminousMyceliumWorld({ settings, accent, actionActive }) {
+function LuminousMyceliumWorld({ settings, accent }) {
   const group = useRef();
   const signalRefs = useRef([]);
-  const branchCount = Math.max(10, Math.min(30, Math.round((settings.nodes ?? 64) / 5)));
+  const branchCount = Math.max(6, Math.min(30, Math.round(settings.mushrooms ?? 14)));
   const branches = useMemo(() => Array.from({ length: branchCount }, (_, index) => {
     const angle = (index / branchCount) * Math.PI * 2 + seeded(index, 710) * 0.35;
     const length = 6.5 + seeded(index, 711) * 7.5;
@@ -50,10 +50,9 @@ function LuminousMyceliumWorld({ settings, accent, actionActive }) {
     group.current.rotation.y += delta * 0.005 * speed;
     signalRefs.current.forEach((signal, index) => {
       if (!signal) return;
-      const travel = (time * (actionActive ? 0.24 : 0.09) + index / branchCount) % 1;
+      const travel = (time * 0.09 + index / branchCount) % 1;
       signal.position.copy(branches[index].curve.getPoint(travel));
-      const pulse = actionActive ? 0.12 + Math.sin(time * 5 + index) * 0.025 : 0.065;
-      signal.scale.setScalar(pulse);
+      signal.scale.setScalar(0.065);
     });
   });
 
@@ -70,7 +69,7 @@ function LuminousMyceliumWorld({ settings, accent, actionActive }) {
             <sphereGeometry args={[1, 10, 10]} />
             <meshBasicMaterial color="#efffe7" toneMapped={false} />
           </mesh>
-          {index % 2 === 0 && <FruitingBody position={branch.end} scale={0.72 + seeded(index, 715) * 1.05} accent={accent} />}
+          <FruitingBody position={branch.end} scale={0.72 + seeded(index, 715) * 1.05} accent={accent} />
         </group>
       ))}
       <mesh position={[0, 0.08, 0]}>
@@ -84,5 +83,5 @@ function LuminousMyceliumWorld({ settings, accent, actionActive }) {
 }
 
 export default function LuminousMycelium({ settings = {} }) {
-  return <GpuExperience scene="luminous-mycelium" World={LuminousMyceliumWorld} settings={settings} accent="#9dff82" background="#010803" eyebrow="04 — Subterranean intelligence" title={"A forest beneath\nthe forest."} description="Branching mycelium carries visible signals through the soil, feeding luminous fruiting bodies as the underground network wakes." cta="Send a pulse" action={() => {}} />;
+  return <GpuExperience scene="luminous-mycelium" World={LuminousMyceliumWorld} settings={settings} accent="#9dff82" background="#010803" eyebrow="04 — Subterranean intelligence" title={"A forest beneath\nthe forest."} description="Branching mycelium carries visible signals through the soil, feeding luminous fruiting bodies as the underground network wakes." />;
 }

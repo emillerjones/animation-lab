@@ -33,7 +33,7 @@
 }
 
 .prism-pulse-lab .experiment-copy h1 {
-  font-size: clamp(62px, 7.3vw, 118px);
+  font-size: clamp(44px, 5.3vw, 84px);
   text-shadow: 0 4px 42px rgb(0 0 0 / 82%);
 }
 
@@ -95,7 +95,7 @@
   }
 
   .prism-pulse-lab .experiment-copy h1 {
-    font-size: clamp(52px, 14vw, 88px);
+    font-size: clamp(38px, 10.1vw, 64px);
   }
 
   .prism-pulse-lab__hint {

@@ -702,7 +702,6 @@ export default function StormMadeOfGlass({ settings = {} }) {
       aria-label="Interactive procedural storm inside a glass chamber"
     >
       <canvas ref={canvasRef} className="storm-made-of-glass__canvas" />
-      <div className="storm-made-of-glass__vignette" aria-hidden="true" />
       <div className="storm-made-of-glass__caustics" aria-hidden="true" />
       <div className="storm-made-of-glass__grain" aria-hidden="true" />
 

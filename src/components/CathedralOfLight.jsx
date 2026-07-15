@@ -4,6 +4,7 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { SMAAPass } from "three/examples/jsm/postprocessing/SMAAPass.js";
+import { Reflector } from "three/examples/jsm/objects/Reflector.js";
 import { WEBGL_DPR_MAX, WEBGL_MSAA_SAMPLES } from "../rendering/quality";
 import { seeded } from "../utils/procedural";
 import "./CathedralOfLight.css";
@@ -52,7 +53,7 @@ function lineSegments(positions, material) {
   return new THREE.LineSegments(geometry, material);
 }
 
-function buildCathedral(scene, bayCount, dustCount) {
+function buildCathedral(scene, bayCount, dustCount, variant2) {
   const architecture = new THREE.Group();
   scene.add(architecture);
 
@@ -72,7 +73,7 @@ function buildCathedral(scene, bayCount, dustCount) {
       addBoxEdges(structure, x, 0, z, .72, height, .72);
       addBoxEdges(details, x, 0, z, 1.8, 1.05, 1.8);
       addBoxEdges(details, x, height - .7, z, 1.3, .72, 1.3);
-      if (bay % 2 === 0) addBoxEdges(details, x, 5.2, z, 1.1, 1.1, 1.1);
+      if (!variant2 && bay % 2 === 0) addBoxEdges(details, x, 5.2, z, 1.1, 1.1, 1.1);
     });
 
     addSegment(details, new THREE.Vector3(0, 25.5, z), new THREE.Vector3(0, 28.2, z));
@@ -102,6 +103,20 @@ function buildCathedral(scene, bayCount, dustCount) {
   floor.rotation.x = -Math.PI / 2;
   floor.position.set(0, 0, -80);
   architecture.add(floor);
+
+  // Variant 2's "raytracing" pass: a real-time planar reflector laid just above the
+  // existing dark floor, so the arches, columns, and light beam actually mirror in the
+  // ground instead of the floor only ever faking depth through a metalness value.
+  let reflector = null;
+  if (variant2) {
+    reflector = new Reflector(
+      new THREE.PlaneGeometry(70, Math.max(260, bayCount * spacing + 60)),
+      { clipBias: 0.003, textureWidth: 1024, textureHeight: 1024, color: 0x2a2015 },
+    );
+    reflector.rotation.x = -Math.PI / 2;
+    reflector.position.set(0, 0.015, -80);
+    architecture.add(reflector);
+  }
 
   const columnGeometry = new THREE.BoxGeometry(.66, 1, .66);
   const columnMaterial = new THREE.MeshStandardMaterial({ color: 0x100a03, metalness: .9, roughness: .26, emissive: 0x1d0d01, emissiveIntensity: .6 });
@@ -175,7 +190,7 @@ function buildCathedral(scene, bayCount, dustCount) {
   const dust = new THREE.Points(dustGeometry, new THREE.PointsMaterial({ color: PALE_GOLD, size: .085, transparent: true, opacity: .78, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true }));
   architecture.add(dust);
 
-  return { architecture, dust, dustBaseX, dustSeeds, lightBeam, lightVolume };
+  return { architecture, dust, dustBaseX, dustSeeds, lightBeam, lightVolume, reflector };
 }
 
 export default function CathedralOfLight({ settings = {} }) {
@@ -183,6 +198,7 @@ export default function CathedralOfLight({ settings = {} }) {
   const speedRef = useRef(settings.speed ?? 1);
   const arches = Math.round(settings.arches ?? 30);
   const dust = Math.round(settings.dust ?? 110);
+  const variant2 = Boolean(settings.variant2);
 
   useEffect(() => { speedRef.current = settings.speed ?? 1; }, [settings.speed]);
 
@@ -211,12 +227,12 @@ export default function CathedralOfLight({ settings = {} }) {
     warmLight.position.set(0, 17, 5);
     scene.add(warmLight);
 
-    const cathedral = buildCathedral(scene, arches, dust);
+    const cathedral = buildCathedral(scene, arches, dust, variant2);
     const composer = new EffectComposer(renderer);
     composer.renderTarget1.samples = WEBGL_MSAA_SAMPLES;
     composer.renderTarget2.samples = WEBGL_MSAA_SAMPLES;
     composer.addPass(new RenderPass(scene, camera));
-    const bloom = new UnrealBloomPass(new THREE.Vector2(host.clientWidth, host.clientHeight), 1.05, .62, .18);
+    const bloom = new UnrealBloomPass(new THREE.Vector2(host.clientWidth, host.clientHeight), variant2 ? 1.3 : 1.05, .62, variant2 ? .15 : .18);
     composer.addPass(bloom);
     const smaa = new SMAAPass(host.clientWidth * renderer.getPixelRatio(), host.clientHeight * renderer.getPixelRatio());
     composer.addPass(smaa);
@@ -292,10 +308,13 @@ export default function CathedralOfLight({ settings = {} }) {
         if (Array.isArray(object.material)) object.material.forEach((material) => material.dispose());
         else object.material?.dispose();
       });
+      // The reflector (variant 2 only) owns its own render target and needs its own
+      // dispose() call — the generic geometry/material pass above doesn't reach it.
+      cathedral.reflector?.dispose();
       composer.dispose();
       renderer.dispose();
     };
-  }, [arches, dust]);
+  }, [arches, dust, variant2]);
 
   return (
     <section className="atmosphere cathedral-webgl">

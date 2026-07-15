@@ -60,8 +60,10 @@ function Planet({ planet, orbitSpeed }) {
 
 // How far the orrery is tipped toward a top-down view before any drag input. The
 // original -0.32 rad left it nearly edge-on, so the rings (and Saturn's) read as thin
-// lines instead of the visible ellipses a planetarium view should show.
-const BASE_PITCH = -0.58;
+// lines instead of the visible ellipses a planetarium view should show. The sign matters:
+// negative put the fixed camera underneath the disc looking up at its belly (Saturn's
+// ring showing its far/bottom face); positive puts the camera above it, looking down.
+const BASE_PITCH = 0.58;
 
 function SolarRig({ children }) {
   const group = useRef();

@@ -51,6 +51,14 @@ function EndlessLightTunnelWorld({ settings, accent }) {
       ))}
       <Dust count={Math.max(120, (settings.dust ?? settings.particles ?? settings.density ?? 80) * 3)} color={accent} scale={[16, 11, count * 5]} size={1.1} speed={0.35} />
       <pointLight color={accent} intensity={36} distance={55} position={[0, 2, -18]} />
+      {/* A fixed point far past where the frames recycle — the fog (density .028) crushes it
+          to a soft glow rather than a visible object, reading as "something waiting at the
+          end" of what's otherwise an unbroken loop. */}
+      <mesh position={[0, 2.8, -110]}>
+        <sphereGeometry args={[1.6, 24, 24]} />
+        <meshBasicMaterial color={accent} transparent opacity={0.55} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+      </mesh>
+      <pointLight color={accent} intensity={16} distance={42} position={[0, 2.8, -96]} />
     </group>
   );
 }

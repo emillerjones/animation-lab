@@ -1,14 +1,30 @@
 @import "../experiment-base.css";
-.alien-dyson-swarm { background: #020103; }
-.alien-dyson-swarm .experiment-copy { z-index: 20; }
+.alien-dyson-swarm {
+  background:
+    radial-gradient(circle at 68% 48%, rgb(112 47 16 / 18%), transparent 30%),
+    radial-gradient(circle at 40% 20%, #17101a, #070407 66%);
+}
+.alien-dyson-swarm .experiment-copy {
+  z-index: 20;
+  width: min(370px, 34vw);
+  opacity: .74;
+  text-shadow: 0 2px 20px #050204;
+}
+.alien-dyson-swarm .experiment-copy h1 { font-size: clamp(30px, 4.5vw, 66px); }
+.alien-dyson-swarm .experiment-copy span { max-width: 330px; opacity: .58; }
 .alien-dyson-swarm__label {
   padding: 6px 12px;
-  background: rgb(4 6 10 / 78%);
-  border: 1px solid rgb(200 220 255 / 25%);
-  color: #dfe9ff;
+  background: rgb(10 6 4 / 82%);
+  border: 1px solid rgb(255 188 104 / 24%);
+  color: #e8c99e;
   font-size: 10px;
   letter-spacing: .14em;
   text-transform: uppercase;
   white-space: nowrap;
   backdrop-filter: blur(4px);
+}
+
+@media (max-width: 700px) {
+  .alien-dyson-swarm .experiment-copy { width: min(82vw, 330px); opacity: .68; }
+  .alien-dyson-swarm .experiment-copy h1 { font-size: clamp(30px, 10.1vw, 48px); }
 }

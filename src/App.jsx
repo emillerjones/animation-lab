@@ -124,15 +124,6 @@ function AnimationStage({ animation, settings, variant, onSettingChange, onVaria
 
   return (
     <main className="animation-stage" ref={pageRef} aria-label={animation.title}>
-      <div className="animation-stage__identity">
-        <span>
-          {animation.variantComponent && variant === "b"
-            ? (animation.variantBLabel ?? "Claude")
-            : (animation.variantLabel ?? (animation.provider === "chatgpt" ? "ChatGPT" : "Claude"))}
-        </span>
-        <strong>{animation.title}</strong>
-      </div>
-
       {animation.variantComponent && (
         <div className="variant-toggle" role="group" aria-label="Animation variant">
           <button className={variant === "a" ? "is-active" : ""} type="button" onClick={() => onVariantChange("a")}>{animation.variantLabel ?? "Original"}</button>
@@ -151,7 +142,7 @@ function AnimationStage({ animation, settings, variant, onSettingChange, onVaria
         <summary>Motion controls <span aria-hidden="true">⌁</span></summary>
         <div className="motion-controls__body">
           <label className="motion-controls__shared">
-            <span>Animation speed <output>{settings.speed.toFixed(2)}×</output></span>
+            <span>{animation.id === "gravity-museum" ? "Dryer tumble speed" : "Animation speed"} <output>{settings.speed.toFixed(2)}×</output></span>
             <input type="range" min="0.25" max="2.5" step="0.05" value={settings.speed} onChange={(event) => onSettingChange("speed", Number(event.target.value))} />
           </label>
           {!hasVariantControls && (animation.controls ?? []).map(renderControl)}

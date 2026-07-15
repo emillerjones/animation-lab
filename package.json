@@ -21,6 +21,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "three": "^0.185.1",
+    "three-gpu-pathtracer": "^0.0.24",
     "three-mesh-bvh": "^0.9.11",
     "three.quarks": "^0.17.1",
     "vite": "^6.0.5"

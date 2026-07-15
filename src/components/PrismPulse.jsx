@@ -8,7 +8,7 @@ import {
   MeshReflectorMaterial,
   MeshRefractionMaterial,
 } from "@react-three/drei";
-import { Bloom, EffectComposer, SMAA, Vignette } from "@react-three/postprocessing";
+import { Bloom, EffectComposer, SMAA } from "@react-three/postprocessing";
 import { BallCollider, Physics, RigidBody } from "@react-three/rapier";
 import {
   BatchedRenderer,
@@ -26,7 +26,7 @@ import * as THREE from "three";
 import { WEBGL_DPR, WEBGL_MSAA_SAMPLES } from "../rendering/quality";
 import "./PrismPulse.css";
 
-const DICE = ["D4", "D6", "D8", "D10", "D12", "D20"];
+const DICE = ["D4", "D6", "D8", "D12", "D20"];
 const SPECTRUM = ["#ff365f", "#ff8e3a", "#ffe86a", "#63f6ad", "#53c9ff", "#a978ff"];
 
 // The whole rig (die, light beam, spectral fan, motes, reflective bench) is built around
@@ -38,41 +38,6 @@ function useDieX() {
   return useMemo(() => (window.matchMedia("(max-width: 900px)").matches ? 0 : 2.8), []);
 }
 
-function createD10Geometry() {
-  const vertices = [[0, 1.72, 0], [0, -1.72, 0]];
-  const radius = 1.48;
-
-  for (let index = 0; index < 10; index += 1) {
-    const angle = index * Math.PI / 5;
-    vertices.push([
-      Math.cos(angle) * radius,
-      index % 2 === 0 ? 0.42 : -0.42,
-      Math.sin(angle) * radius,
-    ]);
-  }
-
-  const indices = [];
-  for (let index = 0; index < 10; index += 2) {
-    const center = index + 2;
-    const previous = ((index + 9) % 10) + 2;
-    const next = ((index + 1) % 10) + 2;
-    indices.push(0, previous, center, 0, center, next);
-  }
-  for (let index = 1; index < 10; index += 2) {
-    const center = index + 2;
-    const previous = ((index + 9) % 10) + 2;
-    const next = ((index + 1) % 10) + 2;
-    indices.push(1, next, center, 1, center, previous);
-  }
-
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices.flat(), 3));
-  geometry.setIndex(indices);
-  geometry.computeVertexNormals();
-  geometry.center();
-  return geometry;
-}
-
 function DieGeometry({ die }) {
   const d6 = useMemo(() => {
     const geometry = new THREE.BoxGeometry(3.05, 3.05, 3.05);
@@ -81,16 +46,11 @@ function DieGeometry({ die }) {
     geometry.clearGroups();
     return geometry;
   }, []);
-  const d10 = useMemo(createD10Geometry, []);
-  useEffect(() => () => {
-    d6.dispose();
-    d10.dispose();
-  }, [d6, d10]);
+  useEffect(() => () => d6.dispose(), [d6]);
 
   if (die === "D4") return <tetrahedronGeometry args={[2.2, 0]} />;
   if (die === "D6") return <primitive object={d6} attach="geometry" />;
   if (die === "D8") return <octahedronGeometry args={[2.35, 0]} />;
-  if (die === "D10") return <primitive object={d10} attach="geometry" />;
   if (die === "D12") return <dodecahedronGeometry args={[1.92, 0]} />;
   return <icosahedronGeometry args={[2.05, 0]} />;
 }
@@ -398,7 +358,6 @@ function PrismScene({ settings, onDraggingChange }) {
       )}
       <EffectComposer multisampling={WEBGL_MSAA_SAMPLES}>
         <Bloom mipmapBlur intensity={0.95 + light * 0.6} luminanceThreshold={0.32} luminanceSmoothing={0.5} />
-        <Vignette eskil={false} offset={0.18} darkness={0.82} />
         <SMAA />
       </EffectComposer>
       <AdaptiveDpr />

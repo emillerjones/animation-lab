@@ -3,7 +3,9 @@ import { getProject } from "@theatre/core";
 import * as THREE from "three";
 import { MeshBasicNodeMaterial, PostProcessing, WebGPURenderer } from "three/webgpu";
 import { createDragOrbit } from "../utils/dragOrbit";
+import { seeded } from "../utils/procedural";
 import {
+  atan,
   color,
   mix,
   mx_fractal_noise_float,
@@ -22,6 +24,9 @@ import "./LivingBlackHole.css";
 
 const MAX_STARS = 72000;
 const DISK_PARTICLES = 115000;
+const DISK_RADIUS_INNER = 3.15;
+const DISK_RADIUS_SPAN = 14.5;
+const DISK_RADIUS_OUTER = DISK_RADIUS_INNER + DISK_RADIUS_SPAN;
 const project = getProject("Living Black Hole Interface", {
   state: { sheetsById: {}, definitionVersion: "0.4.0", revisionHistory: [] },
 });
@@ -74,15 +79,15 @@ function makeAccretionParticles(count = DISK_PARTICLES) {
   const positions = new Float32Array(count * 3);
   const colors = new Float32Array(count * 3);
   const meta = new Float32Array(count * 4);
-  const hot = new THREE.Color("#fff7d7");
-  const middle = new THREE.Color("#ff8d36");
-  const outer = new THREE.Color("#6f1737");
+  const hot = new THREE.Color("#ffffff");
+  const middle = new THREE.Color("#aecdff");
+  const outer = new THREE.Color("#1c3454");
 
   for (let index = 0; index < count; index += 1) {
     const u = Math.random();
-    const radius = 3.15 + Math.pow(u, 0.62) * 14.5;
+    const radius = DISK_RADIUS_INNER + Math.pow(u, 0.62) * DISK_RADIUS_SPAN;
     const angle = Math.random() * Math.PI * 2;
-    const heat = THREE.MathUtils.clamp(1 - (radius - 3.15) / 14.5, 0, 1);
+    const heat = THREE.MathUtils.clamp(1 - (radius - DISK_RADIUS_INNER) / DISK_RADIUS_SPAN, 0, 1);
     const c = outer.clone().lerp(middle, heat).lerp(hot, Math.pow(heat, 4) * 0.8);
     const i3 = index * 3;
     const i4 = index * 4;
@@ -122,6 +127,49 @@ function makePhotonRing(radius, colorValue, opacity, thickness = 0.028) {
   return mesh;
 }
 
+// A handful of orbiting bodies well outside the disk (radius 18) so the scene reads as
+// a system with something else in it, not just an isolated hole — lit by a single point
+// light at the singularity so each one shows a real day/night terminator rather than
+// being a flat, self-lit blob like everything else here.
+function makePlanets() {
+  const configs = [
+    { radius: 34, size: 1.5, color: "#9fb7ff", speed: 0.05, tilt: 0.1, phase: 0.4 },
+    { radius: 47, size: 0.85, color: "#ffcf9e", speed: 0.037, tilt: -0.16, phase: 3.1 },
+    { radius: 63, size: 2.1, color: "#d8e4ff", speed: 0.026, tilt: 0.06, phase: 5.2, ring: true },
+    { radius: 80, size: 1.1, color: "#ff9d7a", speed: 0.019, tilt: -0.05, phase: 1.7 },
+  ];
+  const group = new THREE.Group();
+  const disposables = [];
+  const bodies = configs.map((config) => {
+    const geometry = new THREE.SphereGeometry(config.size, 32, 24);
+    const material = new THREE.MeshStandardMaterial({
+      color: config.color,
+      roughness: 0.6,
+      metalness: 0.08,
+      emissive: config.color,
+      emissiveIntensity: 0.05,
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    group.add(mesh);
+    disposables.push(geometry, material);
+    if (config.ring) {
+      const ringGeometry = new THREE.RingGeometry(config.size * 1.7, config.size * 2.5, 48);
+      const ringMaterial = new THREE.MeshBasicMaterial({
+        color: config.color,
+        transparent: true,
+        opacity: 0.35,
+        side: THREE.DoubleSide,
+      });
+      const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+      ring.rotation.x = Math.PI / 2.4;
+      mesh.add(ring);
+      disposables.push(ringGeometry, ringMaterial);
+    }
+    return { mesh, ...config };
+  });
+  return { group, bodies, disposables };
+}
+
 function makeTslDiskMaterial(intensityUniform, turbulenceUniform) {
   const material = new MeshBasicNodeMaterial({
     transparent: true,
@@ -132,23 +180,35 @@ function makeTslDiskMaterial(intensityUniform, turbulenceUniform) {
   });
   const centered = uv().sub(vec2(0.5));
   const radius = centered.length();
+  const angle = atan(centered.y, centered.x);
+  // Low-octave, low-frequency noise now only roughens the edges of each arm instead of
+  // dominating the pattern — the old version (5 octaves at 10x frequency, mixed in at
+  // amplitude 9) buried the spiral under fine-grained static, which read as "foggy" rather
+  // than as a whirlpool.
   const turbulence = mx_fractal_noise_float(
-    vec3(centered.mul(10), time.mul(0.16).mul(turbulenceUniform)),
-    5,
-    2.1,
-    0.52,
+    vec3(centered.mul(5), time.mul(0.09).mul(turbulenceUniform)),
+    3,
+    2.0,
+    0.5,
     1,
   );
-  const filaments = sin(
-    radius.mul(118)
-      .sub(time.mul(2.1))
-      .add(turbulence.mul(15)),
-  ).mul(0.5).add(0.5);
+  // Three arms (the angle coefficient must stay an integer so the pattern is continuous
+  // across the atan2 seam at +-PI). The time term is *added*, not subtracted: for a fixed
+  // arm (constant phase), that means the radius satisfying that phase shrinks as time
+  // increases, so the arms visibly drain toward the core instead of climbing outward.
+  const spiralPhase = radius.mul(22)
+    .sub(angle.mul(3))
+    .add(time.mul(1.2))
+    .add(turbulence.mul(2.2));
+  const filaments = smoothstep(0.15, 0.85, sin(spiralPhase).mul(0.5).add(0.5));
   const body = smoothstep(0.08, 0.51, radius).oneMinus()
     .mul(smoothstep(0.035, 0.17, radius));
-  const heat = smoothstep(0.08, 0.5, radius).oneMinus().pow(2.2);
-  const plasma = mix(color("#43142c"), color("#ff5e24"), filaments)
-    .mix(color("#fff6cf"), heat.mul(0.88));
+  // Kept tight to the inner rim (was 0.08-0.5, nearly the whole disk) and capped well below
+  // full white so the arms stay legible as color all the way in, instead of the core's glow
+  // bleeding out under bloom and washing the whole disk to a foggy white dome.
+  const heat = smoothstep(0.08, 0.24, radius).oneMinus().pow(2.4);
+  const plasma = mix(color("#0c1830"), color("#a8caff"), filaments)
+    .mix(color("#fff3df"), heat.mul(0.55));
   material.colorNode = plasma.mul(intensityUniform);
   material.opacityNode = body.mul(filaments.mul(0.56).add(0.28)).mul(intensityUniform);
   return material;
@@ -302,6 +362,12 @@ function buildScene(canvas, host, settingsRef, report) {
   blackHole.add(lens);
   disposables.push(lens.geometry, lensMaterial);
 
+  const holeLight = new THREE.PointLight("#ffd9a8", 55, 260, 1.4);
+  scene.add(holeLight);
+  const planets = makePlanets();
+  scene.add(planets.group);
+  disposables.push(...planets.disposables);
+
   const tunnel = new THREE.Group();
   tunnel.visible = false;
   scene.add(tunnel);
@@ -417,6 +483,53 @@ function buildScene(canvas, host, settingsRef, report) {
     }
   }
 
+  // Real inward motion, not a rigid spin of the whole field: each particle keeps its own
+  // radius and angle in `meta` and drifts inward every frame, picking up angular speed as
+  // it falls the way real orbiting matter does (faster orbit at smaller radius). A particle
+  // that reaches the inner edge respawns at the outer edge — the recolor to the dim outer
+  // hue on respawn (same formula used at spawn time) keeps that reset from reading as a
+  // bright pop, since it's additive-blended and the outer color is dark.
+  function updateAccretionSpiral(delta, speed, accretionIntensity, activeCount) {
+    const meta = particleGeometry.userData.meta;
+    const positions = particleGeometry.attributes.position.array;
+    const colors = particleGeometry.attributes.color.array;
+    const inwardRate = 0.052 * speed * accretionIntensity;
+    const angularRate = 1.1 * speed;
+    for (let index = 0; index < activeCount; index += 1) {
+      const i3 = index * 3;
+      const i4 = index * 4;
+      let radius = meta[i4];
+      let angle = meta[i4 + 1];
+      const speedMul = meta[i4 + 2];
+      const seed = meta[i4 + 3];
+
+      const normalized = (radius - DISK_RADIUS_INNER) / DISK_RADIUS_SPAN;
+      angle += (angularRate * speedMul) / Math.max(radius, 1.2) * delta;
+      radius -= inwardRate * (0.35 + (1 - normalized) * 1.5) * delta;
+      if (radius < DISK_RADIUS_INNER) {
+        radius = DISK_RADIUS_OUTER - seed * 3;
+      }
+
+      positions[i3] = Math.cos(angle) * radius;
+      positions[i3 + 1] = (seeded(index, 900) * 2 - 1) * (0.035 + radius * 0.052);
+      positions[i3 + 2] = Math.sin(angle) * radius;
+
+      const heat = THREE.MathUtils.clamp(1 - (radius - DISK_RADIUS_INNER) / DISK_RADIUS_SPAN, 0, 1);
+      const heat4 = heat ** 4 * 0.8;
+      const cr = THREE.MathUtils.lerp(THREE.MathUtils.lerp(0.109, 0.682, heat), 1, heat4);
+      const cg = THREE.MathUtils.lerp(THREE.MathUtils.lerp(0.204, 0.804, heat), 1, heat4);
+      const cb = THREE.MathUtils.lerp(THREE.MathUtils.lerp(0.329, 1, heat), 1, heat4);
+      colors[i3] = cr;
+      colors[i3 + 1] = cg;
+      colors[i3 + 2] = cb;
+
+      meta[i4] = radius;
+      meta[i4 + 1] = angle;
+    }
+    particleGeometry.attributes.position.needsUpdate = true;
+    particleGeometry.attributes.color.needsUpdate = true;
+  }
+
   function updateStarWarp(delta, lensingStrength) {
     stars.rotation.y += delta * 0.004;
     galaxies.rotation.y -= delta * 0.0015;
@@ -469,8 +582,9 @@ function buildScene(canvas, host, settingsRef, report) {
       disk.rotation.z = elapsed * 0.028;
       lowerDisk.rotation.z = -elapsed * 0.022;
       starGeometry.setDrawRange(0, Math.floor(MAX_STARS * stellarDensity));
-      particleGeometry.setDrawRange(0, Math.floor(DISK_PARTICLES * THREE.MathUtils.clamp(0.35 + accretionIntensity * 0.55, 0.25, 1)));
-      diskParticles.rotation.y += delta * speed * 0.055 * accretionIntensity;
+      const activeParticles = Math.floor(DISK_PARTICLES * THREE.MathUtils.clamp(0.35 + accretionIntensity * 0.55, 0.25, 1));
+      particleGeometry.setDrawRange(0, activeParticles);
+      updateAccretionSpiral(delta, speed, accretionIntensity, activeParticles);
       diskParticles.rotation.z = Math.sin(elapsed * 0.17) * 0.008;
       const ringReveal = THREE.MathUtils.smoothstep(elapsed, 0.18, 2.4);
       const diskReveal = THREE.MathUtils.smoothstep(elapsed, 1.1, 5.4);
@@ -480,7 +594,10 @@ function buildScene(canvas, host, settingsRef, report) {
         ring.scale.setScalar(1 + Math.sin(elapsed * (0.65 + index * 0.2)) * 0.018 + state.distortion * 0.035);
         ring.material.opacity = [0.94, 0.48, 0.16][index] * ringReveal * lensingStrength * (1 + state.distortion * 0.6);
       });
-      intensity.value = diskReveal * accretionIntensity * (1.02 + state.distortion * 0.48);
+      // Kept below the bloom threshold (0.82) at rest so the spiral arms stay legible as
+      // color instead of blooming into one soft dome — distortion still pushes it hot during
+      // a dive, which is the moment that deserves to blow out.
+      intensity.value = diskReveal * accretionIntensity * (0.72 + state.distortion * 0.55);
       turbulence.value = plasmaTurbulence * (1 + state.distortion * 1.8);
       lensPower.value = lensingStrength;
       renderer.toneMappingExposure = 1.02 + state.distortion * 0.25;
@@ -498,6 +615,16 @@ function buildScene(canvas, host, settingsRef, report) {
 
       updateDynamicStars(delta, speed);
       updateStarWarp(delta, lensingStrength);
+      planets.bodies.forEach((body) => {
+        const orbitPhase = elapsed * body.speed * speed + body.phase;
+        body.mesh.position.set(
+          Math.cos(orbitPhase) * body.radius,
+          Math.sin(body.tilt) * body.radius * 0.18,
+          Math.sin(orbitPhase) * body.radius,
+        );
+        body.mesh.rotation.y += delta * 0.25;
+      });
+      planets.group.visible = state.progress < 0.9;
       const tunnelAmount = THREE.MathUtils.smoothstep(state.progress, 0.79, 0.98);
       tunnel.visible = tunnelAmount > 0.002;
       tunnel.position.copy(camera.position);
@@ -574,7 +701,6 @@ export default function LivingBlackHole({ settings = {} }) {
       aria-label="Interactive procedural black hole"
     >
       <canvas ref={canvasRef} className="living-black-hole__canvas" />
-      <div className="living-black-hole__vignette" aria-hidden="true" />
       <div className="living-black-hole__grain" aria-hidden="true" />
 
       <div className="living-black-hole__copy">

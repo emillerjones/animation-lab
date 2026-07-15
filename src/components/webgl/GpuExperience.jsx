@@ -1,7 +1,7 @@
 import { Suspense, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { AdaptiveDpr } from "@react-three/drei";
-import { Bloom, EffectComposer, Noise, SMAA, Vignette } from "@react-three/postprocessing";
+import { Bloom, EffectComposer, Noise, SMAA } from "@react-three/postprocessing";
 import * as THREE from "three";
 import useDragOrbit from "../../hooks/useDragOrbit";
 import { WEBGL_DPR, WEBGL_MSAA_SAMPLES } from "../../rendering/quality";
@@ -51,7 +51,6 @@ function Stage({ World, settings, accent, background, impulse, actionActive }) {
       <EffectComposer multisampling={WEBGL_MSAA_SAMPLES}>
         <Bloom mipmapBlur intensity={1.3} luminanceThreshold={.18} luminanceSmoothing={.45} />
         <Noise opacity={.018} premultiply />
-        <Vignette eskil={false} offset={.16} darkness={.72} />
         <SMAA />
       </EffectComposer>
       <AdaptiveDpr />
