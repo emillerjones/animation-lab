@@ -1,4 +1,4 @@
-import { Suspense, useRef, useState } from "react";
+import { Suspense, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { AdaptiveDpr } from "@react-three/drei";
 import { Bloom, EffectComposer, Noise, SMAA } from "@react-three/postprocessing";
@@ -9,35 +9,44 @@ import "./GpuExperience.css";
 
 // Orbit focus/distance/base-angles reproduce the camera's original resting pose
 // (position [0, 3.3, 13.5], lookAt-ish target [0, 2.4, -14]) exactly at rest (drag targets 0,0).
-const ORBIT_FOCUS = new THREE.Vector3(0, 2.4, -14);
-const ORBIT_OFFSET = new THREE.Vector3(0, 3.3, 13.5).sub(ORBIT_FOCUS);
-const ORBIT_DISTANCE = ORBIT_OFFSET.length();
-const ORBIT_BASE_YAW = Math.atan2(ORBIT_OFFSET.x, ORBIT_OFFSET.z);
-const ORBIT_BASE_PITCH = Math.asin(ORBIT_OFFSET.y / ORBIT_DISTANCE);
+const DEFAULT_ORBIT_FOCUS = [0, 2.4, -14];
+const DEFAULT_ORBIT_POSITION = [0, 3.3, 13.5];
 
-function CameraRig({ speed = 1, impulse }) {
+function CameraRig({ speed = 1, impulse, orbitFocus, orbitPosition }) {
   const travel = useRef(0);
   const dragRef = useDragOrbit();
-  const orbitRef = useRef({ yaw: ORBIT_BASE_YAW, pitch: ORBIT_BASE_PITCH });
+  const { focus, distance, baseYaw, basePitch } = useMemo(() => {
+    const focusVec = new THREE.Vector3(...orbitFocus);
+    const offset = new THREE.Vector3(...orbitPosition).sub(focusVec);
+    const dist = offset.length();
+    return {
+      focus: focusVec,
+      distance: dist,
+      baseYaw: Math.atan2(offset.x, offset.z),
+      basePitch: Math.asin(offset.y / dist),
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orbitFocus.join(","), orbitPosition.join(",")]);
+  const orbitRef = useRef({ yaw: baseYaw, pitch: basePitch });
   useFrame((state, delta) => {
     const step = Math.min(delta, .05) * speed;
     travel.current += step;
     const drag = dragRef.current;
     const orbit = orbitRef.current;
-    orbit.yaw = THREE.MathUtils.damp(orbit.yaw, ORBIT_BASE_YAW + drag.targetYaw, 3.4, delta);
-    orbit.pitch = THREE.MathUtils.damp(orbit.pitch, ORBIT_BASE_PITCH + drag.targetPitch, 3.4, delta);
+    orbit.yaw = THREE.MathUtils.damp(orbit.yaw, baseYaw + drag.targetYaw, 3.4, delta);
+    orbit.pitch = THREE.MathUtils.damp(orbit.pitch, basePitch + drag.targetPitch, 3.4, delta);
     state.camera.position.set(
-      ORBIT_FOCUS.x + ORBIT_DISTANCE * Math.sin(orbit.yaw) * Math.cos(orbit.pitch),
-      ORBIT_FOCUS.y + ORBIT_DISTANCE * Math.sin(orbit.pitch),
-      ORBIT_FOCUS.z + ORBIT_DISTANCE * Math.cos(orbit.yaw) * Math.cos(orbit.pitch),
+      focus.x + distance * Math.sin(orbit.yaw) * Math.cos(orbit.pitch),
+      focus.y + distance * Math.sin(orbit.pitch),
+      focus.z + distance * Math.cos(orbit.yaw) * Math.cos(orbit.pitch),
     );
     state.camera.position.z += Math.sin(travel.current * .18) * .35 - impulse * .28;
-    state.camera.lookAt(ORBIT_FOCUS);
+    state.camera.lookAt(focus);
   });
   return null;
 }
 
-function Stage({ World, settings, accent, background, impulse, actionActive }) {
+function Stage({ World, settings, accent, background, impulse, actionActive, orbitFocus, orbitPosition }) {
   const speed = settings.speed ?? 1;
   return (
     <>
@@ -46,7 +55,7 @@ function Stage({ World, settings, accent, background, impulse, actionActive }) {
       <ambientLight intensity={.24} color={accent} />
       <directionalLight position={[4, 10, 6]} intensity={1.1} color="#fff1d3" />
       <pointLight position={[-6, 4, 3]} intensity={22} distance={32} color={accent} />
-      <CameraRig speed={speed} impulse={impulse} />
+      <CameraRig speed={speed} impulse={impulse} orbitFocus={orbitFocus} orbitPosition={orbitPosition} />
       <World settings={settings} accent={accent} impulse={impulse} actionActive={actionActive} />
       <EffectComposer multisampling={WEBGL_MSAA_SAMPLES}>
         <Bloom mipmapBlur intensity={1.3} luminanceThreshold={.18} luminanceSmoothing={.45} />
@@ -73,6 +82,8 @@ export default function GpuExperience({
   wheelInteraction = false,
   action = null,
   camera = null,
+  orbitFocus = DEFAULT_ORBIT_FOCUS,
+  orbitPosition = DEFAULT_ORBIT_POSITION,
 }) {
   const [impulse, setImpulse] = useState(0);
   const [actionActive, setActionActive] = useState(false);
@@ -94,7 +105,7 @@ export default function GpuExperience({
       <Canvas
         className="gpu-experience__canvas"
         dpr={WEBGL_DPR}
-        camera={{ fov: 52, near: .1, far: 260, position: [0, 3.3, 13.5], ...camera }}
+        camera={{ fov: 52, near: .1, far: 260, position: orbitPosition, ...camera }}
         gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
         onCreated={({ gl }) => {
           gl.outputColorSpace = THREE.SRGBColorSpace;
@@ -103,7 +114,7 @@ export default function GpuExperience({
         }}
       >
         <Suspense fallback={null}>
-          <Stage World={World} settings={settings} accent={accent} background={background} impulse={impulse} actionActive={actionActive} />
+          <Stage World={World} settings={settings} accent={accent} background={background} impulse={impulse} actionActive={actionActive} orbitFocus={orbitFocus} orbitPosition={orbitPosition} />
         </Suspense>
       </Canvas>
       <div className="gpu-experience__veil" aria-hidden="true" />

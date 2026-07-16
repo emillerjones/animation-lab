@@ -23,6 +23,22 @@ const GROW_DURATION = 0.8;
 const MAX_SIGNALS = 160;
 const PALETTE = ["#9dff82", "#7dffc2", "#c7ff6a", "#63e9ff", "#e8ffb0", "#a3ffe4"];
 
+// Camera tilt: the one knob to turn. 0 = eye-level horizon, 90 = straight overhead.
+// Everything else (focus point, how far back the camera sits) stays fixed — only this
+// angle changes as you tune it.
+const CAMERA_PITCH_DEGREES = 30;
+const CAMERA_FOCUS = [3, -1, -11];
+const CAMERA_DISTANCE = 70;
+
+function orbitPositionFromPitch(focus, distance, pitchDegrees) {
+  const pitch = THREE.MathUtils.degToRad(pitchDegrees);
+  return [
+    focus[0],
+    focus[1] + distance * Math.sin(pitch),
+    focus[2] + distance * Math.cos(pitch),
+  ];
+}
+
 function easeOutBack(t) {
   const c1 = 1.70158;
   const c3 = c1 + 1;
@@ -331,6 +347,12 @@ export default function LuminousMycelium({ settings = {} }) {
       // Fog already fades them out well before this new distance, so raising it only fixes
       // the clipping without changing how the far edge looks.
       camera={{ far: 420 }}
+      // An angled overhead pose instead of GpuExperience's shared near-horizon default — looks
+      // down into the forest from above so a dense mushroom count reads as a canopy filling
+      // the frame top-to-bottom, rather than a horizon line with empty fog above it. Tune the
+      // angle via CAMERA_PITCH_DEGREES above; everything else derives from it.
+      orbitFocus={CAMERA_FOCUS}
+      orbitPosition={orbitPositionFromPitch(CAMERA_FOCUS, CAMERA_DISTANCE, CAMERA_PITCH_DEGREES)}
     />
   );
 }

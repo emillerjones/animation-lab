@@ -9,7 +9,6 @@ const DreamingCity = load(() => import("../components/DreamingCity"));
 const CathedralOfLight = load(() => import("../components/CathedralOfLight"));
 const MechanicalPlanetarium3D = load(() => import("../components/MechanicalPlanetarium3D"));
 const InfiniteDataOcean3D = load(() => import("../components/InfiniteDataOcean3D"));
-const NeuralNetworkUniverse3D = load(() => import("../components/NeuralNetworkUniverse3D"));
 const BioluminescentTide3D = load(() => import("../components/BioluminescentTide3D"));
 const LuminousMycelium3D = load(() => import("../components/LuminousMycelium3D"));
 const GlassHarmonics3D = load(() => import("../components/GlassHarmonics3D"));
@@ -17,14 +16,12 @@ const InfiniteLibrary3D = load(() => import("../components/InfiniteLibrary3D"));
 const InfiniteLibrary = load(() => import("../components/InfiniteLibrary"));
 const OrigamiFold = load(() => import("../components/OrigamiFold"));
 const LivingBlackHole = load(() => import("../components/LivingBlackHole"));
-const ImpossibleOrigamiCathedralAdvanced = load(() => import("../components/ImpossibleOrigamiCathedral"));
 const GravityMuseum = load(() => import("../components/GravityMuseum"));
 const MechanicalSolarSystem = load(() => import("../components/MechanicalSolarSystem"));
 const StormMadeOfGlass = load(() => import("../components/StormMadeOfGlass"));
 const CityThatBuildsItself = load(() => import("../components/CityThatBuildsItself"));
 
 const SakuraFallClaude = load(() => import("../components/SakuraFall"));
-const ImpossibleOrigamiCathedralClaude = load(() => import("../components/ImpossibleOrigamiCathedral3D"));
 const AlienDysonSwarm = load(() => import("../components/AlienDysonSwarm"));
 const ProceduralOcean = load(() => import("../components/ProceduralOcean"));
 const LivingCrystal = load(() => import("../components/LivingCrystal"));
@@ -152,19 +149,6 @@ export const animations = [
     ],
   },
   {
-    id: "neural-network-universe",
-    provider: "claude",
-    title: "Neural Network Universe",
-    category: "Intelligence / Cosmos",
-    description: "A responsive universe of living nodes and temporary synapses bends toward the pointer and propagates an activation wave when clicked.",
-    accent: "#b286ff", accentRgb: "178 134 255",
-    component: NeuralNetworkUniverse3D,
-    controls: [
-      { key: "nodes", label: "Thinking nodes", min: 50, max: 170, step: 10, default: 150 },
-      { key: "pulseRate", label: "Signal activity", min: 0.2, max: 3, step: 0.1, default: 0.9, suffix: "×" },
-    ],
-  },
-  {
     id: "mechanical-planetarium",
     provider: "claude",
     title: "Mechanical Planetarium",
@@ -247,27 +231,6 @@ export const animations = [
       { key: "lensingStrength", label: "Lensing strength", min: 20, max: 160, step: 5, default: 100, suffix: "%" },
       { key: "diveAcceleration", label: "Dive acceleration", min: 40, max: 180, step: 5, default: 100, suffix: "%" },
       { key: "plasmaTurbulence", label: "Plasma turbulence", min: 20, max: 180, step: 5, default: 100, suffix: "%" },
-    ],
-  },
-  {
-    id: "impossible-origami-cathedral",
-    provider: "chatgpt",
-    collection: "advanced",
-    title: "Impossible Origami Cathedral",
-    category: "WebGPU / Paper Architecture",
-    description: "One ivory sheet folds itself into a breathing gothic sanctuary of translucent ribs, warm internal light, drifting paper fragments, and impossible scale.",
-    accent: "#f0c986",
-    accentRgb: "240 201 134",
-    component: ImpossibleOrigamiCathedralAdvanced,
-    variantComponent: ImpossibleOrigamiCathedralClaude,
-    variantLabel: "ChatGPT",
-    variantBLabel: "Claude",
-    controls: [
-      { key: "foldComplexity", label: "Fold complexity", min: 40, max: 100, step: 5, default: 78, suffix: "%" },
-      { key: "paperGlow", label: "Internal paper light", min: 20, max: 150, step: 5, default: 92, suffix: "%" },
-      { key: "dust", label: "Paper fragments", min: 20, max: 100, step: 5, default: 70, suffix: "%" },
-      { key: "breathing", label: "Fold breathing", min: 0.2, max: 2, step: 0.1, default: 0.8, suffix: "×" },
-      { key: "scrollTravel", label: "Interior travel", min: 40, max: 160, step: 5, default: 100, suffix: "%" },
     ],
   },
   {
