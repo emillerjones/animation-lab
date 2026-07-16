@@ -488,7 +488,7 @@ export default function RiverOfWishes({ settings = {} }) {
       </CanvasStage>
 
       <div className="experiment-copy river-of-wishes__copy">
-        <p>27 — A river suspended in midair</p>
+        <p>25 — A river suspended in midair</p>
         <h1>The River<br />of Wishes.</h1>
         <span>Ten thousand cranes drift through an ancient temple in slow currents, parting around pillars and beneath a wooden bridge, out into a moonlit garden — never colliding, never stopping.</span>
       </div>

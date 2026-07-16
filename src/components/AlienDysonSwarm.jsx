@@ -686,7 +686,7 @@ export default function AlienDysonSwarm({ settings = {} }) {
         ]}
       />
       <div className="experiment-copy">
-        <p>23 — An engineered star, tens of thousands of years old</p>
+        <p>21 — An engineered star, tens of thousands of years old</p>
         <h1>Alien Dyson<br />Swarm.</h1>
         <span>Its builders are gone. The swarm never stopped working. Scroll to approach, drag your cursor to look around, and click a structure to study it closely.</span>
       </div>

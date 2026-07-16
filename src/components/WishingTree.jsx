@@ -813,7 +813,7 @@ export default function WishingTree({ settings = {} }) {
       </CanvasStage>
 
       <div className="experiment-copy wishing-tree__copy">
-        <p>26 — Ten thousand blossoms, one wish each</p>
+        <p>02 — Ten thousand blossoms, one wish each</p>
         <h1>The Wishing<br />Tree.</h1>
         <span>An ancient tree bears tiny blossoms instead of leaves — each one buds, breathes, and eventually falls away on the wind, while another quietly opens elsewhere on the branch. The seasons turn slowly around it, and it never stops renewing.</span>
       </div>

@@ -111,7 +111,7 @@ export default function LuminousMycelium3D({ settings = {} }) {
         </group>
       </CanvasStage>
       <div className="experiment-copy">
-        <p>05 — Intelligence study, with real signal</p>
+        <p>11 — Intelligence study, with real signal</p>
         <h1>Light that<br />actually travels.</h1>
         <span>Real pulses of signal move along each connection, the way a fungal network actually communicates.</span>
       </div>

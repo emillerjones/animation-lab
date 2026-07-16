@@ -110,7 +110,7 @@ export default function InfiniteDataOcean3D({ settings = {} }) {
         <OceanScene settings={settings} />
       </CanvasStage>
       <div className="experiment-copy">
-        <p>09 — Seascape study, mirrored</p>
+        <p>13 — Seascape study, mirrored</p>
         <h1>Data, reflected<br />in black glass.</h1>
         <span>A breathing signal grid floats above a real mirrored floor instead of a flat wireframe pretending at depth.</span>
       </div>

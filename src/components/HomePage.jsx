@@ -57,8 +57,8 @@ export default function HomePage({ selectedId, open, onToggle, onSelect }) {
         <div className="library-nav__brand"><span>Animation</span><strong>Lab</strong><small>{animations.length} experiments</small></div>
         <label className="library-nav__search"><span aria-hidden="true">&#9906;</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find an animation" /></label>
         <div className="library-nav__scroll">
-          <Collection title="Animations" provider="library" animations={standardAnimations} selectedId={selectedId} onSelect={onSelect} />
-          <Collection title="Advanced Systems" provider="advanced" animations={advancedAnimations} selectedId={selectedId} onSelect={onSelect} />
+          <Collection title="Primary" provider="library" animations={standardAnimations} selectedId={selectedId} onSelect={onSelect} />
+          <Collection title="Secondary" provider="advanced" animations={advancedAnimations} selectedId={selectedId} onSelect={onSelect} />
         </div>
       </aside>
     </>

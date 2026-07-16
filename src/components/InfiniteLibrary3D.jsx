@@ -715,7 +715,7 @@ export default function InfiniteLibrary3D({ settings = {} }) {
         <BookInstances count={bookCount} slotBayCount={bayCount + FAR_BAY_COUNT} />
       </CanvasStage>
       <div className="experiment-copy">
-        <p>13 — Perspective study, genuinely endless</p>
+        <p>16 — Perspective study, genuinely endless</p>
         <h1>A hall that<br />actually recedes.</h1>
         <span>Full shelving bays under a vaulted, gold-ribbed ceiling forty feet up, thousands of books threaded through the shelves, and a much longer silhouette fading into the fog far beyond where the detail stops.</span>
       </div>

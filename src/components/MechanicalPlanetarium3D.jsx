@@ -114,7 +114,7 @@ export default function MechanicalPlanetarium3D({ settings = {} }) {
         <SolarSystemScene settings={settings} />
       </CanvasStage>
       <div className="experiment-copy">
-        <p>11 — Astronomy study, an actual solar system</p>
+        <p>14 — Astronomy study, an actual solar system</p>
         <h1>Eight worlds,<br />in the right order.</h1>
         <span>Mercury through Neptune, correctly ordered and correctly paced — Neptune takes 165 times longer to orbit than Mercury, just like the real thing.</span>
       </div>

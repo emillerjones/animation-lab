@@ -568,7 +568,7 @@ export default function ProceduralOcean({ settings = {} }) {
         </Canvas>
       </div>
       <div className="experiment-copy">
-        <p>24 — Weather that actually arrives</p>
+        <p>22 — Weather that actually arrives</p>
         <h1>Procedural<br />Ocean.</h1>
         <span>A predawn sea builds through wind, rain, and swell on its own as warm light breaks through. Scroll to steer the weather yourself, drag to look around, click the water to send out a ripple.</span>
       </div>

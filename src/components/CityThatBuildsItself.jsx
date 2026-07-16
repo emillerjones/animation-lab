@@ -409,7 +409,7 @@ export default function CityThatBuildsItself({ settings = {} }) {
       <div className="city-builds-itself__grain" aria-hidden="true" />
 
       <div className="city-builds-itself__copy">
-        <p>21 — LIVING URBANISM</p>
+        <p>20 — LIVING URBANISM</p>
         <h1>The city<br />writes itself.</h1>
         <span>Towers sprout, mature, fade, and return. Drag to orbit the living skyline.</span>
       </div>

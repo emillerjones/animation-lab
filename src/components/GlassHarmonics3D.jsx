@@ -54,7 +54,7 @@ export default function GlassHarmonics3D({ settings = {} }) {
         </group>
       </CanvasStage>
       <div className="experiment-copy">
-        <p>06 — Orbital geometry</p>
+        <p>08 — Orbital geometry</p>
         <h1>Halos without<br />a horizon.</h1>
         <span>Transmissive rings float, tilt, and breathe through a field where gravity has released its hold.</span>
       </div>

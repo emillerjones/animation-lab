@@ -323,7 +323,7 @@ export default function CathedralOfLight({ settings = {} }) {
       <canvas ref={canvasRef} className="cathedral-webgl__canvas" aria-hidden="true" />
       <div className="cathedral-webgl__veil" aria-hidden="true" />
       <div className="experiment-copy cathedral-webgl__copy">
-        <p>08 — Luminous architecture</p>
+        <p>12 — Luminous architecture</p>
         <h1>Cathedral<br />of Light.</h1>
         <span>An endless nave drawn in gold, dust, reflection, and a single line of intent.</span>
       </div>
