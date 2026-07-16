@@ -23,6 +23,10 @@
   .gpu-experience__copy h1 { font-size: clamp(14px, 4.6vw, 19px); line-height: .95; }
   .gpu-experience__copy > span { max-width: 100%; margin-top: 6px; font-size: 9px; line-height: 1.35; }
   .gpu-experience__status { display: none; }
+  /* Desktop-tuned to shade behind the left-side hero copy — on mobile that copy moves
+     down to a small bottom-left panel, leaving this as an unexplained dark/warm band
+     down the left edge with nothing left to justify it. */
+  .gpu-experience__veil { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .gpu-experience__status i { animation: none; } }
 

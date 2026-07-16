@@ -95,7 +95,7 @@ export default function BioluminescentTide3D({ settings = {} }) {
         <pointLight color={glowColor} intensity={18} distance={14} />
       </CanvasStage>
       <div className="experiment-copy">
-        <p>02 — Organism study, mirrored in real water</p>
+        <p>03 — Organism study, mirrored in real water</p>
         <h1>Glow, actually<br />afloat.</h1>
         <span>Plankton drift over a real reflective tide instead of a flat animated gradient standing in for water.</span>
       </div>

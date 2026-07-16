@@ -337,7 +337,7 @@ export default function LuminousMycelium({ settings = {} }) {
       settings={settings}
       accent="#9dff82"
       background="#010803"
-      eyebrow="04 — Subterranean intelligence"
+      eyebrow="01 — Subterranean intelligence"
       title={"A forest beneath\nthe forest."}
       description="Branching mycelium carries visible signals through the soil, feeding luminous fruiting bodies as the underground network wakes."
       foreground={<AnimationReadout eyebrow="Live network" value={`${mushroomCount.toLocaleString()} MUSHROOMS`} />}

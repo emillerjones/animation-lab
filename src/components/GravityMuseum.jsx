@@ -626,10 +626,14 @@ function BackgroundArtifacts({ density, assets }) {
     if (!mesh.current) return;
     for (let index = 0; index < count; index += 1) {
       const side = index % 2 ? 1 : -1;
+      // Rescaled to stay behind z -6 (the same "narrow, easily-cropped zone in front of the
+      // lens" boundary the foreground artifacts use, see FRONT_Z above) while keeping the
+      // original far edge (5 - GALLERY_DEPTH) fixed, so the pile's total depth is unchanged —
+      // it's compressed into the visible range instead of pushed further behind the back wall.
       tempObject.position.set(
         GALLERY_X + side * (8.5 + seeded(index, 41) * 2.4),
         -0.4 + seeded(index, 42) * 10.2,
-        5 - seeded(index, 43) * GALLERY_DEPTH,
+        -6 - seeded(index, 43) * (GALLERY_DEPTH - 11),
       );
       tempObject.rotation.set(seeded(index, 44) * 3, seeded(index, 45) * 3, seeded(index, 46) * 3);
       const scale = 0.12 + seeded(index, 47) * 0.44;
@@ -1022,10 +1026,13 @@ function PhysicalSand({ amount }) {
     const depthBand = index % 12;
     return {
       key: `grain-${index}`,
+      // Shifted back by 7.5 so the nearest band (depthBand 0) no longer spawns at z up to 1.5 —
+      // well inside the camera's easily-cropped near zone (see FRONT_Z above) — while every
+      // band keeps the same 3.7-unit spacing, just starting from -6 instead of 1.5.
       position: [
         GALLERY_X + (seeded(index, 1401) - 0.5) * 13.5,
         GALLERY_CENTER_Y - 6.8 + seeded(index, 1402) * 9.5,
-        1.5 - depthBand * 3.7 - seeded(index, 1403) * 1.4,
+        -6 - depthBand * 3.7 - seeded(index, 1403) * 1.4,
       ],
       rotation: [seeded(index, 1404) * 3, seeded(index, 1405) * 3, seeded(index, 1406) * 3],
       scale: [
@@ -1069,7 +1076,10 @@ function VisualSandMass({ amount }) {
     const mixed = new THREE.Color();
     for (let index = 0; index < MAX_VISUAL_SAND; index += 1) {
       const i3 = index * 3;
-      const z = 1.2 - seeded(index, 1601) * 47;
+      // Shifted back by 7.2 so the pile no longer spawns as close as z 1.2 — inside the
+      // camera's easily-cropped near zone (see FRONT_Z above) — while keeping the same
+      // 47-unit spread, just starting from -6 instead of 1.2.
+      const z = -6 - seeded(index, 1601) * 47;
       const depthT = Math.abs(z) / 47;
       const width = 7.8 - depthT * 0.7;
       const x = (seeded(index, 1602) * 2 - 1) * width;

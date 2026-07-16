@@ -33,6 +33,17 @@ const TheFirstFold = load(() => import("../components/TheFirstFold"));
 // The single source of truth for the gallery, its order, and every detail route.
 export const animations = [
   {
+    id: "luminous-mycelium",
+    provider: "chatgpt",
+    title: "Luminous Mycelium",
+    category: "Biology / Intelligence",
+    description: "A fungal intelligence sends waves of light through an underground network and wakes a forest of glowing forms.",
+    accent: "#9dff82",
+    accentRgb: "157 255 130",
+    component: LuminousMycelium,
+    controls: [{ key: "mushrooms", label: "Mushrooms", min: 10, max: 10000, default: 100, curve: { mid: 100, power: 2.2 } }],
+  },
+  {
     id: "endless-light-tunnel",
     provider: "chatgpt",
     title: "Endless Light Tunnel",
@@ -76,17 +87,6 @@ export const animations = [
       { key: "light", label: "Incident light", min: 20, max: 100, step: 1, default: 76, suffix: "%" },
       { key: "motes", label: "Photon motes", min: 12, max: 72, step: 4, default: 44 },
     ],
-  },
-  {
-    id: "luminous-mycelium",
-    provider: "chatgpt",
-    title: "Luminous Mycelium",
-    category: "Biology / Intelligence",
-    description: "A fungal intelligence sends waves of light through an underground network and wakes a forest of glowing forms.",
-    accent: "#9dff82",
-    accentRgb: "157 255 130",
-    component: LuminousMycelium,
-    controls: [{ key: "mushrooms", label: "Mushrooms", min: 10, max: 10000, default: 30, curve: { mid: 100, power: 2.2 } }],
   },
   {
     id: "luminous-signal",
