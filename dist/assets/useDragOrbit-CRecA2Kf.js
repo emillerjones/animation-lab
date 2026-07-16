@@ -1,0 +1,1 @@
+import{r as e}from"./index-jIxsv_f0.js";import{c as i}from"./dragOrbit-v25o8ncq.js";import{a as c}from"./react-three-fiber.esm-BW7FtN9-.js";function m(a){const{gl:t,invalidate:s}=c(),r=e.useRef({dragging:!1,dragDistance:0,targetYaw:0,targetPitch:0});return e.useEffect(()=>{const{state:o,dispose:n}=i(t.domElement,{...a,onDrag:()=>s()});return r.current=o,n},[t]),r}export{m as u};

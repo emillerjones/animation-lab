@@ -27,6 +27,7 @@ const ProceduralOcean = load(() => import("../components/ProceduralOcean"));
 const LivingCrystal = load(() => import("../components/LivingCrystal"));
 const ThreadBuildsSystem = load(() => import("../components/ThreadBuildsSystem"));
 const WishingTree = load(() => import("../components/WishingTree"));
+const WishingGrove = load(() => import("../components/WishingGrove"));
 const RiverOfWishes = load(() => import("../components/RiverOfWishes"));
 const TheFirstFold = load(() => import("../components/TheFirstFold"));
 
@@ -59,6 +60,23 @@ export const animations = [
       { key: "seasonSpeed", label: "Season cycle rate", min: 0.2, max: 3, step: 0.1, default: 1, suffix: "×" },
       { key: "windIntensity", label: "Wind (falling drift)", min: 0, max: 200, step: 10, default: 100, suffix: "%" },
       { key: "flightFrequency", label: "Petals falling", min: 0, max: 10000, step: 1, default: 1000 },
+    ],
+  },
+  {
+    id: "wishing-grove",
+    provider: "chatgpt",
+    title: "The Wishing Grove",
+    category: "Instancing / Living Forest",
+    description: "One sacred tree becomes a living grove, filling a circular sand garden with an impossible abundance of blossoms.",
+    accent: "#ffb7c5",
+    accentRgb: "255 183 197",
+    component: WishingGrove,
+    controls: [
+      { key: "treeCount", label: "Number of trees", min: 1, max: 100, step: 1, default: 12 },
+      { key: "petalCount", label: "Blossoms per tree", min: 2000, max: 250000, step: 2000, default: 30000 },
+      { key: "seasonSpeed", label: "Season cycle rate", min: 0.2, max: 3, step: 0.1, default: 1, suffix: "×" },
+      { key: "windIntensity", label: "Wind (falling drift)", min: 0, max: 200, step: 10, default: 100, suffix: "%" },
+      { key: "flightFrequency", label: "Petals falling per tree", min: 0, max: 10000, step: 1, default: 500 },
     ],
   },
   {

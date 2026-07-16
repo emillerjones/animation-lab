@@ -627,7 +627,13 @@ const SEASONS = [
   { sky: "#141c28", fogColor: "#141c28", colorA: "#f5f0ea", colorB: "#c8d4e0", ground: "#8a94a0" },
 ];
 
-function TreeScene({ settings, onStats }) {
+export function TreeScene({
+  settings,
+  onStats,
+  treePlacements = [{ x: 0, z: 0, rotation: 0, scale: 1 }],
+  defaultCameraDistance = 32,
+  maxCameraDistance = 68,
+}) {
   const { camera, gl } = useThree();
   const speed = useSpeed();
   const petalCount = Math.round(THREE.MathUtils.clamp(settings.petalCount ?? 60000, 2000, MAX_PETALS));
@@ -673,8 +679,8 @@ function TreeScene({ settings, onStats }) {
 
   const dragRef = useDragOrbit({ pitchMin: -0.45, pitchMax: 0.5 });
   const baseAngleRef = useRef(0.4);
-  const distanceRef = useRef(32);
-  const targetDistanceRef = useRef(32);
+  const distanceRef = useRef(defaultCameraDistance);
+  const targetDistanceRef = useRef(defaultCameraDistance);
   const seasonIndexRef = useRef({ value: 0 });
   const statsTimerRef = useRef({ frames: 0, time: 0 });
 
@@ -692,12 +698,12 @@ function TreeScene({ settings, onStats }) {
       targetDistanceRef.current = THREE.MathUtils.clamp(
         targetDistanceRef.current * zoomFactor,
         15,
-        68,
+        maxCameraDistance,
       );
     };
     canvas.addEventListener("wheel", onWheel, { passive: false });
     return () => canvas.removeEventListener("wheel", onWheel);
-  }, [gl]);
+  }, [gl, maxCameraDistance]);
 
   useFrame((state, rawDelta) => {
     const elapsed = state.clock.elapsedTime * speed;
@@ -755,9 +761,14 @@ function TreeScene({ settings, onStats }) {
 
   useEffect(() => {
     const backendName = gl?.constructor?.name ?? "WebGL2";
-    onStats({ gpu: backendName.includes("WebGPU") ? "WebGPU" : "WebGL2", petals: petalCount });
+    onStats({
+      gpu: backendName.includes("WebGPU") ? "WebGPU" : "WebGL2",
+      petals: petalCount,
+      totalPetals: petalCount * treePlacements.length,
+      trees: treePlacements.length,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [petalCount]);
+  }, [petalCount, treePlacements.length]);
 
   return (
     <group>
@@ -790,9 +801,17 @@ function TreeScene({ settings, onStats }) {
         </group>
       ))}
 
-      <mesh geometry={treeMesh} material={barkMaterial} />
-
-      <mesh geometry={leafGeometry} material={leafMaterial} frustumCulled={false} />
+      {treePlacements.map((tree, index) => (
+        <group
+          key={index}
+          position={[tree.x, 0, tree.z]}
+          rotation={[0, tree.rotation, 0]}
+          scale={tree.scale}
+        >
+          <mesh geometry={treeMesh} material={barkMaterial} />
+          <mesh geometry={leafGeometry} material={leafMaterial} frustumCulled={false} />
+        </group>
+      ))}
     </group>
   );
 }
