@@ -31,6 +31,7 @@ const LivingCrystal = load(() => import("../components/LivingCrystal"));
 const ThreadBuildsSystem = load(() => import("../components/ThreadBuildsSystem"));
 const WishingTree = load(() => import("../components/WishingTree"));
 const RiverOfWishes = load(() => import("../components/RiverOfWishes"));
+const TheFirstFold = load(() => import("../components/TheFirstFold"));
 
 // The single source of truth for the gallery, its order, and every detail route.
 export const animations = [
@@ -88,7 +89,7 @@ export const animations = [
     accent: "#9dff82",
     accentRgb: "157 255 130",
     component: LuminousMycelium,
-    controls: [{ key: "mushrooms", label: "Mushrooms", min: 10, max: 10000, step: 10, default: 400 }],
+    controls: [{ key: "mushrooms", label: "Mushrooms", min: 10, max: 10000, default: 30, curve: { mid: 100, power: 2.2 } }],
   },
   {
     id: "luminous-signal",
@@ -446,6 +447,21 @@ export const animations = [
       { key: "riverWidth", label: "River width", min: 0, max: 200, step: 10, default: 100, suffix: "%" },
       { key: "wingFlutter", label: "Wing flutter", min: 0, max: 200, step: 10, default: 100, suffix: "%" },
       { key: "lightWarmth", label: "Lantern warmth", min: 0, max: 200, step: 10, default: 100, suffix: "%" },
+    ],
+  },
+  {
+    id: "the-first-fold",
+    provider: "claude",
+    collection: "advanced",
+    title: "The First Fold",
+    category: "Origami / Single Study",
+    description: "One traditional paper crane, folded the real way — a diamond body, a long raised neck, a head bent sharply down, a tapered tail, and two broad creased wings. No swarm, no thousands — just one.",
+    accent: "#f0c987",
+    accentRgb: "240 201 135",
+    component: TheFirstFold,
+    controls: [
+      { key: "rotationSpeed", label: "Rotation speed", min: 0, max: 2, step: 0.1, default: 1, suffix: "×" },
+      { key: "lightWarmth", label: "Light warmth", min: 50, max: 200, step: 10, default: 100, suffix: "%" },
     ],
   },
 ].map((animation, index) => ({ ...animation, index }));

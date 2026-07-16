@@ -50,9 +50,9 @@ function buildPetalGeometry() {
 // the branch tips, same as a real tree's foliage).
 // ---------------------------------------------------------------------------
 const PRIMARY_COUNT = 15;
-const SECONDARY_PER_PRIMARY = 8;
-const TERTIARY_PER_SECONDARY = 10;
-const QUATERNARY_PER_TERTIARY = 5;
+const SECONDARY_PER_PRIMARY = 10;
+const TERTIARY_PER_SECONDARY = 5;
+const QUATERNARY_PER_TERTIARY = 15;
 
 function buildTreeStructure() {
   const trunk = {

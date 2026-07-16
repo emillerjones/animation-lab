@@ -19,6 +19,34 @@ function resolveControlDefault(animation, control) {
   return control.default;
 }
 
+// Some sliders (e.g. Mycelium's mushroom count) need small, precise steps at the low end and
+// huge steps at the high end within a single control — a plain linear <input type="range">
+// can't do that. `control.curve` maps the slider's own linear 0..1 drag position through two
+// pieces: linear from min up to curve.mid at the slider's midpoint, then a power curve
+// (curve.power, default 2) from mid up to max — so each step gets larger than the last as you
+// approach the top, with the very last step the largest of all.
+const CURVE_RESOLUTION = 1000;
+
+function curvePositionToValue(position, control) {
+  const { min, max } = control;
+  const { mid, power = 2 } = control.curve;
+  if (position <= 0.5) {
+    return min + (position / 0.5) * (mid - min);
+  }
+  const t = (position - 0.5) / 0.5;
+  return mid + Math.pow(t, power) * (max - mid);
+}
+
+function curveValueToPosition(value, control) {
+  const { min, max } = control;
+  const { mid, power = 2 } = control.curve;
+  if (value <= mid) {
+    return ((value - min) / (mid - min)) * 0.5;
+  }
+  const t = Math.pow((value - mid) / (max - mid), 1 / power);
+  return 0.5 + t * 0.5;
+}
+
 function getDefaults(animation) {
   const genericControls = animation.controls ?? [];
   const genericDefaults = animation.variantComponent
@@ -123,12 +151,30 @@ function AnimationStage({ animation, settings, variant, onSettingChange, onVaria
     const settingKey = control.settingKey ?? control.key;
     const value = settings[settingKey];
     const displayValue = control.values?.[Math.round(value)] ?? `${value}${control.suffix ?? ""}`;
+    const sliderProps = control.curve
+      ? {
+        min: 0,
+        max: CURVE_RESOLUTION,
+        step: 1,
+        value: Math.round(curveValueToPosition(value, control) * CURVE_RESOLUTION),
+        onChange: (event) => {
+          const position = Number(event.target.value) / CURVE_RESOLUTION;
+          onSettingChange(settingKey, Math.round(curvePositionToValue(position, control)));
+        },
+      }
+      : {
+        min: control.min,
+        max: control.max,
+        step: control.step,
+        value,
+        onChange: (event) => onSettingChange(settingKey, Number(event.target.value)),
+      };
     return (
     <label key={settingKey} className={control.type === "toggle" ? "motion-controls__toggle" : undefined}>
       <span>{control.label} <output>{control.type === "toggle" ? (value ? "On" : "Off") : displayValue}</output></span>
       {control.type === "toggle"
         ? <input type="checkbox" checked={Boolean(value)} onChange={(event) => onSettingChange(settingKey, event.target.checked)} />
-        : <input type="range" min={control.min} max={control.max} step={control.step} value={value} onChange={(event) => onSettingChange(settingKey, Number(event.target.value))} />}
+        : <input type="range" {...sliderProps} />}
     </label>
     );
   };
