@@ -1,0 +1,54 @@
+@import "../experiment-base.css";
+.wishing-tree { background: #150b10; }
+
+.wishing-tree__copy.experiment-copy {
+  top: 7vh;
+  left: 40px;
+  transform: none;
+  width: min(360px, 40vw);
+  z-index: 20;
+  padding: 22px 24px 24px;
+  border-left: 1px solid rgb(255 183 197 / 34%);
+  background: linear-gradient(90deg, rgb(10 4 8 / 72%), rgb(10 4 8 / 12%));
+  text-shadow: 0 2px 22px rgb(0 0 0 / 85%);
+}
+.wishing-tree__copy.experiment-copy > p { margin: 0 0 15px; color: #ffb7c5; font-size: 9px; letter-spacing: .28em; text-transform: uppercase; }
+.wishing-tree__copy.experiment-copy h1 { margin: 0; color: #fff5f7; font-size: clamp(34px, 3.6vw, 54px); font-weight: 350; letter-spacing: -.055em; line-height: .84; }
+.wishing-tree__copy.experiment-copy > span { display: block; width: 100%; margin-top: 22px; color: rgb(255 245 248 / 68%); font-size: 13px; line-height: 1.7; }
+
+.wishing-tree__legend {
+  position: absolute; z-index: 20; left: 40px; bottom: 40px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.wishing-tree__legend > div { display: flex; align-items: flex-start; gap: 12px; }
+.wishing-tree__legend i {
+  flex: none; width: 26px; height: 26px; border-radius: 50%;
+  border: 1px solid rgb(255 183 197 / 45%);
+  display: flex; align-items: center; justify-content: center;
+  font-style: normal; font-size: 12px; color: #ffb7c5;
+}
+.wishing-tree__legend b { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #fff; }
+.wishing-tree__legend span { display: block; font-size: 11px; color: rgb(255 255 255 / 55%); max-width: 190px; line-height: 1.4; margin-top: 2px; }
+
+.workspace--sidebar .animation-stage .wishing-tree__copy.experiment-copy {
+  left: 318px;
+  width: min(360px, calc(100vw - 680px));
+}
+
+@media (max-width: 900px) {
+  .wishing-tree__legend { display: none; }
+  .wishing-tree__copy.experiment-copy,
+  .workspace--sidebar .animation-stage .wishing-tree__copy.experiment-copy {
+    top: auto;
+    bottom: 14px;
+    left: 12px;
+    width: min(138px, 36vw);
+    padding: 18px;
+  }
+  .wishing-tree__copy.experiment-copy h1 { font-size: clamp(14px, 4.6vw, 19px); }
+  .wishing-tree__copy.experiment-copy > span { max-width: 100%; margin-top: 6px; font-size: 9px; line-height: 1.35; }
+}
+
+@media (max-width: 760px) {
+  .workspace--sidebar .animation-stage .wishing-tree__copy.experiment-copy { left: 12px; width: min(138px, 36vw); }
+}

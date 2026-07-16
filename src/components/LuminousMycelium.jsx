@@ -9,11 +9,15 @@ import { Dust } from "./webgl/GpuPrimitives";
 import "./LuminousMycelium.css";
 
 const MAX_MUSHROOMS = 10000;
-// Vogel/Fermat spiral (sunflower phyllotaxis): radius grows with sqrt(index), so every
-// mushroom "owns" the same slice of area no matter how far out it lands — density stays
-// constant as the slider climbs, and the forest just gets wider instead of denser.
+// Vogel/Fermat spiral (sunflower phyllotaxis) for the angle, same idea as before. But
+// radius now grows with index^0.65, not sqrt(index) (^0.5): area-per-mushroom is
+// proportional to d(radius^2)/d(index), which for an exponent p works out to i^(2p-1) —
+// flat (constant density) at p=0.5, but growing with i once p > 0.5. So this keeps the
+// same close, dense packing near the hub while spacing mushrooms out more and more the
+// further out they land, and it reaches a much larger total radius for the same count.
 const GOLDEN_ANGLE = 2.399963229728653;
-const RING_SPACING = 1.4;
+const RADIUS_POWER = 0.65;
+const RADIUS_SCALE = 0.75;
 const SEGMENTS_PER_PATH = 6;
 const GROW_DURATION = 0.8;
 const MAX_SIGNALS = 160;
@@ -33,7 +37,10 @@ function buildPool(max) {
   const pool = new Array(max);
   for (let i = 0; i < max; i += 1) {
     const angle = i * GOLDEN_ANGLE + (seeded(i, 8101) - 0.5) * 0.16;
-    const radius = RING_SPACING * Math.sqrt(i + 0.5) + (seeded(i, 8102) - 0.5) * RING_SPACING * 0.3;
+    const baseRadius = RADIUS_SCALE * Math.pow(i + 0.5, RADIUS_POWER);
+    // Jitter scaled to the local radius rather than a fixed amount — a fixed jitter would
+    // be proportionally huge right at the hub and invisible way out at the edge.
+    const radius = baseRadius + (seeded(i, 8102) - 0.5) * baseRadius * 0.22;
     const x = Math.cos(angle) * radius;
     const z = Math.sin(angle) * radius;
     const scale = 0.42 + seeded(i, 8103) * 0.85;
@@ -154,11 +161,15 @@ function MushroomForest({ settings, accent }) {
     return geo;
   }, [pool]);
 
+  // toneMapped left at its default (true) so these respect the same ACES curve the mushroom
+  // caps do — `false` here previously let the lines render at raw, uncompressed brightness
+  // while the caps got tone-mapped/softened, which is why the lines read brighter than the
+  // mushrooms despite the caps being the intended focal point. Opacity dropped well below the
+  // caps' own brightness so the lines stay a faint, ghosted trail rather than competing.
   const lineMaterial = useMemo(() => new THREE.LineBasicMaterial({
     vertexColors: true,
     transparent: true,
-    opacity: 0.55,
-    toneMapped: false,
+    opacity: 0.16,
   }), []);
 
   // Pre-sized to the full pool up front. InstancedMesh.setColorAt() lazily allocates
@@ -264,7 +275,7 @@ function MushroomForest({ settings, accent }) {
     }
 
     if (groundRef.current) {
-      const groundRadius = RING_SPACING * Math.sqrt(count) + 4;
+      const groundRadius = RADIUS_SCALE * Math.pow(count, RADIUS_POWER) + 6;
       groundRef.current.scale.setScalar(groundRadius);
     }
   });
@@ -276,7 +287,7 @@ function MushroomForest({ settings, accent }) {
           inside it) to actually reach `scene.fog`. Lower density than GpuExperience's shared
           default: at forest scale the far rings would otherwise vanish well before the count
           slider does anything visible. */}
-      <fogExp2 attach="fog" args={["#010803", 0.0225]} />
+      <fogExp2 attach="fog" args={["#010803", 0.007]} />
       <group ref={groupRef} position={[3, -1.85, -11]}>
         <mesh ref={groundRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.18, 0]}>
           <circleGeometry args={[1, 72]} />
@@ -314,6 +325,12 @@ export default function LuminousMycelium({ settings = {} }) {
       title={"A forest beneath\nthe forest."}
       description="Branching mycelium carries visible signals through the soil, feeding luminous fruiting bodies as the underground network wakes."
       foreground={<AnimationReadout eyebrow="Live network" value={`${mushroomCount.toLocaleString()} MUSHROOMS`} />}
+      // Default GpuExperience far plane (260) sits inside the mushroom field's own radius at
+      // high counts (~299 units at 10k, per RADIUS_SCALE * count^RADIUS_POWER) — fringe
+      // mushrooms were crossing that clip boundary as the camera orbited, popping in and out.
+      // Fog already fades them out well before this new distance, so raising it only fixes
+      // the clipping without changing how the far edge looks.
+      camera={{ far: 420 }}
     />
   );
 }

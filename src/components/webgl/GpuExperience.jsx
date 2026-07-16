@@ -72,6 +72,7 @@ export default function GpuExperience({
   foreground = null,
   wheelInteraction = false,
   action = null,
+  camera = null,
 }) {
   const [impulse, setImpulse] = useState(0);
   const [actionActive, setActionActive] = useState(false);
@@ -93,7 +94,7 @@ export default function GpuExperience({
       <Canvas
         className="gpu-experience__canvas"
         dpr={WEBGL_DPR}
-        camera={{ fov: 52, near: .1, far: 260, position: [0, 3.3, 13.5] }}
+        camera={{ fov: 52, near: .1, far: 260, position: [0, 3.3, 13.5], ...camera }}
         gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
         onCreated={({ gl }) => {
           gl.outputColorSpace = THREE.SRGBColorSpace;

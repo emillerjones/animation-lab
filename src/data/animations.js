@@ -28,8 +28,9 @@ const ImpossibleOrigamiCathedralClaude = load(() => import("../components/Imposs
 const AlienDysonSwarm = load(() => import("../components/AlienDysonSwarm"));
 const ProceduralOcean = load(() => import("../components/ProceduralOcean"));
 const LivingCrystal = load(() => import("../components/LivingCrystal"));
-const TheMonolith = load(() => import("../components/TheMonolith"));
 const ThreadBuildsSystem = load(() => import("../components/ThreadBuildsSystem"));
+const WishingTree = load(() => import("../components/WishingTree"));
+const RiverOfWishes = load(() => import("../components/RiverOfWishes"));
 
 // The single source of truth for the gallery, its order, and every detail route.
 export const animations = [
@@ -279,8 +280,7 @@ export const animations = [
     accentRgb: "167 185 255",
     component: GravityMuseum,
     controls: [
-      { key: "artifactDensity", label: "Number of objects", min: 24, max: 140, step: 4, default: 76 },
-      { key: "lightObjects", label: "Light-emitting objects", min: 0, max: 8, step: 1, default: 3 },
+      { key: "artifactDensity", label: "Number of objects", min: 24, max: 400, step: 4, default: 76 },
       { key: "physicalSand", label: "Physical sand grains", min: 0, max: 6000, step: 250, default: 1500 },
       { key: "illumination", label: "Overall illumination", min: 60, max: 220, step: 10, default: 100, suffix: "%" },
       { key: "pathTracing", label: "Path tracing", type: "toggle", default: false },
@@ -382,7 +382,7 @@ export const animations = [
     collection: "advanced",
     title: "Living Crystal",
     category: "WebGPU / Procedural Growth",
-    description: "One translucent shard branches into an architectural crystal on its own — cursor steers new growth, clicks send energy through it, and mature limbs can be fractured and watched as they regrow.",
+    description: "A cathedral of mineral light grows facet by facet on its own — each one breathes with inner light once mature, then shatters and seeds the next generation. Drag to orbit.",
     accent: "#8fd8ff",
     accentRgb: "143 216 255",
     component: LivingCrystal,
@@ -392,24 +392,6 @@ export const animations = [
       { key: "energyIntensity", label: "Energy intensity", min: 40, max: 200, step: 5, default: 100, suffix: "%" },
       { key: "fractureRate", label: "Fracture frequency", min: 0, max: 100, step: 5, default: 50, suffix: "%" },
       { key: "dustAmount", label: "Crystal dust", min: 10, max: 100, step: 5, default: 35 },
-    ],
-  },
-  {
-    id: "the-monolith",
-    provider: "chatgpt",
-    collection: "advanced",
-    title: "The Monolith",
-    category: "OLED / Procedural Awakening",
-    description: "An obsidian monument turns in true black, fractures with internal light, opens under scroll, and releases a reversible storm of luminous matter.",
-    accent: "#7ebcff",
-    accentRgb: "126 188 255",
-    component: TheMonolith,
-    controls: [
-      { key: "rotationRate", label: "Monolith rotation", min: 0.1, max: 2, step: 0.1, default: 0.5, suffix: "×" },
-      { key: "crackEnergy", label: "Crack energy", min: 20, max: 180, step: 5, default: 100, suffix: "%" },
-      { key: "coreEnergy", label: "Inner light", min: 20, max: 200, step: 5, default: 100, suffix: "%" },
-      { key: "particleCount", label: "Released particles", min: 500, max: 5000, step: 500, default: 3000 },
-      { key: "particleSpread", label: "Release spread", min: 0.4, max: 2, step: 0.1, default: 1, suffix: "×" },
     ],
   },
   {
@@ -429,6 +411,41 @@ export const animations = [
       { key: "orbitRate", label: "Orbital rate", min: 0.2, max: 1.6, step: 0.1, default: 0.72, suffix: "×" },
       { key: "coreEnergy", label: "Central light", min: 20, max: 140, step: 5, default: 76, suffix: "%" },
       { key: "pointerInfluence", label: "Pointer influence", min: 0, max: 100, step: 5, default: 42, suffix: "%" },
+    ],
+  },
+  {
+    id: "wishing-tree",
+    provider: "claude",
+    collection: "advanced",
+    title: "The Wishing Tree",
+    category: "Instancing / Living Ecosystem",
+    description: "A sacred tree bears ten thousand tiny blossoms instead of leaves — each one buds, breathes, and eventually falls away on the wind, while another quietly opens elsewhere on the branch. The seasons turn slowly around it, and it never stops renewing.",
+    accent: "#ffb7c5",
+    accentRgb: "255 183 197",
+    component: WishingTree,
+    controls: [
+      { key: "petalCount", label: "Blossoms on the tree", min: 2000, max: 1000000, step: 2000, default: 60000 },
+      { key: "seasonSpeed", label: "Season cycle rate", min: 0.2, max: 3, step: 0.1, default: 1, suffix: "×" },
+      { key: "windIntensity", label: "Wind (falling drift)", min: 0, max: 200, step: 10, default: 100, suffix: "%" },
+      { key: "flightFrequency", label: "Petals falling", min: 0, max: 10000, step: 1, default: 1000 },
+    ],
+  },
+  {
+    id: "river-of-wishes",
+    provider: "claude",
+    collection: "advanced",
+    title: "The River of Wishes",
+    category: "Instancing / Flow Field",
+    description: "Ten thousand origami cranes drift through an ancient temple in slow, graceful currents — parting around pillars, beneath a wooden bridge, and out into a moonlit garden, never colliding, never stopping.",
+    accent: "#e6c88a",
+    accentRgb: "230 200 138",
+    component: RiverOfWishes,
+    controls: [
+      { key: "craneCount", label: "Cranes in the river", min: 2000, max: 10000, step: 500, default: 6000 },
+      { key: "flowSpeed", label: "Current speed", min: 0.2, max: 3, step: 0.1, default: 1, suffix: "×" },
+      { key: "riverWidth", label: "River width", min: 0, max: 200, step: 10, default: 100, suffix: "%" },
+      { key: "wingFlutter", label: "Wing flutter", min: 0, max: 200, step: 10, default: 100, suffix: "%" },
+      { key: "lightWarmth", label: "Lantern warmth", min: 0, max: 200, step: 10, default: 100, suffix: "%" },
     ],
   },
 ].map((animation, index) => ({ ...animation, index }));

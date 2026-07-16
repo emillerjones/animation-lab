@@ -62,5 +62,13 @@
 }
 
 @media (max-width: 760px) {
-  .animation-readout { display: none; }
+  .animation-readout {
+    top: 14px;
+    right: 14px;
+    min-width: 8.5rem;
+    padding: 9px 11px;
+    gap: 4px;
+    font-size: 7px;
+  }
+  .animation-readout strong { font-size: 10px; }
 }

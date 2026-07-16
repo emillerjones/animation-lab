@@ -5,14 +5,10 @@ import {
   clamp, color, dot, mix, oneMinus, pow, positionLocal, normalView, positionViewDirection, uniform, uv, mx_fractal_noise_float,
 } from "three/tsl";
 import { getProject } from "@theatre/core";
-import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from "three-mesh-bvh";
 import { seeded } from "../utils/procedural";
+import useDragOrbit from "../hooks/useDragOrbit";
 import AnimationReadout from "./AnimationReadout";
 import "./LivingCrystal.css";
-
-THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
-THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
-THREE.Mesh.prototype.raycast = acceleratedRaycast;
 
 const theatreProject = getProject("Living Crystal");
 const growthSheet = theatreProject.sheet("Growth");
@@ -25,7 +21,6 @@ const tuning = growthSheet.object("Tuning", {
   idleFractureMaxGap: 26,
 });
 
-const GROWTH_TIMELINE_SECONDS = 30;
 const MAX_BRANCHES = 48;
 const dummy = new THREE.Object3D();
 
@@ -83,6 +78,51 @@ function buildBranches(density) {
   });
 
   return { branches, groupCounts: groupCounters };
+}
+
+// Re-rolls a branch's shape/position each time it respawns into a new generation, using the
+// same tier-based distribution as the initial layout so "baby" facets stay visually
+// consistent with their role (small tips stay smallish, major limbs stay major) while still
+// looking like a fresh, slightly different growth each life. The hero shard (depth 0) keeps
+// its fixed silhouette — it's the permanent core the rest of the crystal grows around.
+function randomizeBranchShape(branch, generation) {
+  if (branch.depth === 0) return;
+  const salt = 4000 + generation * 41;
+  const i = branch.id;
+  const tier = branch.depth;
+  const azimuth = i * 2.399963 + seeded(i, salt + 1) * Math.PI * 2;
+  const elevation = THREE.MathUtils.degToRad(
+    tier === 1 ? 53 + seeded(i, salt + 2) * 25 : tier === 2 ? 34 + seeded(i, salt + 2) * 32 : 18 + seeded(i, salt + 2) * 32,
+  );
+  const dir = new THREE.Vector3(
+    Math.cos(azimuth) * Math.cos(elevation),
+    Math.sin(elevation),
+    Math.sin(azimuth) * Math.cos(elevation),
+  ).normalize();
+  const radial = tier === 1 ? 0.28 + seeded(i, salt + 3) * 0.34 : tier === 2 ? 0.72 + seeded(i, salt + 3) * 0.68 : 1.25 + seeded(i, salt + 3) * 1.05;
+  const length = tier === 1 ? 2.25 + seeded(i, salt + 4) * 1.55 : tier === 2 ? 1.15 + seeded(i, salt + 4) * 1.45 : 0.55 + seeded(i, salt + 4) * 0.9;
+  const baseRadius = tier === 1 ? 0.28 + seeded(i, salt + 5) * 0.22 : tier === 2 ? 0.15 + seeded(i, salt + 5) * 0.16 : 0.08 + seeded(i, salt + 5) * 0.11;
+  branch.originalDir.copy(dir);
+  branch.renderDir.copy(dir);
+  branch.length = length;
+  branch.baseRadius = baseRadius;
+  branch.basePos.set(Math.cos(azimuth) * radial, -0.68 + seeded(i, salt + 6) * 0.16, Math.sin(azimuth) * radial);
+}
+
+// Grow/breathe/dormant durations for one life of a facet. Tier 1 branches live long, full
+// lives; tier 3 tips are quick "babies" that cycle rapidly. fractureRateMul (0-1, from the
+// Fracture frequency slider) shortens breathe time — more frequent dying/respawning — and
+// growthSpeedMul speeds up the grow phase itself.
+function phaseDurationsFor(tier, growthSpeedMul = 1, fractureRateMul = 0.5) {
+  const breatheRange = tier === 1 ? [11, 20] : tier === 2 ? [7, 14] : [4, 9];
+  const dormantRange = tier === 1 ? [1.4, 3] : tier === 2 ? [0.9, 2.2] : [0.5, 1.5];
+  const growRange = tier === 1 ? [3.2, 5.4] : tier === 2 ? [2, 3.6] : [1.1, 2.3];
+  const breathe = THREE.MathUtils.lerp(breatheRange[1], breatheRange[0], fractureRateMul);
+  return {
+    grow: THREE.MathUtils.lerp(growRange[0], growRange[1], Math.random()) / growthSpeedMul,
+    breathe,
+    dormant: THREE.MathUtils.lerp(dormantRange[0], dormantRange[1], Math.random()),
+  };
 }
 
 function useSharedCrystalUniforms() {
@@ -196,7 +236,7 @@ function useDustPool(count) {
   return { meshRef, spawnBurst, count };
 }
 
-function CrystalFragments({ growthRef, material, count = 72 }) {
+function CrystalFragments({ material, count = 72 }) {
   const meshRef = useRef();
   const geometry = useMemo(() => {
     const geo = new THREE.CylinderGeometry(0.025, 0.65, 1, 5, 1, false);
@@ -219,9 +259,11 @@ function CrystalFragments({ growthRef, material, count = 72 }) {
 
   useFrame((state) => {
     if (!meshRef.current) return;
-    const growth = growthRef.current;
+    // Ambient debris around the crystal fades in over its first ~12s alongside the initial
+    // awakening — independent of any single branch's lifecycle, since these are scenery.
+    const revealClock = Math.min(1, state.clock.elapsedTime / 12);
     fragments.forEach((fragment, index) => {
-      const reveal = THREE.MathUtils.smoothstep(growth, fragment.reveal - 0.08, fragment.reveal + 0.08);
+      const reveal = THREE.MathUtils.smoothstep(revealClock, fragment.reveal - 0.08, fragment.reveal + 0.08);
       const hover = fragment.floating ? Math.sin(state.clock.elapsedTime * 0.55 + fragment.phase) * 0.16 * reveal : 0;
       dummy.position.copy(fragment.position);
       dummy.position.y += hover;
@@ -241,6 +283,7 @@ function CrystalScene({ settings, speedRef, onStats }) {
   const branchDensity = settings.branchDensity ?? 12;
   const energyIntensity = (settings.energyIntensity ?? 100) / 100;
   const fractureRateMul = (settings.fractureRate ?? 50) / 100;
+  const growthSpeedMul = settings.growthSpeed ?? 1;
   const dustCount = Math.max(10, Math.min(100, settings.dustAmount ?? 35));
 
   const { branches, groupCounts } = useMemo(() => buildBranches(branchDensity), [branchDensity]);
@@ -254,19 +297,10 @@ function CrystalScene({ settings, speedRef, onStats }) {
 
   const meshRefs = useRef([null, null, null]);
   const stateRef = useRef(new Map());
-  const heldBranchRef = useRef(null);
-  const lastClickRef = useRef({ time: -10, branchId: -1 });
-  const nextIdleFractureRef = useRef(tuning.value.idleFractureMinGap);
-  const dragRef = useRef({ yaw: 0.6, pitch: 0.15 });
-  const growthTargetRef = useRef(0.56);
-  const growthValueRef = useRef(0.56);
+  const cyclesRef = useRef(0);
+  // Click/tap-drag to orbit, exactly like the other pieces — no more passive hover-parallax.
+  const dragRef = useDragOrbit({ pitchMin: -0.5, pitchMax: 0.55 });
   const fpsRef = useRef({ frames: 0, time: 0 });
-
-  const hitGeometry = useMemo(() => {
-    const geo = new THREE.SphereGeometry(1, 8, 8);
-    geo.computeBoundsTree();
-    return geo;
-  }, []);
 
   const shardGeometry = useMemo(() => {
     const vertices = [];
@@ -298,190 +332,133 @@ function CrystalScene({ settings, speedRef, onStats }) {
     });
   }, [branches.length, dustCount, gl, onStats, shardGeometry]);
 
+  // Each branch runs its own independent lifecycle: growing -> breathing -> dying -> dormant
+  // -> (respawns as a new generation, back to growing). Generation 0 uses the hand-placed
+  // stageStart/stageDuration from buildBranches for a nice staggered first bloom (hero shard
+  // first, then tiers rippling outward); every life after that gets fresh tier-appropriate
+  // timings from phaseDurationsFor. The hero shard (depth 0) never dies — it's the permanent
+  // core the rest of the crystal grows around.
   useEffect(() => {
     branches.forEach((b) => {
-      stateRef.current.set(b.id, { growStart: b.stageStart, fractureAt: -1, regrowAt: -1 });
+      const rolled = phaseDurationsFor(b.depth, growthSpeedMul, fractureRateMul);
+      stateRef.current.set(b.id, {
+        phase: "growing",
+        phaseStart: b.stageStart,
+        scale: 0,
+        generation: 0,
+        nudged: false,
+        durations: { grow: b.stageDuration, breathe: rolled.breathe, dormant: rolled.dormant },
+      });
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [branches]);
 
-  useEffect(() => {
-    const onWheel = (event) => {
-      event.preventDefault();
-      growthTargetRef.current = clampNumber(growthTargetRef.current + event.deltaY * 0.0007, 0.015, 1);
-    };
-    const sceneEl = document.querySelector(".living-crystal");
-    sceneEl?.addEventListener("wheel", onWheel, { passive: false });
-    return () => sceneEl?.removeEventListener("wheel", onWheel);
-  }, []);
-
-  const isDescendantOf = (branchId, ancestorId) => {
-    let current = branches[branchId];
-    while (current && current.parentId !== -1) {
-      if (current.parentId === ancestorId) return true;
-      current = branches[current.parentId];
-    }
-    return false;
+  const triggerDeath = (branch, entry, now) => {
+    entry.phase = "dying";
+    entry.phaseStart = now;
+    const tip = branch.basePos.clone().addScaledVector(branch.renderDir, branch.length);
+    dust.spawnBurst(tip, 16);
   };
-
-  const fractureBranch = (branchId, now) => {
-    const entry = stateRef.current.get(branchId);
-    if (!entry || entry.fractureAt >= 0) return;
-    entry.fractureAt = now;
-    entry.regrowAt = now + 1.1;
-    const b = branches[branchId];
-    const tip = b.basePos.clone().addScaledVector(b.renderDir, b.length);
-    dust.spawnBurst(tip, 14);
-  };
-
-  const hitProxiesRef = useRef([]);
-
-  useEffect(() => {
-    const canvasEl = document.querySelector(".living-crystal__stage canvas");
-    if (!canvasEl) return undefined;
-    let downTime = 0;
-
-    const raycastBranch = (event) => {
-      const rect = canvasEl.getBoundingClientRect();
-      const ndc = new THREE.Vector2(
-        ((event.clientX - rect.left) / rect.width) * 2 - 1,
-        -((event.clientY - rect.top) / rect.height) * 2 + 1,
-      );
-      const raycaster = new THREE.Raycaster();
-      raycaster.setFromCamera(ndc, camera);
-      const targets = hitProxiesRef.current.filter(Boolean);
-      const hits = raycaster.intersectObjects(targets, false);
-      return hits.length ? hits[0].object.userData.branchId : -1;
-    };
-
-    const onPointerDown = (event) => {
-      downTime = performance.now();
-      const downBranch = raycastBranch(event);
-      heldBranchRef.current = downBranch >= 0 ? downBranch : null;
-    };
-    const onPointerUp = (event) => {
-      heldBranchRef.current = null;
-      const elapsed = performance.now() - downTime;
-      const hitBranch = raycastBranch(event);
-      if (elapsed < 350 && hitBranch >= 0) {
-        const now = timeUniform.value;
-        pulseTime.value = now;
-        const last = lastClickRef.current;
-        if (now - last.time < 0.5 && last.branchId === hitBranch) {
-          const entry = stateRef.current.get(hitBranch);
-          const growStart = entry ? entry.growStart : 999;
-          const mature = growthValueRef.current * GROWTH_TIMELINE_SECONDS - growStart > branches[hitBranch].stageDuration;
-          if (mature) fractureBranch(hitBranch, now);
-        }
-        lastClickRef.current = { time: now, branchId: hitBranch };
-      }
-    };
-
-    canvasEl.addEventListener("pointerdown", onPointerDown);
-    window.addEventListener("pointerup", onPointerUp);
-    return () => {
-      canvasEl.removeEventListener("pointerdown", onPointerDown);
-      window.removeEventListener("pointerup", onPointerUp);
-    };
-  }, [camera, branches, pulseTime, timeUniform]);
-
-  const growthSpeedMul = settings.growthSpeed ?? 1;
 
   useFrame((state, rawDelta) => {
-    fpsRef.current.frames += 1;
-    fpsRef.current.time += rawDelta;
-    if (fpsRef.current.time >= 0.5) {
-      onStats({ fps: Math.round(fpsRef.current.frames / fpsRef.current.time), growth: growthValueRef.current });
-      fpsRef.current.frames = 0;
-      fpsRef.current.time = 0;
-    }
-
-    const delta = Math.min(rawDelta, 0.05) * speedRef.current;
-    growthValueRef.current = THREE.MathUtils.damp(
-      growthValueRef.current,
-      growthTargetRef.current,
-      3.8 * growthSpeedMul,
-      Math.min(rawDelta, 0.05),
-    );
-    const growthT = growthValueRef.current * GROWTH_TIMELINE_SECONDS;
     const realTime = state.clock.elapsedTime * speedRef.current;
     timeUniform.value = realTime;
 
+    // The crystal's inner energy/veins glow wakes up gradually over the first ~15-18s after
+    // load, independent of any single branch's lifecycle — the scene itself is "growing".
     const awakeningT = clampNumber(
-      (growthT - tuning.value.awakeningStart) / (tuning.value.awakeningEnd - tuning.value.awakeningStart),
+      (realTime - tuning.value.awakeningStart) / (tuning.value.awakeningEnd - tuning.value.awakeningStart),
       0, 1,
     );
     awakening.value = (0.25 + 0.75 * awakeningT) * energyIntensity;
 
-    if (growthValueRef.current > 0.78) nextIdleFractureRef.current -= delta;
-    if (nextIdleFractureRef.current <= 0 && growthValueRef.current > 0.78) {
-      nextIdleFractureRef.current = THREE.MathUtils.lerp(
-        tuning.value.idleFractureMaxGap, tuning.value.idleFractureMinGap, fractureRateMul,
-      );
-      const matureBranches = branches.filter((b) => {
-        const entry = stateRef.current.get(b.id);
-        return entry && entry.fractureAt < 0 && growthT - entry.growStart > b.stageDuration + 3;
-      });
-      if (matureBranches.length) {
-        const pick = matureBranches[Math.floor(Math.random() * matureBranches.length)];
-        fractureBranch(pick.id, realTime);
-      }
-    }
-
     let maxMatureDepth = 0;
+    let aliveCount = 0;
     branches.forEach((b) => {
       const entry = stateRef.current.get(b.id);
       if (!entry) return;
+      const elapsedInPhase = realTime - entry.phaseStart;
 
-      if (entry.fractureAt >= 0 && realTime < entry.regrowAt) {
-        const shrinkT = clampNumber((realTime - entry.fractureAt) / 0.4, 0, 1);
-        dummy.scale.set(b.baseRadius * (1 - shrinkT), b.length * (1 - shrinkT), b.baseRadius * (1 - shrinkT));
-      } else {
-        if (entry.fractureAt >= 0) {
-          entry.fractureAt = -1;
-          entry.nudged = false;
-          const yaw = pointer.x * 0.6;
-          const nudgedDir = b.originalDir.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw * 0.3);
-          b.renderDir.copy(b.originalDir).lerp(nudgedDir, 0.25).normalize();
-        }
-
-        const held = heldBranchRef.current;
-        const accelerated = held !== null && (held === b.id || isDescendantOf(b.id, held));
-        if (entry.growProgress === undefined) entry.growProgress = 0;
-        const target = clampNumber((growthT - entry.growStart) / b.stageDuration, 0, 1);
-        entry.growProgress = THREE.MathUtils.damp(entry.growProgress, target, accelerated ? 10 : 5.5, Math.min(rawDelta, 0.05));
-        if (entry.growProgress > 0.001 && !entry.nudged) {
+      if (entry.phase === "growing") {
+        const t = clampNumber(elapsedInPhase / Math.max(0.001, entry.durations.grow), 0, 1);
+        entry.scale = t * t * (3 - 2 * t);
+        if (!entry.nudged && t > 0.02) {
           entry.nudged = true;
           const yaw = pointer.x * 0.6;
           const pitch = pointer.y * 0.4;
           const cursorDir = new THREE.Vector3(Math.sin(yaw), 0.3 + pitch, Math.cos(yaw)).normalize();
           b.renderDir.copy(b.originalDir).lerp(cursorDir, 0.22).normalize();
         }
-        const grown = entry.growProgress;
-        if (grown > 0.02 && b.depth <= 2) maxMatureDepth = Math.max(maxMatureDepth, b.depth + grown);
-        dummy.scale.set(b.baseRadius, Math.max(0.001, b.length * grown), b.baseRadius);
+        if (t >= 1) {
+          entry.phase = "breathing";
+          entry.phaseStart = realTime;
+          entry.scale = 1;
+          pulseTime.value = realTime;
+        }
+        aliveCount += 1;
+      } else if (entry.phase === "breathing") {
+        const breathe = Math.sin(realTime * 0.9 + b.id * 0.73) * 0.035 + Math.sin(realTime * 0.31 + b.id) * 0.018;
+        entry.scale = 1 + breathe;
+        aliveCount += 1;
+        if (b.depth !== 0 && elapsedInPhase >= entry.durations.breathe) {
+          triggerDeath(b, entry, realTime);
+        }
+      } else if (entry.phase === "dying") {
+        const dieDuration = 0.55;
+        const t = clampNumber(elapsedInPhase / dieDuration, 0, 1);
+        const pop = Math.sin(t * Math.PI) * 0.22 * (1 - t);
+        entry.scale = Math.max(0, (1 - t) + pop);
+        if (t >= 1) {
+          entry.phase = "dormant";
+          entry.phaseStart = realTime;
+          entry.scale = 0;
+        }
+      } else {
+        entry.scale = 0;
+        if (elapsedInPhase >= entry.durations.dormant) {
+          entry.generation += 1;
+          cyclesRef.current += 1;
+          randomizeBranchShape(b, entry.generation);
+          entry.durations = phaseDurationsFor(b.depth, growthSpeedMul, fractureRateMul);
+          entry.phase = "growing";
+          entry.phaseStart = realTime;
+          entry.scale = 0;
+          entry.nudged = false;
+        }
+      }
+
+      if (entry.scale > 0.02 && b.depth <= 2) {
+        maxMatureDepth = Math.max(maxMatureDepth, b.depth + Math.min(1, entry.scale));
       }
 
       dummy.position.copy(b.basePos);
       dummy.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.renderDir);
+      dummy.scale.set(b.baseRadius * entry.scale, Math.max(0.0005, b.length * entry.scale), b.baseRadius * entry.scale);
       dummy.updateMatrix();
       const meshEl = meshRefs.current[b.groupIndex];
       if (meshEl) meshEl.setMatrixAt(b.localIndex, dummy.matrix);
-
-      const proxy = hitProxiesRef.current[b.id];
-      if (proxy) {
-        proxy.position.copy(b.basePos).addScaledVector(b.renderDir, b.length * 0.5);
-        proxy.scale.setScalar(Math.max(0.12, b.length * 0.32));
-      }
     });
     meshRefs.current.forEach((el) => { if (el) el.instanceMatrix.needsUpdate = true; });
+
+    fpsRef.current.frames += 1;
+    fpsRef.current.time += rawDelta;
+    if (fpsRef.current.time >= 0.5) {
+      onStats({
+        fps: Math.round(fpsRef.current.frames / fpsRef.current.time),
+        growth: aliveCount / branches.length,
+        cycles: cyclesRef.current,
+      });
+      fpsRef.current.frames = 0;
+      fpsRef.current.time = 0;
+    }
 
     const distance = THREE.MathUtils.lerp(
       tuning.value.cameraStartDistance,
       tuning.value.cameraEndDistance,
       clampNumber(maxMatureDepth / 3.4, 0, 1),
     );
-    const yaw = dragRef.current.yaw + pointer.x * 0.12;
-    const pitch = dragRef.current.pitch + pointer.y * 0.08;
+    const yaw = 0.6 + dragRef.current.targetYaw;
+    const pitch = 0.15 + dragRef.current.targetPitch;
     camera.position.set(
       Math.sin(yaw) * Math.cos(pitch) * distance,
       1.1 + Math.sin(pitch) * distance * 0.5,
@@ -510,17 +487,7 @@ function CrystalScene({ settings, speedRef, onStats }) {
       <instancedMesh ref={(el) => { meshRefs.current[0] = el; }} args={[shardGeometry, materials[0], groupCounts[0]]} frustumCulled={false} />
       <instancedMesh ref={(el) => { meshRefs.current[1] = el; }} args={[shardGeometry, materials[1], groupCounts[1]]} frustumCulled={false} />
       <instancedMesh ref={(el) => { meshRefs.current[2] = el; }} args={[shardGeometry, materials[2], groupCounts[2]]} frustumCulled={false} />
-      <CrystalFragments growthRef={growthValueRef} material={materialPurple} />
-      {branches.map((b) => (
-        <mesh
-          key={b.id}
-          ref={(el) => { hitProxiesRef.current[b.id] = el; if (el) el.userData.branchId = b.id; }}
-          geometry={hitGeometry}
-          visible={false}
-        >
-          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
-        </mesh>
-      ))}
+      <CrystalFragments material={materialPurple} />
       <instancedMesh ref={dust.meshRef} args={[undefined, undefined, dust.count]} frustumCulled={false}>
         <sphereGeometry args={[1, 6, 6]} />
         <meshBasicMaterial color="#4d6b85" transparent opacity={0.4} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
@@ -544,7 +511,7 @@ async function createWebGPURenderer(props) {
 export default function LivingCrystal({ settings = {} }) {
   const speedRef = useRef(settings.speed ?? 1);
   speedRef.current = settings.speed ?? 1;
-  const [stats, setStats] = useState({ fps: 60, gpu: "—", crystals: 0, particles: 0, triangles: 0, growth: 0.56 });
+  const [stats, setStats] = useState({ fps: 60, gpu: "—", crystals: 0, particles: 0, triangles: 0, growth: 0.56, cycles: 0 });
 
   const onStats = (patch) => setStats((current) => ({ ...current, ...patch }));
 
@@ -566,15 +533,12 @@ export default function LivingCrystal({ settings = {} }) {
       <div className="experiment-copy living-crystal__copy">
         <p>25 — Procedural mineral intelligence</p>
         <h1>Living<br />Crystal.</h1>
-        <span>Scroll forward to grow a cathedral of mineral light. Reverse the wheel to draw every shard and orbiting fragment back into its seed.</span>
+        <span>Facets grow from the seed, breathe with inner light once mature, then shatter and seed the next generation — on, and on. Drag to look around.</span>
       </div>
 
       <div className="living-crystal__legend">
         <div><i>&#9906;</i><div><b>Move cursor</b><span>Influence the direction of new growth</span></div></div>
-        <div><i>↕</i><div><b>Scroll either way</b><span>Grow or reverse the crystal cluster</span></div></div>
-        <div><i>&#9679;</i><div><b>Click</b><span>Send an energy pulse through the crystal</span></div></div>
-        <div><i>&#9678;</i><div><b>Hold</b><span>Grow the selected region</span></div></div>
-        <div><i>&#9889;</i><div><b>Double click</b><span>Fracture a mature branch</span></div></div>
+        <div><i>&#8635;</i><div><b>Drag</b><span>Orbit around the crystal</span></div></div>
       </div>
 
       <div className="living-crystal__hud">
@@ -585,15 +549,14 @@ export default function LivingCrystal({ settings = {} }) {
         <div><span>TRIANGLES</span><strong>{stats.triangles.toLocaleString()}</strong></div>
       </div>
 
-      <div className="living-crystal__scroll-prompt"><i /><span>Scroll to grow · reverse to retract</span></div>
-
       <AnimationReadout
         eyebrow="CRYSTAL STATE"
-        value={`${Math.round(stats.growth * 100)}% GROWN`}
+        value={`${Math.round(stats.growth * 100)}% ALIVE`}
         progress={stats.growth}
         stats={[
           { value: stats.crystals.toLocaleString(), label: "BRANCHES" },
           { value: stats.particles.toLocaleString(), label: "DUST MOTES" },
+          { value: stats.cycles.toLocaleString(), label: "CYCLES" },
         ]}
       />
     </section>

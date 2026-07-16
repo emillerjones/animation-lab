@@ -17,8 +17,11 @@
 @keyframes gpu-status { 50% { opacity: .2; transform: scale(.65); } }
 
 @media (max-width: 760px) {
-  .gpu-experience__copy, .gpu-experience--right .gpu-experience__copy { right: auto; left: 7vw; width: 84vw; }
-  .gpu-experience__copy h1 { font-size: clamp(36px, 10.8vw, 54px); }
+  .gpu-experience__copy, .gpu-experience--right .gpu-experience__copy {
+    top: auto; bottom: 14px; left: 12px; right: auto; width: min(138px, 36vw);
+  }
+  .gpu-experience__copy h1 { font-size: clamp(14px, 4.6vw, 19px); line-height: .95; }
+  .gpu-experience__copy > span { max-width: 100%; margin-top: 6px; font-size: 9px; line-height: 1.35; }
   .gpu-experience__status { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .gpu-experience__status i { animation: none; } }
@@ -32,5 +35,5 @@
 
 @media (max-width: 760px) {
   .gpu-experience--left .gpu-experience__copy,
-  .workspace--sidebar .animation-stage .gpu-experience--left .gpu-experience__copy { left: 9vw; width: 82vw; }
+  .workspace--sidebar .animation-stage .gpu-experience--left .gpu-experience__copy { left: 12px; width: min(138px, 36vw); }
 }

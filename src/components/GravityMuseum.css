@@ -145,18 +145,22 @@
   .gravity-museum-pro__copy,
   .workspace--sidebar .gravity-museum-pro__copy {
     top: auto;
-    bottom: 7rem;
-    left: 1.5rem;
-    width: min(31rem, calc(100vw - 3rem));
+    bottom: 14px;
+    left: 12px;
+    width: min(138px, 36vw);
     transform: none;
   }
 
   .gravity-museum-pro__copy h1 {
-    font-size: clamp(2.3rem, 9.4vw, 4.18rem);
+    font-size: clamp(14px, 4.6vw, 19px);
+    line-height: .95;
   }
 
   .gravity-museum-pro__copy > span {
-    display: none;
+    max-width: 100%;
+    margin-top: 6px;
+    font-size: 9px;
+    line-height: 1.35;
   }
 
   .gravity-museum-pro__state {

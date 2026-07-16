@@ -123,9 +123,10 @@
 @media (max-width: 900px) {
   .origami-cathedral-pro__title,
   .workspace--sidebar .origami-cathedral-pro__title {
-    top: 5rem;
-    bottom: auto;
-    left: 1.5rem;
+    top: auto;
+    bottom: 14px;
+    left: 12px;
+    width: min(138px, 36vw);
     transform: none;
   }
 

@@ -1,0 +1,54 @@
+@import "../experiment-base.css";
+.river-of-wishes { background: #14100a; }
+
+.river-of-wishes__copy.experiment-copy {
+  top: 7vh;
+  left: 40px;
+  transform: none;
+  width: min(360px, 40vw);
+  z-index: 20;
+  padding: 22px 24px 24px;
+  border-left: 1px solid rgb(230 200 138 / 34%);
+  background: linear-gradient(90deg, rgb(10 8 4 / 72%), rgb(10 8 4 / 12%));
+  text-shadow: 0 2px 22px rgb(0 0 0 / 85%);
+}
+.river-of-wishes__copy.experiment-copy > p { margin: 0 0 15px; color: #e6c88a; font-size: 9px; letter-spacing: .28em; text-transform: uppercase; }
+.river-of-wishes__copy.experiment-copy h1 { margin: 0; color: #fff8ec; font-size: clamp(34px, 3.6vw, 54px); font-weight: 350; letter-spacing: -.055em; line-height: .84; }
+.river-of-wishes__copy.experiment-copy > span { display: block; width: 100%; margin-top: 22px; color: rgb(255 248 236 / 68%); font-size: 13px; line-height: 1.7; }
+
+.river-of-wishes__legend {
+  position: absolute; z-index: 20; left: 40px; bottom: 40px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.river-of-wishes__legend > div { display: flex; align-items: flex-start; gap: 12px; }
+.river-of-wishes__legend i {
+  flex: none; width: 26px; height: 26px; border-radius: 50%;
+  border: 1px solid rgb(230 200 138 / 45%);
+  display: flex; align-items: center; justify-content: center;
+  font-style: normal; font-size: 12px; color: #e6c88a;
+}
+.river-of-wishes__legend b { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #fff; }
+.river-of-wishes__legend span { display: block; font-size: 11px; color: rgb(255 255 255 / 55%); max-width: 190px; line-height: 1.4; margin-top: 2px; }
+
+.workspace--sidebar .animation-stage .river-of-wishes__copy.experiment-copy {
+  left: 318px;
+  width: min(360px, calc(100vw - 680px));
+}
+
+@media (max-width: 900px) {
+  .river-of-wishes__legend { display: none; }
+  .river-of-wishes__copy.experiment-copy,
+  .workspace--sidebar .animation-stage .river-of-wishes__copy.experiment-copy {
+    top: auto;
+    bottom: 14px;
+    left: 12px;
+    width: min(138px, 36vw);
+    padding: 18px;
+  }
+  .river-of-wishes__copy.experiment-copy h1 { font-size: clamp(14px, 4.6vw, 19px); }
+  .river-of-wishes__copy.experiment-copy > span { max-width: 100%; margin-top: 6px; font-size: 9px; line-height: 1.35; }
+}
+
+@media (max-width: 760px) {
+  .workspace--sidebar .animation-stage .river-of-wishes__copy.experiment-copy { left: 12px; width: min(138px, 36vw); }
+}

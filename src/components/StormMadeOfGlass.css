@@ -219,24 +219,31 @@
 
 @media (max-width: 900px) {
   .workspace--sidebar .storm-made-of-glass__copy {
-    left: 1.5rem;
-    width: min(30rem, calc(100vw - 3rem));
+    left: 12px;
+    width: min(138px, 36vw);
   }
   .storm-made-of-glass__copy {
     top: auto;
-    bottom: 7.2rem;
-    left: 1.5rem;
-    width: min(31rem, calc(100vw - 3rem));
+    bottom: 14px;
+    left: 12px;
+    width: min(138px, 36vw);
     transform: none;
   }
 
   .storm-made-of-glass__copy h1 {
-    font-size: clamp(2.16rem, 8.6vw, 3.74rem);
+    font-size: clamp(14px, 4.6vw, 19px);
+    line-height: .95;
   }
 
-  .storm-made-of-glass__copy span,
   .storm-made-of-glass__hint {
     display: none;
+  }
+
+  .storm-made-of-glass__copy span {
+    max-width: 100%;
+    margin-top: 6px;
+    font-size: 9px;
+    line-height: 1.35;
   }
 
   .storm-made-of-glass.is-fractured .storm-made-of-glass__copy {

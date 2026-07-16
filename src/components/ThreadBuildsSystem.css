@@ -92,8 +92,14 @@
 }
 
 @media (max-width: 900px) {
-  .thread-system__copy { width: min(560px, 54vw); }
-  .thread-system__copy h1 { font-size: clamp(38px, 5.8vw, 60px); }
+  .thread-system__copy {
+    top: auto;
+    bottom: 14px;
+    left: 12px;
+    width: min(138px, 36vw);
+    transform: none;
+  }
+  .thread-system__copy h1 { font-size: clamp(14px, 4.6vw, 19px); line-height: .95; }
 }
 
 @media (max-width: 700px) {
@@ -102,23 +108,18 @@
     mask-image: linear-gradient(to bottom, black, transparent 82%);
   }
 
-  .thread-system__canvas {
-    top: -18% !important;
-    height: 85% !important;
-  }
-
   .thread-system__copy {
     top: auto;
-    right: 8vw;
-    bottom: 10vh;
-    left: 8vw;
-    width: auto;
+    bottom: 14px;
+    left: 12px;
+    right: auto;
+    width: min(138px, 36vw);
     transform: none;
   }
 
-  .thread-system__copy p { margin-bottom: 15px; }
-  .thread-system__copy h1 { font-size: clamp(34px, 10.1vw, 52px); }
-  .thread-system__copy span { width: min(350px, 95%); margin-top: 19px; line-height: 1.55; }
+  .thread-system__copy p { margin: 0 0 4px; font-size: 6.5px; letter-spacing: .14em; }
+  .thread-system__copy h1 { font-size: clamp(14px, 4.6vw, 19px); line-height: .95; }
+  .thread-system__copy span { max-width: 100%; margin-top: 6px; font-size: 9px; line-height: 1.35; }
   .thread-system__legend { display: none; }
 }
 

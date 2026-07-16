@@ -84,6 +84,15 @@ function seeded(index, salt = 1) {
 function makeArtifactDescriptors(density, lightCount = 3) {
   const count = Math.round(density);
   const lightDepths = [-40, -24, -12, -32, -7, -46, -18, -28];
+  // Front boundary is pulled well back from the camera's resting position (z 13.5) so the
+  // pile never spawns in the narrow, easily-cropped zone right in front of the lens. Back
+  // boundary keeps clear of the solid back plate collider at -(GALLERY_DEPTH - 6). Row spacing
+  // then scales to whatever depth budget is available, so raising the object count packs rows
+  // tighter instead of pushing the pile behind the back wall where it'd be invisible.
+  const FRONT_Z = -6;
+  const BACK_Z = -GALLERY_DEPTH + 14;
+  const totalRows = Math.max(1, Math.ceil(count / 5));
+  const rowSpacing = Math.min(5.25, (FRONT_Z - BACK_Z) / totalRows);
   return Array.from({ length: count }, (_, index) => {
     const lane = (index % 5) - 2;
     const row = Math.floor(index / 5);
@@ -103,7 +112,7 @@ function makeArtifactDescriptors(density, lightCount = 3) {
         : [
           GALLERY_X + lane * 3.35 + (seeded(index, 8) - 0.5) * 1.3,
           0.5 + seeded(index, 11) * 8.2,
-          4 - row * 5.25 - seeded(index, 17) * 2.5,
+          FRONT_Z - row * rowSpacing - seeded(index, 17) * (rowSpacing * 0.48),
         ],
       rotation: [seeded(index, 21) * Math.PI, seeded(index, 22) * Math.PI, seeded(index, 23) * Math.PI],
       scale,
@@ -1555,11 +1564,11 @@ function GravityDirector({
 }
 
 function MuseumScene({ settings, interactionRef, onStage }) {
-  const density = THREE.MathUtils.clamp(settings.artifactDensity ?? 76, 24, 140);
+  const density = THREE.MathUtils.clamp(settings.artifactDensity ?? 76, 24, 400);
   const sparks = 48;
   const impactEnergy = 0.82;
   const speed = Math.max(0.05, settings.speed ?? 1);
-  const lightCount = THREE.MathUtils.clamp(Math.round(settings.lightObjects ?? 3), 0, 8);
+  const lightCount = 8;
   const descriptors = useMemo(() => makeArtifactDescriptors(density, lightCount), [density, lightCount]);
   const assets = useMuseumAssets();
   const bodyRegistry = useRef([]);
@@ -1663,8 +1672,8 @@ export default function GravityMuseum({ settings = {} }) {
     dragDepth: 0,
   });
   const [stage, setStage] = useState("SUSPENDED");
-  const objectCount = Math.round(THREE.MathUtils.clamp(settings.artifactDensity ?? 76, 24, 140));
-  const lightCount = THREE.MathUtils.clamp(Math.round(settings.lightObjects ?? 3), 0, 8);
+  const objectCount = Math.round(THREE.MathUtils.clamp(settings.artifactDensity ?? 76, 24, 400));
+  const lightCount = 8;
   const sandCount = Math.min(6000, Math.max(0, Math.round(settings.physicalSand ?? 1200)));
 
   const updatePointer = useCallback((event) => {

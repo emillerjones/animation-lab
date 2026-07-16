@@ -21,11 +21,81 @@ const ARCHETYPE_LABELS = {
 };
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
 const MAX_BEAMS = 5;
+const RELAY_LIGHT_COUNT = 3;
 
-const hullMaterial = new THREE.MeshStandardMaterial({ color: "#39352f", metalness: 0.96, roughness: 0.3 });
-const darkHullMaterial = new THREE.MeshStandardMaterial({ color: "#0d0c0b", metalness: 0.9, roughness: 0.42 });
-const panelMaterial = new THREE.MeshStandardMaterial({ color: "#090b0d", metalness: 0.86, roughness: 0.2, emissive: "#6d3107", emissiveIntensity: 0.08 });
-const mirrorMaterial = new THREE.MeshStandardMaterial({ color: "#756047", metalness: 1, roughness: 0.08 });
+// A shared grayscale greeble texture (brushed streaks, panel seams, rivets) multiplies
+// against each material's own color, so structures read as machined hardware with visible
+// detail instead of flat, near-black shapes that vanish against the void once they're not
+// directly star-lit.
+function makeGreebleTexture() {
+  const size = 256;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, size, size);
+
+  for (let i = 0; i < 140; i += 1) {
+    const y = seeded(i, 9001) * size;
+    ctx.strokeStyle = `rgba(0, 0, 0, ${0.03 + seeded(i, 9002) * 0.1})`;
+    ctx.lineWidth = 0.5 + seeded(i, 9003) * 1.4;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(size, y + (seeded(i, 9004) - 0.5) * 6);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.32)";
+  ctx.lineWidth = 1.4;
+  const cells = 4;
+  for (let g = 0; g <= cells; g += 1) {
+    const x = (g / cells) * size;
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, size);
+    ctx.stroke();
+    const y = (g / cells) * size;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(size, y);
+    ctx.stroke();
+  }
+
+  for (let i = 0; i < 70; i += 1) {
+    const x = seeded(i, 9101) * size;
+    const y = seeded(i, 9102) * size;
+    ctx.fillStyle = `rgba(0, 0, 0, ${0.14 + seeded(i, 9103) * 0.2})`;
+    ctx.beginPath();
+    ctx.arc(x, y, 1.1 + seeded(i, 9104) * 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+const greebleTexture = makeGreebleTexture();
+greebleTexture.repeat.set(2.5, 2.5);
+const mirrorGreebleTexture = greebleTexture.clone();
+mirrorGreebleTexture.repeat.set(1, 1);
+
+// Metalness kept moderate rather than near-1: a fully metallic PBR material has almost no
+// diffuse albedo, so with no environment map to reflect it only shows the direct specular
+// highlight from a point light and reads as solid black everywhere else — exactly what was
+// happening on the mirror domes and the backs of the habitat rings. Cutting metalness gives
+// each material a real diffuse response to the ambient/hemisphere fill below.
+// An emissive floor tinted to each material's own color guarantees a minimum brightness no
+// matter which way a surface faces relative to the star or camera — the same trick the
+// satellite-field shader already uses (its "0.12 + lambert * 0.7" floor) to read clearly
+// against the void instead of relying entirely on angle-dependent lit-vs-shadow contrast.
+const hullMaterial = new THREE.MeshStandardMaterial({ color: "#877d63", map: greebleTexture, metalness: 0.55, roughness: 0.42, emissive: "#4a4432", emissiveIntensity: 0.55 });
+const darkHullMaterial = new THREE.MeshStandardMaterial({ color: "#4a453b", map: greebleTexture, metalness: 0.48, roughness: 0.52, emissive: "#332f24", emissiveIntensity: 0.6 });
+const panelMaterial = new THREE.MeshStandardMaterial({ color: "#38332b", map: greebleTexture, metalness: 0.5, roughness: 0.3, emissive: "#6d3107", emissiveIntensity: 0.28 });
+const mirrorMaterial = new THREE.MeshStandardMaterial({ color: "#cab390", map: mirrorGreebleTexture, metalness: 0.7, roughness: 0.18, emissive: "#5f4e34", emissiveIntensity: 0.5 });
 const emberMaterial = new THREE.MeshStandardMaterial({ color: "#ffb066", emissive: "#ff8a3d", emissiveIntensity: 1.6, toneMapped: false });
 const hitMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
 
@@ -202,55 +272,55 @@ function ArchetypeGeometry({ archetype }) {
     case "collector":
       return (
         <group>
-          <mesh material={panelMaterial}><boxGeometry args={[2.2, 0.04, 1.4]} /></mesh>
-          <mesh material={hullMaterial} position={[0, 0, -0.9]}><boxGeometry args={[0.12, 0.12, 0.6]} /></mesh>
-          <mesh material={darkHullMaterial} position={[0, 0, -1.3]}><cylinderGeometry args={[0.08, 0.14, 0.5, 8]} /></mesh>
+          <mesh castShadow receiveShadow material={panelMaterial}><boxGeometry args={[2.2, 0.04, 1.4]} /></mesh>
+          <mesh castShadow receiveShadow material={hullMaterial} position={[0, 0, -0.9]}><boxGeometry args={[0.12, 0.12, 0.6]} /></mesh>
+          <mesh castShadow receiveShadow material={darkHullMaterial} position={[0, 0, -1.3]}><cylinderGeometry args={[0.08, 0.14, 0.5, 8]} /></mesh>
         </group>
       );
     case "habitat":
       return (
         <group rotation={[0.3, 0, 0]}>
-          <mesh material={hullMaterial}><torusGeometry args={[1.1, 0.09, 8, 32]} /></mesh>
-          <mesh material={darkHullMaterial} position={[1.1, 0, 0]}><boxGeometry args={[0.06, 0.5, 0.06]} /></mesh>
-          <mesh material={darkHullMaterial} position={[-1.1, 0, 0]}><boxGeometry args={[0.06, 0.5, 0.06]} /></mesh>
-          <mesh material={darkHullMaterial} position={[0, 1.1, 0]}><boxGeometry args={[0.5, 0.06, 0.06]} /></mesh>
-          <mesh material={panelMaterial}><cylinderGeometry args={[0.3, 0.3, 0.4, 10]} /></mesh>
+          <mesh castShadow receiveShadow material={hullMaterial}><torusGeometry args={[1.1, 0.09, 8, 32]} /></mesh>
+          <mesh castShadow receiveShadow material={darkHullMaterial} position={[1.1, 0, 0]}><boxGeometry args={[0.06, 0.5, 0.06]} /></mesh>
+          <mesh castShadow receiveShadow material={darkHullMaterial} position={[-1.1, 0, 0]}><boxGeometry args={[0.06, 0.5, 0.06]} /></mesh>
+          <mesh castShadow receiveShadow material={darkHullMaterial} position={[0, 1.1, 0]}><boxGeometry args={[0.5, 0.06, 0.06]} /></mesh>
+          <mesh castShadow receiveShadow material={panelMaterial}><cylinderGeometry args={[0.3, 0.3, 0.4, 10]} /></mesh>
         </group>
       );
     case "relay":
       return (
         <group>
-          <mesh material={hullMaterial}><cylinderGeometry args={[0.16, 0.22, 1.6, 8]} /></mesh>
+          <mesh castShadow receiveShadow material={hullMaterial}><cylinderGeometry args={[0.16, 0.22, 1.6, 8]} /></mesh>
           <mesh material={emberMaterial} position={[0, 0.85, 0]}><coneGeometry args={[0.07, 0.5, 6]} /></mesh>
           <mesh material={emberMaterial} position={[0, 0.3, 0]}><coneGeometry args={[0.07, 0.5, 6]} /></mesh>
-          <mesh material={darkHullMaterial} position={[0, -0.9, 0]}><boxGeometry args={[0.5, 0.1, 0.5]} /></mesh>
+          <mesh castShadow receiveShadow material={darkHullMaterial} position={[0, -0.9, 0]}><boxGeometry args={[0.5, 0.1, 0.5]} /></mesh>
         </group>
       );
     case "truss":
       return (
         <group rotation={[0, 0, Math.PI / 2]}>
           {Array.from({ length: 6 }).map((_, k) => (
-            <mesh key={k} material={darkHullMaterial} position={[0, k * 0.55 - 1.4, 0]}><boxGeometry args={[0.12, 0.42, 0.12]} /></mesh>
+            <mesh castShadow receiveShadow key={k} material={darkHullMaterial} position={[0, k * 0.55 - 1.4, 0]}><boxGeometry args={[0.12, 0.42, 0.12]} /></mesh>
           ))}
-          <mesh material={hullMaterial}><cylinderGeometry args={[0.04, 0.04, 3.4, 6]} /></mesh>
+          <mesh castShadow receiveShadow material={hullMaterial}><cylinderGeometry args={[0.04, 0.04, 3.4, 6]} /></mesh>
         </group>
       );
     case "mirror":
       return (
         <group>
-          <mesh material={mirrorMaterial}><sphereGeometry args={[1.3, 20, 20, 0, Math.PI * 2, 0, Math.PI * 0.35]} /></mesh>
-          <mesh material={darkHullMaterial} position={[0, 0, -0.3]}><cylinderGeometry args={[0.05, 0.08, 0.6, 6]} /></mesh>
+          <mesh castShadow receiveShadow material={mirrorMaterial}><sphereGeometry args={[1.3, 20, 20, 0, Math.PI * 2, 0, Math.PI * 0.35]} /></mesh>
+          <mesh castShadow receiveShadow material={darkHullMaterial} position={[0, 0, -0.3]}><cylinderGeometry args={[0.05, 0.08, 0.6, 6]} /></mesh>
         </group>
       );
     case "dock":
     default:
       return (
         <group>
-          <mesh material={hullMaterial}><boxGeometry args={[1.2, 0.5, 1.2]} /></mesh>
-          <mesh material={darkHullMaterial} position={[-0.7, 0, 0]}><cylinderGeometry args={[0.08, 0.08, 0.5, 6]} /></mesh>
-          <mesh material={darkHullMaterial} position={[0.7, 0, 0]}><cylinderGeometry args={[0.08, 0.08, 0.5, 6]} /></mesh>
-          <mesh material={darkHullMaterial} position={[0, 0, -0.7]}><cylinderGeometry args={[0.08, 0.08, 0.5, 6]} /></mesh>
-          <mesh material={darkHullMaterial} position={[0, 0, 0.7]}><cylinderGeometry args={[0.08, 0.08, 0.5, 6]} /></mesh>
+          <mesh castShadow receiveShadow material={hullMaterial}><boxGeometry args={[1.2, 0.5, 1.2]} /></mesh>
+          <mesh castShadow receiveShadow material={darkHullMaterial} position={[-0.7, 0, 0]}><cylinderGeometry args={[0.08, 0.08, 0.5, 6]} /></mesh>
+          <mesh castShadow receiveShadow material={darkHullMaterial} position={[0.7, 0, 0]}><cylinderGeometry args={[0.08, 0.08, 0.5, 6]} /></mesh>
+          <mesh castShadow receiveShadow material={darkHullMaterial} position={[0, 0, -0.7]}><cylinderGeometry args={[0.08, 0.08, 0.5, 6]} /></mesh>
+          <mesh castShadow receiveShadow material={darkHullMaterial} position={[0, 0, 0.7]}><cylinderGeometry args={[0.08, 0.08, 0.5, 6]} /></mesh>
         </group>
       );
   }
@@ -312,6 +382,49 @@ function CoronaShell({ index, intensity }) {
   );
 }
 
+const STAR_FIELD_COUNT = 4000;
+const STAR_FIELD_PALETTE = [
+  new THREE.Color("#bcd4ff"),
+  new THREE.Color("#ffffff"),
+  new THREE.Color("#ffe9c4"),
+  new THREE.Color("#ffcf9c"),
+];
+
+function BackgroundStars() {
+  const geometry = useMemo(() => {
+    const positions = new Float32Array(STAR_FIELD_COUNT * 3);
+    const colors = new Float32Array(STAR_FIELD_COUNT * 3);
+    const sizes = new Float32Array(STAR_FIELD_COUNT);
+    for (let i = 0; i < STAR_FIELD_COUNT; i += 1) {
+      const radius = 140 + seeded(i, 9401) * 340;
+      const theta = seeded(i, 9402) * Math.PI * 2;
+      const phi = Math.acos(seeded(i, 9403) * 2 - 1);
+      const i3 = i * 3;
+      positions[i3] = Math.sin(phi) * Math.cos(theta) * radius;
+      positions[i3 + 1] = Math.cos(phi) * radius;
+      positions[i3 + 2] = Math.sin(phi) * Math.sin(theta) * radius;
+      const color = STAR_FIELD_PALETTE[Math.floor(seeded(i, 9404) * STAR_FIELD_PALETTE.length)];
+      colors[i3] = color.r;
+      colors[i3 + 1] = color.g;
+      colors[i3 + 2] = color.b;
+      sizes[i] = 0.5 + seeded(i, 9405) * 1.6;
+    }
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    geom.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    geom.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
+    return geom;
+  }, []);
+
+  useEffect(() => () => geometry.dispose(), [geometry]);
+
+  return (
+    <points geometry={geometry} frustumCulled={false}>
+      <pointsMaterial size={1.1} vertexColors sizeAttenuation transparent opacity={0.85} depthWrite={false} toneMapped={false} />
+    </points>
+  );
+}
+
 function Swarm({ settings, onSunReady }) {
   const { camera } = useThree();
   const speed = useSpeed();
@@ -332,6 +445,7 @@ function Swarm({ settings, onSunReady }) {
   const nodes = useMemo(() => buildNodes(swarmDensity), [swarmDensity]);
   const sourceIndices = useMemo(() => nodes.map((n, i) => i).filter((i) => nodes[i].tracksStar), [nodes]);
   const relayIndices = useMemo(() => nodes.map((n, i) => i).filter((i) => nodes[i].archetype === "relay"), [nodes]);
+  const litRelayIndices = useMemo(() => new Set(relayIndices.slice(0, RELAY_LIGHT_COUNT)), [relayIndices]);
   const beamGeometry = useMemo(() => new THREE.CylinderGeometry(0.035, 0.06, 1, 6, 1, true), []);
   const beamRefs = useRef([]);
   const beamsRef = useRef(Array.from({ length: MAX_BEAMS }, () => null));
@@ -473,14 +587,41 @@ function Swarm({ settings, onSunReady }) {
     <>
       <color attach="background" args={["#090508"]} />
       <fogExp2 attach="fog" args={["#10080a", 0.008]} />
-      <ambientLight color="#704628" intensity={0.075} />
-      <pointLight color="#ffb95c" intensity={85 * (starIntensity / 100)} distance={125} decay={1.55} />
+      <BackgroundStars />
+      <ambientLight color="#8a6a48" intensity={0.24} />
+      <hemisphereLight color="#6a5a52" groundColor="#0a0604" intensity={0.4} />
+      <pointLight
+        color="#ffb95c"
+        intensity={85 * (starIntensity / 100)}
+        distance={125}
+        decay={1.55}
+        castShadow
+        shadow-mapSize-width={1024}
+        shadow-mapSize-height={1024}
+        shadow-camera-near={1}
+        shadow-camera-far={130}
+        shadow-bias={-0.0004}
+      />
       <Sun onReady={onSunReady} intensity={starIntensity} onClear={() => setFocusedIndex(null)} />
       {Array.from({ length: 5 }).map((_, index) => <CoronaShell key={index} index={index} intensity={starIntensity} />)}
 
       {nodes.map((node, i) => (
         <group key={i} ref={(el) => { groupRefs.current[i] = el; }}>
           <ArchetypeGeometry archetype={node.archetype} />
+          {litRelayIndices.has(i) && (
+            <pointLight
+              color="#ff8a3d"
+              intensity={7}
+              distance={13}
+              decay={1.8}
+              castShadow
+              shadow-mapSize-width={512}
+              shadow-mapSize-height={512}
+              shadow-camera-near={0.3}
+              shadow-camera-far={14}
+              shadow-bias={-0.0006}
+            />
+          )}
           <mesh
             material={hitMaterial}
             onPointerOver={(event) => { event.stopPropagation(); setHoveredIndex(i); }}
@@ -525,6 +666,7 @@ export default function AlienDysonSwarm({ settings = {} }) {
         camera={{ position: [0, 10, 46], fov: 48 }}
         speed={settings.speed ?? 1}
         bloom={{ intensity: 1.75, threshold: 0.12 }}
+        shadows
         extraEffects={sun ? (
           <>
             <GodRays sun={sun} blendFunction={BlendFunction.SCREEN} samples={42} density={0.85} decay={0.93} weight={0.3} exposure={0.35} clampMax={0.85} kernelSize={KernelSize.SMALL} blur />

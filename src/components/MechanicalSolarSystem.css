@@ -209,24 +209,31 @@
 
 @media (max-width: 900px) {
   .workspace--sidebar .mechanical-solar-system__copy {
-    left: 1.5rem;
-    width: min(30rem, calc(100vw - 3rem));
+    left: 12px;
+    width: min(138px, 36vw);
   }
   .mechanical-solar-system__copy {
     top: auto;
-    bottom: 7.2rem;
-    left: 1.5rem;
-    width: min(31rem, calc(100vw - 3rem));
+    bottom: 14px;
+    left: 12px;
+    width: min(138px, 36vw);
     transform: none;
   }
 
   .mechanical-solar-system__copy h1 {
-    font-size: clamp(2.16rem, 8.6vw, 3.74rem);
+    font-size: clamp(14px, 4.6vw, 19px);
+    line-height: .95;
   }
 
-  .mechanical-solar-system__copy span,
   .mechanical-solar-system__hint {
     display: none;
+  }
+
+  .mechanical-solar-system__copy span {
+    max-width: 100%;
+    margin-top: 6px;
+    font-size: 9px;
+    line-height: 1.35;
   }
 
   .mechanical-solar-system.is-focused .mechanical-solar-system__copy {

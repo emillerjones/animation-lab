@@ -45,23 +45,6 @@
 .living-crystal__hud strong { color: rgb(255 255 255 / 85%); font-weight: 500; }
 .living-crystal__hud strong.is-accent { color: #bfe8ff; }
 
-.living-crystal__scroll-prompt {
-  position: absolute; z-index: 20; left: 50%; bottom: 40px; transform: translateX(-50%);
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  color: rgb(255 255 255 / 55%);
-  animation: living-crystal-breathe 2.6s ease-in-out infinite;
-}
-.living-crystal__scroll-prompt i {
-  width: 18px; height: 28px; border: 1px solid rgb(255 255 255 / 45%); border-radius: 10px; position: relative;
-}
-.living-crystal__scroll-prompt i::after {
-  content: ""; position: absolute; top: 5px; left: 50%; width: 2px; height: 6px;
-  background: rgb(255 255 255 / 70%); transform: translateX(-50%); border-radius: 1px;
-}
-.living-crystal__scroll-prompt span { font-size: 10px; letter-spacing: .22em; text-transform: uppercase; }
-@keyframes living-crystal-breathe { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .living-crystal__scroll-prompt { animation: none; opacity: .7; } }
-
 .workspace--sidebar .animation-stage .living-crystal__copy.experiment-copy {
   left: 318px;
   width: min(350px, calc(100vw - 680px));
@@ -69,14 +52,20 @@
 
 @media (max-width: 900px) {
   .living-crystal__legend { display: none; }
-  .living-crystal__copy.experiment-copy { top: 9vh; left: 20px; width: min(330px, calc(100vw - 40px)); padding: 18px; }
-  .living-crystal__copy.experiment-copy h1 { font-size: clamp(30px, 9.4vw, 46px); }
+  .living-crystal__copy.experiment-copy,
+  .workspace--sidebar .animation-stage .living-crystal__copy.experiment-copy {
+    top: auto;
+    bottom: 14px;
+    left: 12px;
+    width: min(138px, 36vw);
+    padding: 18px;
+  }
+  .living-crystal__copy.experiment-copy h1 { font-size: clamp(14px, 4.6vw, 19px); }
+  .living-crystal__copy.experiment-copy > span { max-width: 100%; margin-top: 6px; font-size: 9px; line-height: 1.35; }
   .living-crystal__hud { right: 20px; bottom: 20px; }
-  .living-crystal__scroll-prompt { bottom: 24px; }
-  .workspace--sidebar .animation-stage .living-crystal__copy.experiment-copy { left: 282px; width: min(320px, calc(100vw - 570px)); }
 }
 
 @media (max-width: 760px) {
-  .workspace--sidebar .animation-stage .living-crystal__copy.experiment-copy { left: 20px; width: min(330px, calc(100vw - 40px)); }
+  .workspace--sidebar .animation-stage .living-crystal__copy.experiment-copy { left: 12px; width: min(138px, 36vw); }
   .living-crystal__hud { display: none; }
 }

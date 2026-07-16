@@ -25,6 +25,6 @@
 }
 
 @media (max-width: 700px) {
-  .alien-dyson-swarm .experiment-copy { width: min(82vw, 330px); opacity: .68; }
-  .alien-dyson-swarm .experiment-copy h1 { font-size: clamp(30px, 10.1vw, 48px); }
+  .alien-dyson-swarm .experiment-copy { width: min(138px, 36vw); opacity: .68; }
+  .alien-dyson-swarm .experiment-copy h1 { font-size: clamp(14px, 4.6vw, 19px); }
 }

@@ -5,8 +5,8 @@ function clamp(value, min, max) {
 // Ports the drag-orbit feel from components/MechanicalSolarSystem.jsx: unclamped yaw
 // accumulation, clamped pitch, and a click/drag threshold so a tap doesn't register as a drag.
 export function createDragOrbit(host, {
-  yawSpeed = 0.004,
-  pitchSpeed = 0.0026,
+  yawSpeed = -0.004,
+  pitchSpeed = -0.0026,
   pitchMin = -0.55,
   pitchMax = 0.58,
   clickThreshold = 9,
