@@ -248,8 +248,14 @@ function buildPath() {
   }
   const texture = new THREE.DataTexture(data, PATH_SAMPLES, 1, THREE.RGBAFormat, THREE.FloatType);
   texture.needsUpdate = true;
-  texture.minFilter = THREE.LinearFilter;
-  texture.magFilter = THREE.LinearFilter;
+  // NearestFilter, not Linear: sampling a FloatType texture with linear filtering needs the
+  // OES_texture_float_linear extension, which most desktop GPUs support but plenty of mobile
+  // GPUs don't. Where it's missing, WebGL treats the texture as "incomplete" and every sample
+  // silently returns (0,0,0,0) — every crane's position collapsing to the origin, which is why
+  // this rendered fine on desktop and not on phone. At 512 samples along the path the nearest-
+  // neighbor step between texels is a fraction of a unit, well below what's visible in motion.
+  texture.minFilter = THREE.NearestFilter;
+  texture.magFilter = THREE.NearestFilter;
   texture.wrapS = THREE.RepeatWrapping;
 
   return { curve, texture };
