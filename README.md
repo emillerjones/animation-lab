@@ -1,30 +1,32 @@
 # Animation Lab
 
-A Vite + React gallery of 48 procedural motion experiments. The home page is
-generated from the master catalog in `src/data/animations.js`; selecting an
-experiment opens its own hash route, so no backend or server-side routing is
-needed.
+Animation Lab is a collection of interactive, real-time visual experiments built around impossible physics, procedural ecosystems, astronomical machinery, and living environments.
 
-The gallery compares 28 ChatGPT experiments with 20 Claude experiments. The
-seven closely related A/B pairs keep an in-place variant toggle; substantially
-different ideas are standalone pages. Every experiment has live speed and
-scene-specific controls.
+Rather than presenting traditional animations that simply play from beginning to end, each experiment is designed as a system: something that continues evolving, responds to the viewer, and can produce moments that were never explicitly animated by hand.
 
-No images, video files, canvas, WebGL, or animation libraries are used.
+The collection currently includes 27 experiments, ranging from a living black hole and a mechanical solar system to a path-traced gravity chamber, bioluminescent oceans, procedural cities, and trees carrying hundreds of thousands of animated blossoms.
 
-## Run it
+## Design philosophy
 
-Open a terminal inside the `animation-lab` folder:
+The project explores a particular kind of visual world:
 
-```bash
-npm install
-npm run dev
-```
+- One clear physical or conceptual law governs each scene.
+- Large numbers of elements form organized systems rather than visual noise.
+- Motion emerges from physics, shaders, procedural generation, and simulation.
+- Materials, lighting, scale, and camera movement help each experiment feel inhabitable.
+- Controls expose meaningful properties of the system instead of merely changing colors.
+- Experiments are allowed to be excessive, computationally demanding, and strange.
 
-Then open the local address Vite prints, usually:
+Many scenes combine natural structures with ancient or speculative technology: roots behaving like neural networks, orbital machinery built from brass, monumental spaces governed by impossible gravity, or forests carrying millions of individual blossoms.
+
+## The collection
+
+The gallery is divided into two groups:
+
+- **Primary** contains the strongest and most developed experiments.
+- **Secondary** contains earlier explorations, alternate directions, and more focused technical studies.
+
+The gallery order, metadata, routes, and controls are defined in:
 
 ```text
-http://localhost:5173
-```
-
-Use the index to open an experiment and the floating back button to return.
+src/data/animations.js

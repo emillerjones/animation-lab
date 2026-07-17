@@ -20,7 +20,7 @@ function tri(positions, a, b, c) {
   positions.push(...a, ...b, ...c);
 }
 
-function buildCraneGeometry() {
+function buildLegacyCraneGeometry() {
   const positions = [];
 
   // --- Body: a thin blade-like hull, two side panels meeting at a bottom
@@ -86,6 +86,91 @@ function buildCraneGeometry() {
   geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
   geo.computeVertexNormals();
   return geo;
+}
+
+function buildCraneGeometry() {
+  const positions = [];
+
+  // Closed diamond bird-base body: raised ridge, low keel, and four sharp
+  // corners. This gives the center a folded-paper volume without rounding it.
+  const ridge = [0, 0.58, 0.02];
+  const keel = [0, -0.14, 0.02];
+  const left = [-0.48, 0.2, 0.02];
+  const right = [0.48, 0.2, 0.02];
+  const front = [0, 0.22, 0.7];
+  const back = [0, 0.22, -0.68];
+  tri(positions, ridge, left, front);
+  tri(positions, ridge, front, right);
+  tri(positions, ridge, right, back);
+  tri(positions, ridge, back, left);
+  tri(positions, keel, front, left);
+  tri(positions, keel, right, front);
+  tri(positions, keel, back, right);
+  tri(positions, keel, left, back);
+
+  // Long inside-reverse-folded neck with a narrow paper thickness.
+  const neckBaseL = [-0.055, 0.24, 0.58];
+  const neckBaseR = [0.055, 0.24, 0.58];
+  const neckKneeL = [-0.04, 0.82, 1.05];
+  const neckKneeR = [0.04, 0.82, 1.05];
+  const headBackL = [-0.035, 1.25, 1.38];
+  const headBackR = [0.035, 1.25, 1.38];
+  tri(positions, neckBaseL, neckBaseR, neckKneeR);
+  tri(positions, neckBaseL, neckKneeR, neckKneeL);
+  tri(positions, neckKneeL, neckKneeR, headBackR);
+  tri(positions, neckKneeL, headBackR, headBackL);
+
+  // Distinct reverse-folded head, crown, throat, and descending pointed beak.
+  const crown = [0, 1.38, 1.53];
+  const throat = [0, 1.18, 1.6];
+  const beak = [0, 1.03, 2.02];
+  tri(positions, headBackL, headBackR, crown);
+  tri(positions, headBackL, throat, headBackR);
+  tri(positions, crown, headBackR, beak);
+  tri(positions, crown, beak, headBackL);
+  tri(positions, headBackL, beak, throat);
+  tri(positions, throat, beak, headBackR);
+
+  // Raised tail: the second split point of the traditional bird base.
+  const tailBaseL = [-0.06, 0.24, -0.57];
+  const tailBaseR = [0.06, 0.24, -0.57];
+  const tailFoldL = [-0.035, 0.58, -1.0];
+  const tailFoldR = [0.035, 0.58, -1.0];
+  const tailTip = [0, 0.82, -1.55];
+  tri(positions, tailBaseL, tailBaseR, tailFoldR);
+  tri(positions, tailBaseL, tailFoldR, tailFoldL);
+  tri(positions, tailFoldL, tailFoldR, tailTip);
+
+  // Broad kite wings. Five facets on each side meet along a raised mountain
+  // fold so the lighting reveals how the sheet is folded.
+  function wing(sign) {
+    const rootFront = [0.08 * sign, 0.48, 0.5];
+    const rootBack = [0.08 * sign, 0.48, -0.48];
+    const shoulderFront = [0.82 * sign, 0.42, 0.62];
+    const shoulderBack = [0.92 * sign, 0.4, -0.62];
+    const tip = [2.12 * sign, 0.18, -0.04];
+    const crease = [1.0 * sign, 0.66, 0.02];
+    if (sign > 0) {
+      tri(positions, rootFront, shoulderFront, crease);
+      tri(positions, shoulderFront, tip, crease);
+      tri(positions, crease, tip, shoulderBack);
+      tri(positions, crease, shoulderBack, rootBack);
+      tri(positions, rootFront, crease, rootBack);
+    } else {
+      tri(positions, rootFront, crease, shoulderFront);
+      tri(positions, shoulderFront, crease, tip);
+      tri(positions, crease, shoulderBack, tip);
+      tri(positions, crease, rootBack, shoulderBack);
+      tri(positions, rootFront, rootBack, crease);
+    }
+  }
+  wing(1);
+  wing(-1);
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.computeVertexNormals();
+  return geometry;
 }
 
 function makeShadowTexture() {

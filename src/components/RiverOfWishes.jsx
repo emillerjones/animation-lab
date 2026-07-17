@@ -8,8 +8,40 @@ import AnimationReadout from "./AnimationReadout";
 import { seeded } from "../utils/procedural";
 import "./RiverOfWishes.css";
 
-const MAX_CRANES = 10000;
+const MAX_CRANES = 100000;
 const PATH_SAMPLES = 512;
+const PATH_FOOTPRINT = 0.87;
+const MAIN_LAMPS = [
+  { position: [-18, 0, 14], color: "#ffd18a" },
+  { position: [18, 0, 14], color: "#ffc078" },
+  { position: [18, 0, -16], color: "#ffe0a0" },
+  { position: [-18, 0, -16], color: "#ffb96e" },
+];
+
+// A fixed dark blue-purple sky — previously this cycled warm/cool by camera position along
+// the path; now it just holds still at what used to be the "cool" end of that cycle.
+const SKY_COLOR = "#090d20";
+
+// Where the river narrows to ~half width (coincides with the bridge crossing) and where it
+// widens to ~2x (out in the garden). Used both to bake the visual lane-width taper and to
+// drive the "traffic" speed profile below (narrower = slower = cranes bunch up approaching
+// the choke; wider = faster = they spread out).
+const CHOKE_U = 0.58;
+const WIDE_U = 0.85;
+
+function circularDistance(a, b) {
+  const d = Math.abs(a - b) % 1;
+  return Math.min(d, 1 - d);
+}
+
+function widthProfileAt(u) {
+  const chokeDist = circularDistance(u, CHOKE_U);
+  const wideDist = circularDistance(u, WIDE_U);
+  const width = 1
+    + Math.exp(-(wideDist ** 2) / (2 * 0.05 ** 2))
+    - 0.55 * Math.exp(-(chokeDist ** 2) / (2 * 0.035 ** 2));
+  return THREE.MathUtils.clamp(width, 0.4, 2.1);
+}
 
 // ---------------------------------------------------------------------------
 // Crane geometry — same construction as The Wishing Tree (kept as its own
@@ -37,7 +69,7 @@ function buildWingGeometry(mirror) {
   return geo;
 }
 
-function buildCraneGeometry() {
+function buildLegacyCraneGeometry() {
   const body = new THREE.OctahedronGeometry(0.5, 0).toNonIndexed();
   body.scale(0.56, 0.34, 1.35);
   body.rotateX(Math.PI / 2);
@@ -73,6 +105,95 @@ function buildCraneGeometry() {
   return merged;
 }
 
+// The same traditional folded silhouette used by The First Fold, with a
+// hinge group attached to every vertex so the river shader can still animate
+// the two wings independently across as many as 100,000 instances.
+function buildCraneGeometry() {
+  const positions = [];
+  const hingeGroups = [];
+  const foldedTri = (group, a, b, c) => {
+    positions.push(...a, ...b, ...c);
+    hingeGroups.push(group, group, group);
+  };
+
+  const ridge = [0, 0.58, 0.02];
+  const keel = [0, -0.14, 0.02];
+  const left = [-0.48, 0.2, 0.02];
+  const right = [0.48, 0.2, 0.02];
+  const front = [0, 0.22, 0.7];
+  const back = [0, 0.22, -0.68];
+  foldedTri(0, ridge, left, front);
+  foldedTri(0, ridge, front, right);
+  foldedTri(0, ridge, right, back);
+  foldedTri(0, ridge, back, left);
+  foldedTri(0, keel, front, left);
+  foldedTri(0, keel, right, front);
+  foldedTri(0, keel, back, right);
+  foldedTri(0, keel, left, back);
+
+  // Slightly exaggerated folded width keeps the neck visible edge-on when
+  // each crane occupies only a few pixels in the distant river.
+  const neckBaseL = [-0.13, 0.24, 0.58];
+  const neckBaseR = [0.13, 0.24, 0.58];
+  const neckKneeL = [-0.1, 0.82, 1.05];
+  const neckKneeR = [0.1, 0.82, 1.05];
+  const headBackL = [-0.09, 1.25, 1.38];
+  const headBackR = [0.09, 1.25, 1.38];
+  foldedTri(0, neckBaseL, neckBaseR, neckKneeR);
+  foldedTri(0, neckBaseL, neckKneeR, neckKneeL);
+  foldedTri(0, neckKneeL, neckKneeR, headBackR);
+  foldedTri(0, neckKneeL, headBackR, headBackL);
+
+  const crown = [0, 1.38, 1.53];
+  const throat = [0, 1.18, 1.6];
+  const beak = [0, 1.03, 2.02];
+  foldedTri(0, headBackL, headBackR, crown);
+  foldedTri(0, headBackL, throat, headBackR);
+  foldedTri(0, crown, headBackR, beak);
+  foldedTri(0, crown, beak, headBackL);
+  foldedTri(0, headBackL, beak, throat);
+  foldedTri(0, throat, beak, headBackR);
+
+  const tailBaseL = [-0.06, 0.24, -0.57];
+  const tailBaseR = [0.06, 0.24, -0.57];
+  const tailFoldL = [-0.035, 0.58, -1.0];
+  const tailFoldR = [0.035, 0.58, -1.0];
+  const tailTip = [0, 0.82, -1.55];
+  foldedTri(0, tailBaseL, tailBaseR, tailFoldR);
+  foldedTri(0, tailBaseL, tailFoldR, tailFoldL);
+  foldedTri(0, tailFoldL, tailFoldR, tailTip);
+
+  function wing(sign, group) {
+    const rootFront = [0.08 * sign, 0.48, 0.5];
+    const rootBack = [0.08 * sign, 0.48, -0.48];
+    const shoulderFront = [0.82 * sign, 0.42, 0.62];
+    const shoulderBack = [0.92 * sign, 0.4, -0.62];
+    const tip = [2.12 * sign, 0.18, -0.04];
+    const crease = [1.0 * sign, 0.66, 0.02];
+    if (sign > 0) {
+      foldedTri(group, rootFront, shoulderFront, crease);
+      foldedTri(group, shoulderFront, tip, crease);
+      foldedTri(group, crease, tip, shoulderBack);
+      foldedTri(group, crease, shoulderBack, rootBack);
+      foldedTri(group, rootFront, crease, rootBack);
+    } else {
+      foldedTri(group, rootFront, crease, shoulderFront);
+      foldedTri(group, shoulderFront, crease, tip);
+      foldedTri(group, crease, shoulderBack, tip);
+      foldedTri(group, crease, rootBack, shoulderBack);
+      foldedTri(group, rootFront, rootBack, crease);
+    }
+  }
+  wing(-1, 1);
+  wing(1, 2);
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute("aHingeGroup", new THREE.Float32BufferAttribute(hingeGroups, 1));
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
 // ---------------------------------------------------------------------------
 // The river's path: a closed loop threading through an entrance courtyard
 // (pillars), a bridge crossing, and a garden — authored once as control
@@ -82,29 +203,55 @@ function buildCraneGeometry() {
 // shader, so baking to a texture is the standard technique for GPU-side
 // curve-following motion at scale).
 // ---------------------------------------------------------------------------
+// Closed curve (see `true` below) already wraps the last point back to the first on its
+// own — an explicit duplicate of the first point at the end used to create a zero-length
+// closing segment. Right at that seam the curve's parametric speed collapsed to ~0, so the
+// vertex shader's finite-difference tangent (centerAhead - centerHere) normalized a
+// near-zero vector into an unstable, near-arbitrary direction — that's what read as cranes
+// bunching up and spiraling around a single fixed point. No duplicate point here.
+//
+// Roughly twice the length of the original loop, with real elevation change (a low duck
+// under the bridge around t=0.58, a high sweep over the courtyard around t=0.18) instead of
+// the ~4-unit-tall, mostly-flat original — but the same overall footprint as the original
+// (radius from center maxing out in the mid-30s, same as before): the extra length comes
+// from more winding and more up/down travel, not a bigger scene. t=0.02-0.4 is the courtyard
+// (pillars), t=0.58 is the bridge crossing, t=0.68-0.98 is the garden — same zones the
+// architecture below places itself in.
 const PATH_CONTROL_POINTS = [
-  [0, 3, 16], [6, 3.4, 12], [9, 3, 5], [8.5, 3.6, -3],
-  [4, 4.4, -8], [-4, 4.6, -9], [-9, 3.4, -3], [-9, 2.8, 6],
-  [-5, 2.6, 13], [0, 2.8, 16],
+  [-24, 10.2, 18], [-19, 11.2, 23], [-12, 10.4, 18], [-7, 9.4, 9],
+  [0, 10.3, 14], [9, 11.4, 21], [18, 10.7, 20], [24, 10.1, 14],
+  [19, 11.1, 8], [10, 10.3, 4], [15, 9.5, -2], [24, 10.4, -9],
+  [23, 11.3, -17], [18, 10.6, -23], [10, 9.6, -18], [5, 10.5, -9],
+  [0, 11.6, -14], [-9, 12.1, -23], [-18, 10.8, -22], [-24, 9.7, -16],
+  [-21, 10.5, -8], [-12, 11.4, -4], [-17, 10.7, 2], [-25, 10.1, 9],
 ];
 
 function buildPath() {
-  const points = PATH_CONTROL_POINTS.map((p) => new THREE.Vector3(p[0], p[1], p[2]));
+  const points = PATH_CONTROL_POINTS.map((p) => new THREE.Vector3(
+    p[0] * PATH_FOOTPRINT,
+    p[1],
+    p[2] * PATH_FOOTPRINT,
+  ));
   const curve = new THREE.CatmullRomCurve3(points, true, "catmullrom", 0.5);
   const sampled = curve.getPoints(PATH_SAMPLES);
+
+  // Position texture's alpha channel (otherwise a constant unused 1) carries the local river
+  // width multiplier at that arc position — the choke/wide taper, sampled once alongside
+  // position instead of needing a whole second texture.
   const data = new Float32Array(PATH_SAMPLES * 4);
   for (let i = 0; i < PATH_SAMPLES; i += 1) {
     const p = sampled[i];
     data[i * 4] = p.x;
     data[i * 4 + 1] = p.y;
     data[i * 4 + 2] = p.z;
-    data[i * 4 + 3] = 1;
+    data[i * 4 + 3] = widthProfileAt(i / PATH_SAMPLES);
   }
   const texture = new THREE.DataTexture(data, PATH_SAMPLES, 1, THREE.RGBAFormat, THREE.FloatType);
   texture.needsUpdate = true;
   texture.minFilter = THREE.LinearFilter;
   texture.magFilter = THREE.LinearFilter;
   texture.wrapS = THREE.RepeatWrapping;
+
   return { curve, texture };
 }
 
@@ -163,92 +310,157 @@ function makeStoneTexture() {
 // as Alien Dyson Swarm's satellite field. Each instance samples the baked
 // path texture for its centerline position, offsets by a fixed per-instance
 // lane (lateral+vertical), and flutters its wings continuously.
+//
+// Unlike the raw ShaderMaterial this used to be, this now injects that same
+// motion logic into a real MeshStandardMaterial via onBeforeCompile — the
+// same trick used to keep custom GPU-driven instancing while still letting
+// Three's actual PBR lighting pipeline light the result. That means every
+// real light already in the scene (the lamp's pointLight included) lights
+// the cranes for real — proper falloff, proper decay, proper facing-based
+// shading — the same way Mechanical Planetarium's sun lights its planets,
+// rather than a hand-rolled distance formula standing in for one.
 // ---------------------------------------------------------------------------
-const RIVER_VERTEX_SHADER = `
-  attribute float aHingeGroup;
-  attribute float aPathPhase;
-  attribute float aLaneX;
-  attribute float aLaneY;
-  attribute float aFlapPhase;
-  attribute float aFlapSpeed;
-  attribute float aColorSeed;
+function configureRiverShader(shader, { pathTexture, flowSpeedMul, riverWidthMul, wingFlutter }) {
+  shader.uniforms.uPathTexture = { value: pathTexture };
+  shader.uniforms.uTime = { value: 0 };
+  shader.uniforms.uFlowSpeed = { value: flowSpeedMul };
+  shader.uniforms.uRiverWidth = { value: riverWidthMul };
+  shader.uniforms.uWingFlutter = { value: wingFlutter };
 
-  uniform sampler2D uPathTexture;
-  uniform float uTime;
-  uniform float uFlowSpeed;
-  uniform float uRiverWidth;
-  uniform float uWingFlutter;
+  shader.vertexShader = shader.vertexShader
+    .replace(
+      "#include <common>",
+      `
+      attribute float aHingeGroup;
+      attribute float aPathPhase;
+      attribute float aLaneX;
+      attribute float aLaneY;
+      attribute float aFlapPhase;
+      attribute float aFlapSpeed;
+      attribute float aColorSeed;
+      attribute float aWeavePhase;
+      attribute float aScale;
 
-  varying vec3 vNormal;
-  varying float vColorSeed;
-  varying float vPathU;
+      uniform sampler2D uPathTexture;
+      uniform float uTime;
+      uniform float uFlowSpeed;
+      uniform float uRiverWidth;
+      uniform float uWingFlutter;
 
-  vec3 rotateAroundAxis(vec3 p, vec3 axis, float angle) {
-    return p * cos(angle) + cross(axis, p) * sin(angle) + axis * dot(axis, p) * (1.0 - cos(angle));
-  }
+      varying float vColorSeedV;
+      varying vec2 vPaperCoordV;
 
-  void applyFlap(inout vec3 p, inout vec3 n, int group, float openT) {
-    vec3 pivot = vec3(0.0);
-    vec3 axis = vec3(0.0, 0.0, 1.0);
-    float closedAngle = 0.0;
-    if (group == 1) { pivot = vec3(-0.12, 0.22, -0.15); axis = vec3(0.0, 0.0, 1.0); closedAngle = 0.9; }
-    else if (group == 2) { pivot = vec3(0.12, 0.22, -0.15); axis = vec3(0.0, 0.0, 1.0); closedAngle = -0.9; }
-    else { return; }
-    float angle = mix(closedAngle, 0.0, openT);
-    vec3 local = p - pivot;
-    p = rotateAroundAxis(local, axis, angle) + pivot;
-    n = rotateAroundAxis(n, axis, angle);
-  }
+      vec3 riverRotateAroundAxis(vec3 p, vec3 axis, float angle) {
+        return p * cos(angle) + cross(axis, p) * sin(angle) + axis * dot(axis, p) * (1.0 - cos(angle));
+      }
 
-  void main() {
-    float u = fract(aPathPhase + uTime * uFlowSpeed);
-    vec3 centerHere = texture2D(uPathTexture, vec2(u, 0.5)).xyz;
-    float uAhead = fract(u + 0.006);
-    vec3 centerAhead = texture2D(uPathTexture, vec2(uAhead, 0.5)).xyz;
-    vec3 tangent = normalize(centerAhead - centerHere);
+      void riverApplyFlap(inout vec3 p, inout vec3 n, int group, float openT) {
+        vec3 pivot = vec3(0.0);
+        vec3 axis = vec3(0.0, 0.0, 1.0);
+        float closedAngle = 0.0;
+        if (group == 1) { pivot = vec3(-0.08, 0.48, 0.0); axis = vec3(0.0, 0.0, 1.0); closedAngle = 0.9; }
+        else if (group == 2) { pivot = vec3(0.08, 0.48, 0.0); axis = vec3(0.0, 0.0, 1.0); closedAngle = -0.9; }
+        else { return; }
+        float angle = mix(closedAngle, 0.0, openT);
+        vec3 local = p - pivot;
+        p = riverRotateAroundAxis(local, axis, angle) + pivot;
+        n = riverRotateAroundAxis(n, axis, angle);
+      }
+      #include <common>
+      `,
+    )
+    .replace(
+      "#include <beginnormal_vertex>",
+      `
+      // aPathPhase is each crane's own clock offset (time, not position) — the phase
+      // texture maps "how far through one loop period" to the arc position that actually
+      // corresponds to, given the variable speed profile below. Near the choke, arc
+      // position advances slowly for a given time step (cranes bunch up); out in the wide
+      // stretch it advances quickly (they spread out).
+      float riverTimeFrac = fract(aPathPhase + uTime * uFlowSpeed);
+      // Direct closed-spline phase avoids the old lookup texture's 1-to-0
+      // interpolation seam, which could teleport and blink individual cranes.
+      float riverU = riverTimeFrac;
+      vec4 riverHereSample = texture2D(uPathTexture, vec2(riverU, 0.5));
+      vec3 riverCenterHere = riverHereSample.xyz;
+      float riverWidthHere = riverHereSample.w;
+      float riverUAhead = fract(riverU + 0.004);
+      float riverUBehind = fract(riverU - 0.004);
+      vec3 riverCenterAhead = texture2D(uPathTexture, vec2(riverUAhead, 0.5)).xyz;
+      vec3 riverCenterBehind = texture2D(uPathTexture, vec2(riverUBehind, 0.5)).xyz;
+      vec3 riverTangentDelta = riverCenterAhead - riverCenterBehind;
+      vec3 riverTangent = riverTangentDelta / max(length(riverTangentDelta), 0.0001);
 
-    vec3 worldUp = vec3(0.0, 1.0, 0.0);
-    vec3 right = normalize(cross(worldUp, tangent));
-    vec3 up = normalize(cross(tangent, right));
+      vec3 riverWorldUp = abs(riverTangent.y) > 0.92
+        ? vec3(0.0, 0.0, 1.0)
+        : vec3(0.0, 1.0, 0.0);
+      vec3 riverRightDelta = cross(riverWorldUp, riverTangent);
+      vec3 riverRight = riverRightDelta / max(length(riverRightDelta), 0.0001);
+      vec3 riverUp = normalize(cross(riverTangent, riverRight));
 
-    int group = int(aHingeGroup + 0.5);
-    vec3 localPos = position;
-    vec3 localNormal = normal;
-    float openT = 0.72 + sin(uTime * aFlapSpeed + aFlapPhase) * 0.28 * uWingFlutter;
-    applyFlap(localPos, localNormal, group, clamp(openT, 0.0, 1.0));
+      int riverGroup = int(aHingeGroup + 0.5);
+      vec3 riverLocalPos = position;
+      vec3 riverLocalNormal = normal;
+      float riverOpenT = 0.72 + sin(uTime * aFlapSpeed + aFlapPhase) * 0.28 * uWingFlutter;
+      riverApplyFlap(riverLocalPos, riverLocalNormal, riverGroup, clamp(riverOpenT, 0.0, 1.0));
 
-    vec3 laneOffset = right * aLaneX * uRiverWidth + up * aLaneY * uRiverWidth;
-    vec3 orientedBody = right * localPos.x + up * localPos.y + tangent * localPos.z;
-    vec3 worldPos = centerHere + laneOffset + orientedBody * 0.42;
-    vec3 worldNormal = normalize(right * localNormal.x + up * localNormal.y + tangent * localNormal.z);
+      vec3 objectNormal = normalize(riverRight * riverLocalNormal.x + riverUp * riverLocalNormal.y + riverTangent * riverLocalNormal.z);
+      `,
+    )
+    .replace(
+      "#include <begin_vertex>",
+      `
+      #include <begin_vertex>
+      float riverWeave = sin(uTime * (0.32 + aFlapSpeed * 0.025) + aWeavePhase + riverU * 18.0);
+      vec3 riverLaneOffset = riverRight * (aLaneX + riverWeave * 0.16) * uRiverWidth * riverWidthHere
+        + riverUp * (aLaneY + cos(aWeavePhase + riverU * 14.0) * 0.08) * uRiverWidth * riverWidthHere;
+      vec3 riverOrientedBody = riverRight * riverLocalPos.x + riverUp * riverLocalPos.y + riverTangent * riverLocalPos.z;
+      transformed = riverCenterHere + riverLaneOffset + riverOrientedBody * (0.115 * aScale);
+      vColorSeedV = aColorSeed;
+      vPaperCoordV = riverLocalPos.xz * 5.0 + riverLocalPos.yy * 1.7;
+      `,
+    );
 
-    vNormal = normalize(normalMatrix * worldNormal);
-    vColorSeed = aColorSeed;
-    vPathU = u;
+  shader.fragmentShader = shader.fragmentShader
+    .replace(
+      "#include <common>",
+      `
+      varying float vColorSeedV;
+      varying vec2 vPaperCoordV;
 
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(worldPos, 1.0);
-  }
-`;
+      // One color per crane, drawn once from its own instance seed — never reinterpolated
+      // by position along the river, so a crane's color stays fixed for its whole journey.
+      vec3 riverHsl2rgb(vec3 hsl) {
+        vec3 rgb = clamp(abs(mod(hsl.x * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0);
+        return hsl.z + hsl.y * (rgb - 0.5) * (1.0 - abs(2.0 * hsl.z - 1.0));
+      }
+      float riverPaperNoise(vec2 p) {
+        float fibers = sin(p.x * 37.0 + sin(p.y * 9.0) * 2.0) * 0.5 + 0.5;
+        float crossFibers = sin(p.y * 51.0 + p.x * 3.0) * 0.5 + 0.5;
+        return fibers * 0.65 + crossFibers * 0.35;
+      }
+      #include <common>
+      `,
+    )
+    .replace(
+      "#include <color_fragment>",
+      `
+      #include <color_fragment>
+      // Night sky: lightness stays low across the board so cranes read as dark silhouettes
+      // except where a real light (the lamp, mainly) actually reaches them — hue and
+      // saturation still vary per instance for the "standard colors, some dark" mix.
+      float riverHue = fract(vColorSeedV * 3.7 + 0.15);
+      float riverSat = mix(0.35, 0.85, fract(vColorSeedV * 9.13 + 0.41));
+      float riverLight = mix(0.045, 0.3, fract(vColorSeedV * 17.7 + 0.63));
+      vec3 riverColor = riverHsl2rgb(vec3(riverHue, riverSat, riverLight));
+      float riverFiber = riverPaperNoise(vPaperCoordV + vColorSeedV * 7.0);
+      riverColor *= mix(0.88, 1.08, riverFiber);
+      diffuseColor.rgb = riverColor;
+      `,
+    );
+}
 
-const RIVER_FRAGMENT_SHADER = `
-  uniform vec3 uWarmColor;
-  uniform vec3 uCoolColor;
-  varying vec3 vNormal;
-  varying float vColorSeed;
-  varying float vPathU;
-
-  void main() {
-    vec3 lightDir = normalize(vec3(0.4, 1.0, 0.35));
-    float lambert = max(dot(normalize(vNormal), lightDir), 0.0);
-    float warmth = 1.0 - smoothstep(0.0, 0.62, vPathU);
-    vec3 base = mix(uCoolColor, uWarmColor, warmth);
-    base = mix(base, base * 1.08, fract(vColorSeed * 4.1));
-    vec3 shaded = base * (0.3 + lambert * 0.68);
-    gl_FragColor = vec4(shaded, 1.0);
-  }
-`;
-
-function buildRiverGeometry(craneGeometry, count, riverWidthMul) {
+function buildRiverGeometry(craneGeometry, count) {
   const geometry = new THREE.InstancedBufferGeometry();
   geometry.index = craneGeometry.index;
   geometry.attributes.position = craneGeometry.attributes.position;
@@ -261,16 +473,27 @@ function buildRiverGeometry(craneGeometry, count, riverWidthMul) {
   const flapPhase = new Float32Array(count);
   const flapSpeed = new Float32Array(count);
   const colorSeed = new Float32Array(count);
+  const weavePhase = new Float32Array(count);
+  const instanceScale = new Float32Array(count);
+
+  const laneCount = 64;
+  const cranesPerLane = Math.ceil(count / laneCount);
 
   for (let i = 0; i < count; i += 1) {
-    pathPhase[i] = seeded(i, 901);
-    const lane = 0.4 + seeded(i, 902) * 2.6;
-    const laneAngle = seeded(i, 903) * Math.PI * 2;
-    laneX[i] = Math.cos(laneAngle) * lane * riverWidthMul;
-    laneY[i] = Math.sin(laneAngle) * lane * 0.5 * riverWidthMul;
+    const laneIndex = i % laneCount;
+    const slot = Math.floor(i / laneCount);
+    // Each lane is evenly staggered along the route. A small seeded offset
+    // keeps it organic without allowing neighboring cranes to share a slot.
+    pathPhase[i] = (slot + seeded(i, 901) * 0.22 + laneIndex / laneCount) / cranesPerLane;
+    const laneRadius = 0.28 + Math.sqrt((laneIndex + 0.5) / laneCount) * 2.8;
+    const laneAngle = laneIndex * 2.399963229728653;
+    laneX[i] = Math.cos(laneAngle) * laneRadius;
+    laneY[i] = Math.sin(laneAngle) * laneRadius * 0.52;
     flapPhase[i] = seeded(i, 904) * Math.PI * 2;
     flapSpeed[i] = 2.2 + seeded(i, 905) * 1.6;
     colorSeed[i] = seeded(i, 906);
+    weavePhase[i] = seeded(i, 907) * Math.PI * 2;
+    instanceScale[i] = 1 + seeded(i, 908) * 0.1;
   }
 
   geometry.setAttribute("aPathPhase", new THREE.InstancedBufferAttribute(pathPhase, 1));
@@ -279,6 +502,8 @@ function buildRiverGeometry(craneGeometry, count, riverWidthMul) {
   geometry.setAttribute("aFlapPhase", new THREE.InstancedBufferAttribute(flapPhase, 1));
   geometry.setAttribute("aFlapSpeed", new THREE.InstancedBufferAttribute(flapSpeed, 1));
   geometry.setAttribute("aColorSeed", new THREE.InstancedBufferAttribute(colorSeed, 1));
+  geometry.setAttribute("aWeavePhase", new THREE.InstancedBufferAttribute(weavePhase, 1));
+  geometry.setAttribute("aScale", new THREE.InstancedBufferAttribute(instanceScale, 1));
   geometry.instanceCount = count;
   return geometry;
 }
@@ -289,33 +514,37 @@ function RiverScene({ settings, onStats }) {
   const craneCount = Math.round(THREE.MathUtils.clamp(settings.craneCount ?? 6000, 2000, MAX_CRANES));
   const flowSpeedMul = (settings.flowSpeed ?? 1) * 0.016;
   const riverWidthMul = (settings.riverWidth ?? 100) / 100;
-  const wingFlutter = (settings.wingFlutter ?? 100) / 100;
-  const lightWarmth = (settings.lightWarmth ?? 100) / 100;
+  const wingFlutter = 2.5;
+  const lampHeight = settings.lampHeight ?? 11.5;
+  const lampIntensity = settings.lampIntensity ?? 220;
+  const lampRange = settings.lampRange ?? 82;
+  const lampFalloff = settings.lampFalloff ?? 1.65;
 
   const craneGeometry = useMemo(() => buildCraneGeometry(), []);
   const { curve, texture: pathTexture } = useMemo(() => buildPath(), []);
   const riverGeometry = useMemo(
-    () => buildRiverGeometry(craneGeometry, craneCount, riverWidthMul),
-    [craneGeometry, craneCount, riverWidthMul],
+    () => buildRiverGeometry(craneGeometry, craneCount),
+    [craneGeometry, craneCount],
   );
 
-  const warmColor = useMemo(() => new THREE.Color("#f0b866"), []);
-  const coolColor = useMemo(() => new THREE.Color("#5c78b8"), []);
-
-  const riverMaterial = useMemo(() => new THREE.ShaderMaterial({
-    vertexShader: RIVER_VERTEX_SHADER,
-    fragmentShader: RIVER_FRAGMENT_SHADER,
-    uniforms: {
-      uPathTexture: { value: pathTexture },
-      uTime: { value: 0 },
-      uFlowSpeed: { value: flowSpeedMul },
-      uRiverWidth: { value: riverWidthMul },
-      uWingFlutter: { value: wingFlutter },
-      uWarmColor: { value: warmColor },
-      uCoolColor: { value: coolColor },
-    },
-    side: THREE.DoubleSide,
-  }), [pathTexture, warmColor, coolColor, flowSpeedMul, riverWidthMul, wingFlutter]);
+  // Real MeshStandardMaterial now (not a raw ShaderMaterial) — onBeforeCompile injects the
+  // GPU-driven instance motion into its vertex shader while leaving Three's own PBR lighting
+  // chunks intact, so every real light in the scene (the lamp's pointLight below included)
+  // lights the cranes for real, the same way Mechanical Planetarium's sun lights its planets.
+  const compiledShaderRef = useRef(null);
+  const riverMaterial = useMemo(() => {
+    const material = new THREE.MeshStandardMaterial({
+      color: "#ffffff",
+      roughness: 0.86,
+      metalness: 0.02,
+      side: THREE.DoubleSide,
+    });
+    material.onBeforeCompile = (shader) => {
+      configureRiverShader(shader, { pathTexture, flowSpeedMul, riverWidthMul, wingFlutter });
+      compiledShaderRef.current = shader;
+    };
+    return material;
+  }, [pathTexture, flowSpeedMul, riverWidthMul, wingFlutter]);
 
   useEffect(() => () => { riverGeometry.dispose(); }, [riverGeometry]);
   useEffect(() => () => { riverMaterial.dispose(); }, [riverMaterial]);
@@ -324,6 +553,14 @@ function RiverScene({ settings, onStats }) {
   const stoneTexture = useMemo(() => makeStoneTexture(), []);
   const woodMaterial = useMemo(() => new THREE.MeshStandardMaterial({ map: woodTexture, color: "#c9a878", roughness: 0.78, metalness: 0.04 }), [woodTexture]);
   const stoneMaterial = useMemo(() => new THREE.MeshStandardMaterial({ map: stoneTexture, color: "#8f8a80", roughness: 0.85, metalness: 0.05 }), [stoneTexture]);
+  const groundMaterial = useMemo(() => new THREE.MeshStandardMaterial({
+    map: stoneTexture,
+    bumpMap: stoneTexture,
+    bumpScale: 0.18,
+    color: "#171a24",
+    roughness: 0.94,
+    metalness: 0.01,
+  }), [stoneTexture]);
 
   const pillars = useMemo(() => {
     const list = [];
@@ -338,13 +575,6 @@ function RiverScene({ settings, onStats }) {
     return list;
   }, [curve]);
 
-  const bridgeCenter = useMemo(() => curve.getPoint(0.58).clone().setY(1.4), [curve]);
-  const bridgeTangent = useMemo(() => curve.getTangent(0.58).normalize(), [curve]);
-  const bridgeQuat = useMemo(
-    () => new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), bridgeTangent),
-    [bridgeTangent],
-  );
-
   const gardenLanterns = useMemo(() => {
     const list = [];
     for (let i = 0; i < 5; i += 1) {
@@ -358,46 +588,68 @@ function RiverScene({ settings, onStats }) {
     return list;
   }, [curve]);
 
-  const dragRef = useDragOrbit({ pitchMin: -0.4, pitchMax: 0.45 });
+  const dragRef = useDragOrbit({ pitchMin: -0.85, pitchMax: 0.85 });
   const travelRef = useRef(0.08);
+  const overviewYawRef = useRef(0.42);
+  const distanceRef = useRef(62);
+  const targetDistanceRef = useRef(62);
   const statsTimerRef = useRef({ frames: 0, time: 0 });
-  const sceneColorRef = useRef(new THREE.Color());
 
   useEffect(() => {
-    camera.position.set(0, 4, 20);
-    camera.lookAt(0, 3, 12);
+    camera.position.set(23, 36, 43);
+    camera.lookAt(1, 8.5, -3);
   }, [camera]);
+
+  useEffect(() => {
+    const canvas = gl.domElement;
+    const onWheel = (event) => {
+      if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+      event.preventDefault();
+      targetDistanceRef.current = THREE.MathUtils.clamp(
+        targetDistanceRef.current * Math.exp(event.deltaY * 0.0012),
+        18,
+        115,
+      );
+    };
+    canvas.addEventListener("wheel", onWheel, { passive: false });
+    return () => canvas.removeEventListener("wheel", onWheel);
+  }, [gl]);
 
   useFrame((state, rawDelta) => {
     const elapsed = state.clock.elapsedTime * speed;
-    riverMaterial.uniforms.uTime.value = elapsed;
-    riverMaterial.uniforms.uFlowSpeed.value = flowSpeedMul;
-    riverMaterial.uniforms.uRiverWidth.value = riverWidthMul;
-    riverMaterial.uniforms.uWingFlutter.value = wingFlutter;
+    const shader = compiledShaderRef.current;
+    if (shader) {
+      shader.uniforms.uTime.value = elapsed;
+      shader.uniforms.uFlowSpeed.value = flowSpeedMul;
+      shader.uniforms.uRiverWidth.value = riverWidthMul;
+      shader.uniforms.uWingFlutter.value = wingFlutter;
+    }
 
     travelRef.current = (travelRef.current + Math.min(rawDelta, 0.05) * speed * 0.01) % 1;
-    const camPoint = curve.getPoint(travelRef.current);
-    const camTangent = curve.getTangent(travelRef.current).normalize();
-    const lookPoint = curve.getPoint((travelRef.current + 0.03) % 1);
-    // Ride alongside the river rather than through its centerline — lane offsets put cranes
-    // up to ~3 units off-axis, so a camera sitting exactly on the path is submerged in traffic.
-    const worldUp = new THREE.Vector3(0, 1, 0);
-    const camRight = new THREE.Vector3().crossVectors(worldUp, camTangent).normalize();
-    const sideOffset = camRight.clone().multiplyScalar(6.5);
+    // Survey the entire current from far above; drag offsets this slow orbit.
     const yaw = dragRef.current.targetYaw;
     const pitch = dragRef.current.targetPitch;
-    const lookOffset = new THREE.Vector3(Math.sin(yaw) * 4, pitch * 3, Math.cos(yaw) * -0.5);
-    camera.position.set(
-      camPoint.x + sideOffset.x,
-      camPoint.y + 3.2,
-      camPoint.z + sideOffset.z,
+    overviewYawRef.current += Math.min(rawDelta, 0.05) * speed * 0.018;
+    const overviewYaw = overviewYawRef.current + yaw;
+    const overviewPitch = 0.48 + pitch * 0.55;
+    distanceRef.current = THREE.MathUtils.damp(
+      distanceRef.current,
+      targetDistanceRef.current,
+      9,
+      Math.min(rawDelta, 0.05),
     );
-    camera.lookAt(lookPoint.x + lookOffset.x, lookPoint.y + lookOffset.y, lookPoint.z + lookOffset.z);
+    const overviewDistance = distanceRef.current;
+    const overviewFocus = new THREE.Vector3(1, 8.5, -3);
+    camera.position.set(
+      overviewFocus.x + Math.sin(overviewYaw) * Math.cos(overviewPitch) * overviewDistance,
+      overviewFocus.y + Math.sin(overviewPitch) * overviewDistance,
+      overviewFocus.z + Math.cos(overviewYaw) * Math.cos(overviewPitch) * overviewDistance,
+    );
+    camera.lookAt(overviewFocus);
 
+    // Zone label still tracks where the camera's slow auto-orbit is dwelling — only the sky
+    // color itself no longer follows it.
     const warmth = 1 - THREE.MathUtils.smoothstep(travelRef.current, 0, 0.62);
-    sceneColorRef.current.copy(coolColor).lerp(warmColor, warmth).multiplyScalar(0.32 * lightWarmth + 0.14);
-    state.scene.background = sceneColorRef.current;
-    if (state.scene.fog) state.scene.fog.color.copy(sceneColorRef.current);
 
     statsTimerRef.current.frames += 1;
     statsTimerRef.current.time += rawDelta;
@@ -419,14 +671,47 @@ function RiverScene({ settings, onStats }) {
 
   return (
     <group>
-      <ambientLight intensity={0.16} color="#f4e0c0" />
-      <hemisphereLight color="#dcc9a0" groundColor="#241c14" intensity={0.16} />
-      <directionalLight position={[8, 10, 6]} intensity={0.4} color="#ffdca0" />
+      <ambientLight intensity={0.008} color="#b9c8e8" />
+      <hemisphereLight color="#53658f" groundColor="#08070a" intensity={0.008} />
+      <directionalLight position={[8, 10, 6]} intensity={0.09} color="#7186b8" />
 
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]}>
-        <circleGeometry args={[22, 64]} />
-        <primitive object={stoneMaterial} attach="material" />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]} receiveShadow>
+        <circleGeometry args={[40, 96]} />
+        <primitive object={groundMaterial} attach="material" />
       </mesh>
+
+      {MAIN_LAMPS.map((lamp, index) => (
+        <group key={`main-lamp-${index}`} position={lamp.position}>
+          <mesh position={[0, 5.1, 0]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.32, 0.7, 10.2, 10]} />
+            <primitive object={stoneMaterial} attach="material" />
+          </mesh>
+          <mesh position={[0, 10.35, 0]} castShadow>
+            <cylinderGeometry args={[1.15, 0.52, 0.65, 10]} />
+            <primitive object={woodMaterial} attach="material" />
+          </mesh>
+          <mesh position={[0, lampHeight, 0]}>
+            <sphereGeometry args={[0.72, 24, 16]} />
+            <meshStandardMaterial
+              color="#5a3518"
+              emissive={lamp.color}
+              emissiveIntensity={0.85}
+              roughness={0.38}
+            />
+          </mesh>
+          <pointLight
+            position={[0, lampHeight, 0]}
+            color={lamp.color}
+            intensity={lampIntensity}
+            distance={lampRange}
+            decay={lampFalloff}
+            castShadow
+            shadow-mapSize-width={512}
+            shadow-mapSize-height={512}
+            shadow-bias={-0.0004}
+          />
+        </group>
+      ))}
 
       {pillars.map((p, i) => (
         <group key={i} position={p}>
@@ -434,24 +719,8 @@ function RiverScene({ settings, onStats }) {
             <cylinderGeometry args={[0.32, 0.38, 4.4, 8]} />
             <primitive object={woodMaterial} attach="material" />
           </mesh>
-          <pointLight position={[0, 4.6, 0]} intensity={3.5 * lightWarmth} distance={7} color="#ffcf8a" />
         </group>
       ))}
-
-      <group position={bridgeCenter} quaternion={bridgeQuat}>
-        <mesh>
-          <boxGeometry args={[3.2, 0.24, 5.5]} />
-          <primitive object={woodMaterial} attach="material" />
-        </mesh>
-        <mesh position={[1.5, 0.6, 0]}>
-          <boxGeometry args={[0.16, 1.2, 5.5]} />
-          <primitive object={woodMaterial} attach="material" />
-        </mesh>
-        <mesh position={[-1.5, 0.6, 0]}>
-          <boxGeometry args={[0.16, 1.2, 5.5]} />
-          <primitive object={woodMaterial} attach="material" />
-        </mesh>
-      </group>
 
       {gardenLanterns.map((p, i) => (
         <group key={i} position={p}>
@@ -479,22 +748,24 @@ export default function RiverOfWishes({ settings = {} }) {
   return (
     <section className="atmosphere river-of-wishes" style={{ "--experiment-accent": "#e6c88a" }}>
       <CanvasStage
-        camera={{ position: [0, 4, 20], fov: 50, near: 0.1, far: 70 }}
+        camera={{ position: [23, 36, 43], fov: 46, near: 0.1, far: 150 }}
         speed={settings.speed ?? 1}
+        shadows
         bloom={{ intensity: 0.8, threshold: 0.6 }}
       >
-        <fogExp2 attach="fog" args={["#2a2418", 0.018]} />
+        <color attach="background" args={[SKY_COLOR]} />
+        <fogExp2 attach="fog" args={[SKY_COLOR, 0.009]} />
         <RiverScene settings={settings} onStats={onStats} />
       </CanvasStage>
 
       <div className="experiment-copy river-of-wishes__copy">
-        <p>25 — A river suspended in midair</p>
+        <p>26 — A river suspended in midair</p>
         <h1>The River<br />of Wishes.</h1>
-        <span>Ten thousand cranes drift through an ancient temple in slow currents, parting around pillars and beneath a wooden bridge, out into a moonlit garden — never colliding, never stopping.</span>
+        <span>Tens of thousands of tiny cranes become a suspended river, flowing through an ancient temple and out into a moonlit garden — never colliding, never stopping.</span>
       </div>
 
       <div className="river-of-wishes__legend">
-        <div><i>&#8635;</i><div><b>Drag</b><span>Look around as you drift</span></div></div>
+        <div><i>&#8635;</i><div><b>Drag</b><span>Orbit the river</span></div></div>
       </div>
 
       <AnimationReadout
