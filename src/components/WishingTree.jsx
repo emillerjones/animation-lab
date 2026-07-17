@@ -344,147 +344,157 @@ function makeGravelTexture() {
 // Petals need no "face" direction (unlike a bird), so orientation can be
 // fully random per instance without hurting readability.
 // ---------------------------------------------------------------------------
-const LEAF_VERTEX_SHADER = `
-  attribute vec3 aBranchPos;
-  attribute vec3 aBranchNormal;
-  attribute float aCycleSeed;
-  attribute float aCycleStart;
-  attribute float aGrowDur;
-  attribute float aBreatheDur;
-  attribute float aDieDur;
-  attribute float aDormantDur;
-  attribute float aColorSeed;
-  attribute float aScaleVar;
-  attribute float aFallIndex;
+// Petals used to carry their own hand-rolled fixed-lightDir shading, completely blind to
+// any real light in the scene — a blossom right next to a lamp looked exactly like one in
+// total darkness. This now injects the same growth/breathe/die/fall motion into a real
+// MeshStandardMaterial via onBeforeCompile instead — the same trick RiverOfWishes.jsx uses
+// for its cranes — so petals pick up real point-light falloff from nearby lamps for free.
+function configureLeafShader(shader, { windIntensity, fallingPetalCount, seasonColorA, seasonColorB }) {
+  shader.uniforms.uTime = { value: 0 };
+  shader.uniforms.uWindIntensity = { value: windIntensity };
+  shader.uniforms.uFallingPetalCount = { value: fallingPetalCount };
+  shader.uniforms.uSeasonColorA = { value: seasonColorA };
+  shader.uniforms.uSeasonColorB = { value: seasonColorB };
 
-  uniform float uTime;
-  uniform float uWindIntensity;
-  uniform float uFallingPetalCount;
+  shader.vertexShader = shader.vertexShader
+    .replace(
+      "#include <common>",
+      `
+      attribute vec3 aBranchPos;
+      attribute vec3 aBranchNormal;
+      attribute float aCycleSeed;
+      attribute float aCycleStart;
+      attribute float aGrowDur;
+      attribute float aBreatheDur;
+      attribute float aDieDur;
+      attribute float aDormantDur;
+      attribute float aColorSeed;
+      attribute float aScaleVar;
+      attribute float aFallIndex;
 
-  varying vec3 vNormal;
-  varying float vColorSeed;
-  varying float vScale;
+      uniform float uTime;
+      uniform float uWindIntensity;
+      uniform float uFallingPetalCount;
 
-  vec3 rotateAroundAxis(vec3 p, vec3 axis, float angle) {
-    return p * cos(angle) + cross(axis, p) * sin(angle) + axis * dot(axis, p) * (1.0 - cos(angle));
-  }
+      varying float vColorSeedV;
+      varying float vScaleV;
 
-  void main() {
-    float cycleLen = aGrowDur + aBreatheDur + aDieDur + aDormantDur;
-    float t = mod(uTime - aCycleStart, cycleLen);
-    float scale = 0.0;
-    float openT = 0.0;
-    vec3 fallOffset = vec3(0.0);
-    float fallSpin = 0.0;
-    if (t < aGrowDur) {
-      float growT = t / max(0.001, aGrowDur);
-      scale = growT * growT * (3.0 - 2.0 * growT);
-      openT = scale;
-    } else if (t < aGrowDur + aBreatheDur) {
-      // Attached and fully open — no idle animation layered on top, just sits as a real
-      // petal would until it's time to fall.
-      openT = 1.0;
-      scale = 1.0;
-    } else if (t < aGrowDur + aBreatheDur + aDieDur) {
-      openT = 1.0;
-      float dieT = (t - aGrowDur - aBreatheDur) / max(0.001, aDieDur);
-      // Remain readable through the descent, then disappear only as the petal
-      // reaches the ground instead of shrinking in mid-air.
-      scale = 1.0 - smoothstep(0.9, 1.0, dieT);
-      // A falling petal drifts and tumbles away rather than just shrinking in place — real
-      // wind carries it further sideways as it falls.
-      float wind = max(0.3, uWindIntensity);
-      float fallDistance = max(0.0, aBranchPos.y - 0.05);
-      fallOffset = vec3(
-        sin(aCycleSeed * 12.1) * dieT * 1.5 * wind,
-        -fallDistance * dieT * dieT,
-        cos(aCycleSeed * 8.7) * dieT * 1.5 * wind
-      );
-      fallSpin = dieT * 7.0;
-    } else {
-      scale = 0.0;
-    }
+      vec3 leafRotateAroundAxis(vec3 p, vec3 axis, float angle) {
+        return p * cos(angle) + cross(axis, p) * sin(angle) + axis * dot(axis, p) * (1.0 - cos(angle));
+      }
+      #include <common>
+      `,
+    )
+    .replace(
+      "#include <beginnormal_vertex>",
+      `
+      float leafCycleLen = aGrowDur + aBreatheDur + aDieDur + aDormantDur;
+      float leafT = mod(uTime - aCycleStart, leafCycleLen);
+      float leafScale = 0.0;
+      float leafOpenT = 0.0;
+      vec3 leafFallOffset = vec3(0.0);
+      float leafFallSpin = 0.0;
+      if (leafT < aGrowDur) {
+        float growT = leafT / max(0.001, aGrowDur);
+        leafScale = growT * growT * (3.0 - 2.0 * growT);
+        leafOpenT = leafScale;
+      } else if (leafT < aGrowDur + aBreatheDur) {
+        leafOpenT = 1.0;
+        leafScale = 1.0;
+      } else if (leafT < aGrowDur + aBreatheDur + aDieDur) {
+        leafOpenT = 1.0;
+        float dieT = (leafT - aGrowDur - aBreatheDur) / max(0.001, aDieDur);
+        leafScale = 1.0 - smoothstep(0.9, 1.0, dieT);
+        float wind = max(0.3, uWindIntensity);
+        float fallDistance = max(0.0, aBranchPos.y - 0.05);
+        leafFallOffset = vec3(
+          sin(aCycleSeed * 12.1) * dieT * 1.5 * wind,
+          -fallDistance * dieT * dieT,
+          cos(aCycleSeed * 8.7) * dieT * 1.5 * wind
+        );
+        leafFallSpin = dieT * 7.0;
+      } else {
+        leafScale = 0.0;
+      }
 
-    // The control is an exact concurrent count. The selected instances loop
-    // continuously from branch to ground; every other blossom remains attached.
-    if (aFallIndex < uFallingPetalCount) {
-      float controlledFallT = fract(uTime / 6.0 + aCycleSeed);
-      float wind = max(0.3, uWindIntensity);
-      float fallDistance = max(0.0, aBranchPos.y - 0.05);
-      scale = 1.0 - smoothstep(0.9, 1.0, controlledFallT);
-      openT = 1.0;
-      fallOffset = vec3(
-        sin(aCycleSeed * 12.1) * controlledFallT * 1.5 * wind,
-        -fallDistance * controlledFallT * controlledFallT,
-        cos(aCycleSeed * 8.7) * controlledFallT * 1.5 * wind
-      );
-      fallSpin = controlledFallT * 7.0;
-    } else {
-      scale = 1.0;
-      openT = 1.0;
-      fallOffset = vec3(0.0);
-      fallSpin = 0.0;
-    }
+      if (aFallIndex < uFallingPetalCount) {
+        float controlledFallT = fract(uTime / 6.0 + aCycleSeed);
+        float wind = max(0.3, uWindIntensity);
+        float fallDistance = max(0.0, aBranchPos.y - 0.05);
+        leafScale = 1.0 - smoothstep(0.9, 1.0, controlledFallT);
+        leafOpenT = 1.0;
+        leafFallOffset = vec3(
+          sin(aCycleSeed * 12.1) * controlledFallT * 1.5 * wind,
+          -fallDistance * controlledFallT * controlledFallT,
+          cos(aCycleSeed * 8.7) * controlledFallT * 1.5 * wind
+        );
+        leafFallSpin = controlledFallT * 7.0;
+      } else {
+        leafScale = 1.0;
+        leafOpenT = 1.0;
+        leafFallOffset = vec3(0.0);
+        leafFallSpin = 0.0;
+      }
 
-    // Bud opening: the petal rotates open from folded-against-receptacle to flat as it grows.
-    vec3 localPos = position;
-    vec3 localNormal = normal;
-    float closedAngle = mix(1.35, 0.0, openT);
-    localPos = rotateAroundAxis(localPos, vec3(1.0, 0.0, 0.0), closedAngle);
-    localNormal = rotateAroundAxis(localNormal, vec3(1.0, 0.0, 0.0), closedAngle);
-    localPos = rotateAroundAxis(localPos, vec3(0.3, 1.0, 0.2), fallSpin);
-    localNormal = rotateAroundAxis(localNormal, vec3(0.3, 1.0, 0.2), fallSpin);
-    localPos *= scale * aScaleVar;
+      vec3 leafLocalPos = position;
+      vec3 leafLocalNormal = normal;
+      float leafClosedAngle = mix(1.35, 0.0, leafOpenT);
+      leafLocalPos = leafRotateAroundAxis(leafLocalPos, vec3(1.0, 0.0, 0.0), leafClosedAngle);
+      leafLocalNormal = leafRotateAroundAxis(leafLocalNormal, vec3(1.0, 0.0, 0.0), leafClosedAngle);
+      leafLocalPos = leafRotateAroundAxis(leafLocalPos, vec3(0.3, 1.0, 0.2), leafFallSpin);
+      leafLocalNormal = leafRotateAroundAxis(leafLocalNormal, vec3(0.3, 1.0, 0.2), leafFallSpin);
+      leafLocalPos *= leafScale * aScaleVar;
 
-    vec3 up = vec3(0.0, 1.0, 0.0);
-    vec3 outward = vec3(aBranchNormal.x, 0.0, aBranchNormal.z);
-    vec3 fwd = (dot(outward, outward) > 0.0001) ? normalize(outward) : vec3(1.0, 0.0, 0.0);
-    vec3 right = normalize(cross(up, fwd));
-    fwd = normalize(cross(right, up));
-    // Petals have no "face" to keep readable, so unlike a bird they can be rotated fully
-    // freely per instance — a natural, un-uniform scatter, like real blossoms on a branch.
-    // Fixed per-instance orientation only — no idle time-based wobble on attached petals.
-    float yaw = aCycleSeed * 6.2831;
-    float cy = cos(yaw);
-    float sy = sin(yaw);
-    vec3 rotFwd = fwd * cy + right * sy;
-    vec3 rotRight = right * cy - fwd * sy;
-    float rollSeed = fract(aCycleSeed * 17.23 + 0.41);
-    float roll = rollSeed * 6.2831;
-    vec3 tiltUp = rotateAroundAxis(up, rotFwd, roll);
-    vec3 tiltRight = rotateAroundAxis(rotRight, rotFwd, roll);
-    vec3 worldOffset = tiltRight * localPos.x + tiltUp * localPos.y + rotFwd * localPos.z + fallOffset;
-    vec3 worldPos = aBranchPos + worldOffset;
-    vec3 worldNormal = normalize(tiltRight * localNormal.x + tiltUp * localNormal.y + rotFwd * localNormal.z);
+      vec3 leafUp = vec3(0.0, 1.0, 0.0);
+      vec3 leafOutward = vec3(aBranchNormal.x, 0.0, aBranchNormal.z);
+      vec3 leafFwd = (dot(leafOutward, leafOutward) > 0.0001) ? normalize(leafOutward) : vec3(1.0, 0.0, 0.0);
+      vec3 leafRight = normalize(cross(leafUp, leafFwd));
+      leafFwd = normalize(cross(leafRight, leafUp));
+      float leafYaw = aCycleSeed * 6.2831;
+      float leafCy = cos(leafYaw);
+      float leafSy = sin(leafYaw);
+      vec3 leafRotFwd = leafFwd * leafCy + leafRight * leafSy;
+      vec3 leafRotRight = leafRight * leafCy - leafFwd * leafSy;
+      float leafRollSeed = fract(aCycleSeed * 17.23 + 0.41);
+      float leafRoll = leafRollSeed * 6.2831;
+      vec3 leafTiltUp = leafRotateAroundAxis(leafUp, leafRotFwd, leafRoll);
+      vec3 leafTiltRight = leafRotateAroundAxis(leafRotRight, leafRotFwd, leafRoll);
+      vec3 leafWorldOffset = leafTiltRight * leafLocalPos.x + leafTiltUp * leafLocalPos.y + leafRotFwd * leafLocalPos.z + leafFallOffset;
+      vec3 leafWorldPos = aBranchPos + leafWorldOffset;
+      vec3 objectNormal = normalize(leafTiltRight * leafLocalNormal.x + leafTiltUp * leafLocalNormal.y + leafRotFwd * leafLocalNormal.z);
+      `,
+    )
+    .replace(
+      "#include <begin_vertex>",
+      `
+      #include <begin_vertex>
+      transformed = leafWorldPos;
+      vColorSeedV = aColorSeed;
+      vScaleV = leafScale;
+      `,
+    );
 
-    vNormal = normalize(normalMatrix * worldNormal);
-    vColorSeed = aColorSeed;
-    vScale = scale;
-
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(worldPos, 1.0);
-  }
-`;
-
-const LEAF_FRAGMENT_SHADER = `
-  uniform vec3 uSeasonColorA;
-  uniform vec3 uSeasonColorB;
-  varying vec3 vNormal;
-  varying float vColorSeed;
-  varying float vScale;
-
-  void main() {
-    if (vScale <= 0.004) discard;
-    vec3 n = normalize(vNormal);
-    vec3 lightDir = normalize(vec3(0.4, 1.0, 0.35));
-    float lambert = max(dot(n, lightDir), 0.0);
-    // Petals are thin and slightly translucent — a soft wrap term keeps the shadowed side
-    // from going flat black, unlike a hard-shaded paper facet.
-    float wrap = max(dot(n, -lightDir), 0.0) * 0.35;
-    vec3 base = mix(uSeasonColorA, uSeasonColorB, fract(vColorSeed * 3.7));
-    vec3 shaded = base * (0.4 + lambert * 0.55 + wrap);
-    gl_FragColor = vec4(shaded, 1.0);
-  }
-`;
+  shader.fragmentShader = shader.fragmentShader
+    .replace(
+      "#include <common>",
+      `
+      uniform vec3 uSeasonColorA;
+      uniform vec3 uSeasonColorB;
+      varying float vColorSeedV;
+      varying float vScaleV;
+      #include <common>
+      `,
+    )
+    .replace(
+      "#include <color_fragment>",
+      `
+      if (vScaleV <= 0.004) discard;
+      #include <color_fragment>
+      vec3 leafColor = mix(uSeasonColorA, uSeasonColorB, fract(vColorSeedV * 3.7));
+      diffuseColor.rgb = leafColor;
+      `,
+    );
+}
 
 function buildLeafGeometry(petalGeometry, attachPoints, count, growthSpeedMul) {
   const geometry = new THREE.InstancedBufferGeometry();
@@ -543,6 +553,80 @@ function buildLeafGeometry(petalGeometry, attachPoints, count, growthSpeedMul) {
   geometry.setAttribute("aScaleVar", new THREE.InstancedBufferAttribute(scaleVar, 1));
   geometry.instanceCount = count;
   return geometry;
+}
+
+// Reusable scene-native version of the Wishing Tree. It shares the exact
+// procedural branch hierarchy and blossom shaders with the full experiment,
+// but owns no camera, ground, lights, fog, controls, or interface.
+export function WishingTreeModel({
+  position = [0, 0, 0],
+  rotation = [0, 0, 0],
+  scale = 1,
+  petalCount = 14000,
+  fallingPetals = 180,
+  windIntensity = 0.65,
+}) {
+  const speed = useSpeed();
+  const petalGeometry = useMemo(() => buildPetalGeometry(), []);
+  const { woody, canopyBranches } = useMemo(() => buildTreeStructure(), []);
+  const attachPoints = useMemo(
+    () => buildAttachPoints(canopyBranches, petalCount),
+    [canopyBranches, petalCount],
+  );
+  const leafGeometry = useMemo(
+    () => buildLeafGeometry(petalGeometry, attachPoints, petalCount, 1),
+    [petalGeometry, attachPoints, petalCount],
+  );
+  const treeMesh = useMemo(() => buildTreeMesh(woody), [woody]);
+  const barkTexture = useMemo(() => makeBarkTexture(), []);
+  const barkMaterial = useMemo(() => new THREE.MeshStandardMaterial({
+    map: barkTexture,
+    bumpMap: barkTexture,
+    bumpScale: 0.13,
+    color: "#806758",
+    roughness: 0.93,
+    metalness: 0.01,
+  }), [barkTexture]);
+  const colorA = useMemo(() => new THREE.Color("#f3a8c4"), []);
+  const colorB = useMemo(() => new THREE.Color("#b93268"), []);
+  const leafShaderRef = useRef(null);
+  const leafMaterial = useMemo(() => {
+    const material = new THREE.MeshStandardMaterial({
+      color: "#ffffff",
+      roughness: 0.55,
+      metalness: 0.02,
+      side: THREE.DoubleSide,
+    });
+    material.onBeforeCompile = (shader) => {
+      configureLeafShader(shader, { windIntensity, fallingPetalCount: fallingPetals, seasonColorA: colorA, seasonColorB: colorB });
+      leafShaderRef.current = shader;
+    };
+    return material;
+  }, [colorA, colorB, fallingPetals, windIntensity]);
+
+  useFrame((state) => {
+    const shader = leafShaderRef.current;
+    if (!shader) return;
+    shader.uniforms.uTime.value = state.clock.elapsedTime * speed;
+    shader.uniforms.uWindIntensity.value = windIntensity;
+    shader.uniforms.uFallingPetalCount.value = fallingPetals;
+  });
+
+  useEffect(() => () => {
+    petalGeometry.dispose();
+    leafGeometry.dispose();
+    treeMesh.dispose();
+    barkTexture.dispose();
+    barkMaterial.dispose();
+    leafMaterial.dispose();
+  }, [petalGeometry, leafGeometry, treeMesh, barkTexture, barkMaterial, leafMaterial]);
+
+  return (
+    <group position={position} rotation={rotation} scale={scale}>
+      <mesh geometry={treeMesh} material={barkMaterial} castShadow receiveShadow />
+      <mesh geometry={leafGeometry} material={leafMaterial} frustumCulled={false} />
+    </group>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -654,18 +738,20 @@ export function TreeScene({
   const seasonColorA = useMemo(() => new THREE.Color(SEASONS[0].colorA), []);
   const seasonColorB = useMemo(() => new THREE.Color(SEASONS[0].colorB), []);
 
-  const leafMaterial = useMemo(() => new THREE.ShaderMaterial({
-    vertexShader: LEAF_VERTEX_SHADER,
-    fragmentShader: LEAF_FRAGMENT_SHADER,
-    uniforms: {
-      uTime: { value: 0 },
-      uWindIntensity: { value: windIntensity },
-      uFallingPetalCount: { value: fallingPetalCount },
-      uSeasonColorA: { value: seasonColorA },
-      uSeasonColorB: { value: seasonColorB },
-    },
-    side: THREE.DoubleSide,
-  }), [seasonColorA, seasonColorB, windIntensity]);
+  const leafShaderRef = useRef(null);
+  const leafMaterial = useMemo(() => {
+    const material = new THREE.MeshStandardMaterial({
+      color: "#ffffff",
+      roughness: 0.55,
+      metalness: 0.02,
+      side: THREE.DoubleSide,
+    });
+    material.onBeforeCompile = (shader) => {
+      configureLeafShader(shader, { windIntensity, fallingPetalCount, seasonColorA, seasonColorB });
+      leafShaderRef.current = shader;
+    };
+    return material;
+  }, [seasonColorA, seasonColorB, windIntensity, fallingPetalCount]);
 
   useEffect(() => () => { leafGeometry.dispose(); }, [leafGeometry]);
   useEffect(() => () => { leafMaterial.dispose(); }, [leafMaterial]);
@@ -709,9 +795,12 @@ export function TreeScene({
 
   useFrame((state, rawDelta) => {
     const elapsed = state.clock.elapsedTime * speed;
-    leafMaterial.uniforms.uTime.value = elapsed;
-    leafMaterial.uniforms.uWindIntensity.value = windIntensity;
-    leafMaterial.uniforms.uFallingPetalCount.value = fallingPetalCount;
+    const leafShader = leafShaderRef.current;
+    if (leafShader) {
+      leafShader.uniforms.uTime.value = elapsed;
+      leafShader.uniforms.uWindIntensity.value = windIntensity;
+      leafShader.uniforms.uFallingPetalCount.value = fallingPetalCount;
+    }
 
     const cycleSeconds = 200 / Math.max(0.05, seasonSpeedMul);
     const raw = (elapsed % cycleSeconds) / cycleSeconds;
