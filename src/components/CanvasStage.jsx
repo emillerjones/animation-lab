@@ -1,8 +1,9 @@
-import { Suspense, createContext, useContext, useMemo, useRef } from "react";
+import { Suspense, createContext, useContext, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { EffectComposer, Bloom, SMAA } from "@react-three/postprocessing";
 import * as THREE from "three";
 import useDragOrbit from "../hooks/useDragOrbit";
+import usePinchZoom from "../hooks/usePinchZoom";
 import { WEBGL_DPR, WEBGL_MSAA_SAMPLES } from "../rendering/quality";
 import "./CanvasStage.css";
 
@@ -31,6 +32,16 @@ function OrbitCameraRig({ camera, focus, pitchLimits }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const orbitRef = useRef({ yaw: geometry.baseYaw, pitch: geometry.basePitch });
+  // Zoom range is proportional to each scene's own starting distance, not an absolute unit
+  // count, since world scale varies wildly between pieces.
+  const distanceRef = useRef(geometry.distance);
+  const targetDistanceRef = useRef(geometry.distance);
+  usePinchZoom({
+    targetDistanceRef,
+    min: geometry.distance * 0.4,
+    max: geometry.distance * 2.2,
+    invalidate,
+  });
 
   useFrame((state, delta) => {
     const drag = dragRef.current;
@@ -38,10 +49,11 @@ function OrbitCameraRig({ camera, focus, pitchLimits }) {
     if (drag.dragging) invalidate();
     orbit.yaw = THREE.MathUtils.damp(orbit.yaw, geometry.baseYaw + drag.targetYaw, 3.4, delta);
     orbit.pitch = THREE.MathUtils.damp(orbit.pitch, geometry.basePitch + drag.targetPitch, 3.4, delta);
+    distanceRef.current = THREE.MathUtils.damp(distanceRef.current, targetDistanceRef.current, 6, delta);
     state.camera.position.set(
-      geometry.focus.x + geometry.distance * Math.sin(orbit.yaw) * Math.cos(orbit.pitch),
-      geometry.focus.y + geometry.distance * Math.sin(orbit.pitch),
-      geometry.focus.z + geometry.distance * Math.cos(orbit.yaw) * Math.cos(orbit.pitch),
+      geometry.focus.x + distanceRef.current * Math.sin(orbit.yaw) * Math.cos(orbit.pitch),
+      geometry.focus.y + distanceRef.current * Math.sin(orbit.pitch),
+      geometry.focus.z + distanceRef.current * Math.cos(orbit.yaw) * Math.cos(orbit.pitch),
     );
     state.camera.lookAt(geometry.focus);
   });

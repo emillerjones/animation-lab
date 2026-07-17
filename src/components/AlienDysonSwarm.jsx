@@ -7,6 +7,7 @@ import * as THREE from "three";
 import CanvasStage, { useSpeed } from "./CanvasStage";
 import AnimationReadout from "./AnimationReadout";
 import useDragOrbit from "../hooks/useDragOrbit";
+import usePinchZoom from "../hooks/usePinchZoom";
 import { seeded } from "../utils/procedural";
 import "./AlienDysonSwarm.css";
 
@@ -473,16 +474,7 @@ function Swarm({ settings, onSunReady }) {
     if (hoveredIndex != null && hoveredIndex >= nodes.length) setHoveredIndex(null);
   }, [nodes.length, focusedIndex, hoveredIndex]);
 
-  useEffect(() => {
-    const stageEl = document.querySelector(".alien-dyson-swarm .canvas-stage canvas");
-    if (!stageEl) return undefined;
-    const onWheel = (event) => {
-      event.preventDefault();
-      distanceRef.current = THREE.MathUtils.clamp(distanceRef.current - event.deltaY * 0.045, 9, 92);
-    };
-    stageEl.addEventListener("wheel", onWheel, { passive: false });
-    return () => stageEl.removeEventListener("wheel", onWheel);
-  }, []);
+  usePinchZoom({ targetDistanceRef: distanceRef, min: 9, max: 92 });
 
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const origin = useMemo(() => new THREE.Vector3(0, 0, 0), []);

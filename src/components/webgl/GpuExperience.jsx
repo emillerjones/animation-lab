@@ -1,9 +1,10 @@
 import { Suspense, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { AdaptiveDpr } from "@react-three/drei";
 import { Bloom, EffectComposer, Noise, SMAA } from "@react-three/postprocessing";
 import * as THREE from "three";
 import useDragOrbit from "../../hooks/useDragOrbit";
+import usePinchZoom from "../../hooks/usePinchZoom";
 import { WEBGL_DPR, WEBGL_MSAA_SAMPLES } from "../../rendering/quality";
 import "./GpuExperience.css";
 
@@ -28,6 +29,11 @@ function CameraRig({ speed = 1, impulse, orbitFocus, orbitPosition }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orbitFocus.join(","), orbitPosition.join(",")]);
   const orbitRef = useRef({ yaw: baseYaw, pitch: basePitch });
+  // Zoom range proportional to this scene's own resting distance — every GpuExperience piece
+  // has a different world scale, so an absolute unit range wouldn't translate between them.
+  const distanceRef = useRef(distance);
+  const targetDistanceRef = useRef(distance);
+  usePinchZoom({ targetDistanceRef, min: distance * 0.4, max: distance * 2.2 });
   useFrame((state, delta) => {
     const step = Math.min(delta, .05) * speed;
     travel.current += step;
@@ -35,10 +41,11 @@ function CameraRig({ speed = 1, impulse, orbitFocus, orbitPosition }) {
     const orbit = orbitRef.current;
     orbit.yaw = THREE.MathUtils.damp(orbit.yaw, baseYaw + drag.targetYaw, 3.4, delta);
     orbit.pitch = THREE.MathUtils.damp(orbit.pitch, basePitch + drag.targetPitch, 3.4, delta);
+    distanceRef.current = THREE.MathUtils.damp(distanceRef.current, targetDistanceRef.current, 6, delta);
     state.camera.position.set(
-      focus.x + distance * Math.sin(orbit.yaw) * Math.cos(orbit.pitch),
-      focus.y + distance * Math.sin(orbit.pitch),
-      focus.z + distance * Math.cos(orbit.yaw) * Math.cos(orbit.pitch),
+      focus.x + distanceRef.current * Math.sin(orbit.yaw) * Math.cos(orbit.pitch),
+      focus.y + distanceRef.current * Math.sin(orbit.pitch),
+      focus.z + distanceRef.current * Math.cos(orbit.yaw) * Math.cos(orbit.pitch),
     );
     state.camera.position.z += Math.sin(travel.current * .18) * .35 - impulse * .28;
     state.camera.lookAt(focus);

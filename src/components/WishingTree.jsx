@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import CanvasStage, { useSpeed } from "./CanvasStage";
 import useDragOrbit from "../hooks/useDragOrbit";
+import usePinchZoom from "../hooks/usePinchZoom";
 import AnimationReadout from "./AnimationReadout";
 import { seeded } from "../utils/procedural";
 import "./WishingTree.css";
@@ -689,21 +690,7 @@ export function TreeScene({
     camera.lookAt(0, 17, 0);
   }, [camera]);
 
-  useEffect(() => {
-    const canvas = gl.domElement;
-    const onWheel = (event) => {
-      if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
-      event.preventDefault();
-      const zoomFactor = Math.exp(event.deltaY * 0.0012);
-      targetDistanceRef.current = THREE.MathUtils.clamp(
-        targetDistanceRef.current * zoomFactor,
-        15,
-        maxCameraDistance,
-      );
-    };
-    canvas.addEventListener("wheel", onWheel, { passive: false });
-    return () => canvas.removeEventListener("wheel", onWheel);
-  }, [gl, maxCameraDistance]);
+  usePinchZoom({ targetDistanceRef, min: 15, max: maxCameraDistance });
 
   useFrame((state, rawDelta) => {
     const elapsed = state.clock.elapsedTime * speed;

@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import CanvasStage, { useSpeed } from "./CanvasStage";
 import useDragOrbit from "../hooks/useDragOrbit";
+import usePinchZoom from "../hooks/usePinchZoom";
 import AnimationReadout from "./AnimationReadout";
 import { seeded } from "../utils/procedural";
 import "./RiverOfWishes.css";
@@ -350,7 +351,13 @@ function configureRiverShader(shader, { pathTexture, flowSpeedMul, riverWidthMul
       attribute float aScale;
 
       uniform sampler2D uPathTexture;
-      uniform float uTime;
+      // highp: uTime keeps growing for the whole session, and mediump — which plenty of
+      // mobile GPUs use by default, unlike desktop where highp is nearly universal — runs
+      // out of mantissa bits for a large, ever-growing float, quantizing sin()/fract() into
+      // big jumps instead of smooth motion. That's what "camera is smooth but crane motion
+      // looks like 1-2fps" actually was: the camera's own motion lives in a JS ref (always
+      // full 64-bit precision), so it never degrades, while this uniform did.
+      uniform highp float uTime;
       uniform float uFlowSpeed;
       uniform float uRiverWidth;
       uniform float uWingFlutter;
@@ -615,60 +622,13 @@ function RiverScene({ settings, onStats, mobile }) {
     camera.lookAt(1, 8.5, -3);
   }, [camera]);
 
-  useEffect(() => {
-    const canvas = gl.domElement;
-    const onWheel = (event) => {
-      if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
-      event.preventDefault();
-      targetDistanceRef.current = THREE.MathUtils.clamp(
-        targetDistanceRef.current * Math.exp(event.deltaY * 0.0012),
-        18,
-        115,
-      );
-    };
-    canvas.addEventListener("wheel", onWheel, { passive: false });
-
-    // Two-finger pinch, tracked directly off raw touch points rather than the shared
-    // drag-orbit hook (which only understands a single pointer at a time) — same
-    // distance-clamp range as the desktop wheel zoom above.
-    const pinchRef = { startDistance: null, startTarget: null };
-    const touchDistance = (touches) => Math.hypot(
-      touches[0].clientX - touches[1].clientX,
-      touches[0].clientY - touches[1].clientY,
-    );
-    const onTouchStart = (event) => {
-      if (event.touches.length === 2) {
-        pinchRef.startDistance = touchDistance(event.touches);
-        pinchRef.startTarget = targetDistanceRef.current;
-      }
-    };
-    const onTouchMove = (event) => {
-      if (event.touches.length === 2 && pinchRef.startDistance) {
-        event.preventDefault();
-        const currentDistance = touchDistance(event.touches);
-        const scale = pinchRef.startDistance / Math.max(currentDistance, 1);
-        targetDistanceRef.current = THREE.MathUtils.clamp(pinchRef.startTarget * scale, 18, 115);
-      }
-    };
-    const onTouchEnd = (event) => {
-      if (event.touches.length < 2) pinchRef.startDistance = null;
-    };
-    canvas.addEventListener("touchstart", onTouchStart, { passive: true });
-    canvas.addEventListener("touchmove", onTouchMove, { passive: false });
-    canvas.addEventListener("touchend", onTouchEnd, { passive: true });
-    canvas.addEventListener("touchcancel", onTouchEnd, { passive: true });
-
-    return () => {
-      canvas.removeEventListener("wheel", onWheel);
-      canvas.removeEventListener("touchstart", onTouchStart);
-      canvas.removeEventListener("touchmove", onTouchMove);
-      canvas.removeEventListener("touchend", onTouchEnd);
-      canvas.removeEventListener("touchcancel", onTouchEnd);
-    };
-  }, [gl]);
+  usePinchZoom({ targetDistanceRef, min: 18, max: 115 });
 
   useFrame((state, rawDelta) => {
-    const elapsed = state.clock.elapsedTime * speed;
+    // Wrapped well below where float precision would ever bite, even on a device that
+    // doesn't fully honor the highp qualifier above — every uTime-driven motion here is
+    // periodic (sin/fract), so wrapping the clock itself is inaudible/invisible.
+    const elapsed = (state.clock.elapsedTime * speed) % 3600;
     const shader = compiledShaderRef.current;
     if (shader) {
       shader.uniforms.uTime.value = elapsed;
