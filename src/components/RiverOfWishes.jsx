@@ -248,9 +248,14 @@ function buildPath() {
   }
   const texture = new THREE.DataTexture(data, PATH_SAMPLES, 1, THREE.RGBAFormat, THREE.FloatType);
   texture.needsUpdate = true;
-  texture.minFilter = THREE.LinearFilter;
-  texture.magFilter = THREE.LinearFilter;
+  // Some mobile GPUs cannot linearly filter floating-point textures in a
+  // vertex shader. Nearest float sampling is broadly supported; the shader
+  // performs the interpolation itself so motion remains fully GPU-driven and
+  // smooth instead of falling back to per-crane CPU updates.
+  texture.minFilter = THREE.NearestFilter;
+  texture.magFilter = THREE.NearestFilter;
   texture.wrapS = THREE.RepeatWrapping;
+  texture.generateMipmaps = false;
 
   return { curve, texture };
 }
@@ -350,6 +355,18 @@ function configureRiverShader(shader, { pathTexture, flowSpeedMul, riverWidthMul
       varying float vColorSeedV;
       varying vec2 vPaperCoordV;
 
+      vec4 riverSamplePath(float u) {
+        float samplePosition = fract(u) * ${PATH_SAMPLES.toFixed(1)};
+        float sampleIndex = floor(samplePosition);
+        float sampleMix = fract(samplePosition);
+        float nextIndex = mod(sampleIndex + 1.0, ${PATH_SAMPLES.toFixed(1)});
+        float uvA = (sampleIndex + 0.5) / ${PATH_SAMPLES.toFixed(1)};
+        float uvB = (nextIndex + 0.5) / ${PATH_SAMPLES.toFixed(1)};
+        vec4 sampleA = texture2D(uPathTexture, vec2(uvA, 0.5));
+        vec4 sampleB = texture2D(uPathTexture, vec2(uvB, 0.5));
+        return mix(sampleA, sampleB, sampleMix);
+      }
+
       vec3 riverRotateAroundAxis(vec3 p, vec3 axis, float angle) {
         return p * cos(angle) + cross(axis, p) * sin(angle) + axis * dot(axis, p) * (1.0 - cos(angle));
       }
@@ -381,13 +398,13 @@ function configureRiverShader(shader, { pathTexture, flowSpeedMul, riverWidthMul
       // Direct closed-spline phase avoids the old lookup texture's 1-to-0
       // interpolation seam, which could teleport and blink individual cranes.
       float riverU = riverTimeFrac;
-      vec4 riverHereSample = texture2D(uPathTexture, vec2(riverU, 0.5));
+      vec4 riverHereSample = riverSamplePath(riverU);
       vec3 riverCenterHere = riverHereSample.xyz;
       float riverWidthHere = riverHereSample.w;
       float riverUAhead = fract(riverU + 0.004);
       float riverUBehind = fract(riverU - 0.004);
-      vec3 riverCenterAhead = texture2D(uPathTexture, vec2(riverUAhead, 0.5)).xyz;
-      vec3 riverCenterBehind = texture2D(uPathTexture, vec2(riverUBehind, 0.5)).xyz;
+      vec3 riverCenterAhead = riverSamplePath(riverUAhead).xyz;
+      vec3 riverCenterBehind = riverSamplePath(riverUBehind).xyz;
       vec3 riverTangentDelta = riverCenterAhead - riverCenterBehind;
       vec3 riverTangent = riverTangentDelta / max(length(riverTangentDelta), 0.0001);
 
