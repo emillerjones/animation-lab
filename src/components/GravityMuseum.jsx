@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import useLiveFps from "../hooks/useLiveFps";
 import {
   BallCollider,
   CuboidCollider,
@@ -1667,6 +1668,7 @@ function createPathTracingRenderer(props) {
 }
 
 export default function GravityMuseum({ settings = {} }) {
+  const fps = useLiveFps();
   const interactionRef = useRef({
     pointer: new THREE.Vector2(),
     previousPointer: new THREE.Vector2(),
@@ -1747,6 +1749,7 @@ export default function GravityMuseum({ settings = {} }) {
         <span>{objectCount.toLocaleString()} OBJECTS</span>
         <span>{lightCount.toLocaleString()} LIGHT SOURCES</span>
         <span>{sandCount.toLocaleString()} SAND GRAINS</span>
+        <span>{fps ?? "—"} FPS</span>
       </div>
       <div className="gravity-museum-pro__hint" aria-hidden="true">
         CLICK AND DRAG AN OBJECT · RELEASE TO DROP

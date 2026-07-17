@@ -610,14 +610,16 @@ function configureRiverShader(shader, { pathTexture, flowSpeedMul, riverWidthMul
         return p * cos(angle) + cross(axis, p) * sin(angle) + axis * dot(axis, p) * (1.0 - cos(angle));
       }
 
-      void riverApplyFlap(inout vec3 p, inout vec3 n, int group, float openT) {
+      void riverApplyFlap(inout vec3 p, inout vec3 n, int group, float signedFlap) {
         vec3 pivot = vec3(0.0);
         vec3 axis = vec3(0.0, 0.0, 1.0);
         float closedAngle = 0.0;
         if (group == 1) { pivot = vec3(-0.08, 0.48, 0.0); axis = vec3(0.0, 0.0, 1.0); closedAngle = 0.9; }
         else if (group == 2) { pivot = vec3(0.08, 0.48, 0.0); axis = vec3(0.0, 0.0, 1.0); closedAngle = -0.9; }
         else { return; }
-        float angle = mix(closedAngle, 0.0, openT);
+        // signedFlap spans the complete wing stroke: positive rotates the
+        // wings down, zero is level, and negative rotates them upward.
+        float angle = closedAngle * signedFlap;
         vec3 local = p - pivot;
         p = riverRotateAroundAxis(local, axis, angle) + pivot;
         n = riverRotateAroundAxis(n, axis, angle);
@@ -657,8 +659,8 @@ function configureRiverShader(shader, { pathTexture, flowSpeedMul, riverWidthMul
       int riverGroup = int(aHingeGroup + 0.5);
       vec3 riverLocalPos = position;
       vec3 riverLocalNormal = normal;
-      float riverOpenT = 0.72 + sin(uTime * aFlapSpeed + aFlapPhase) * 0.28 * uWingFlutter;
-      riverApplyFlap(riverLocalPos, riverLocalNormal, riverGroup, clamp(riverOpenT, 0.0, 1.0));
+      float riverSignedFlap = sin(uTime * aFlapSpeed + aFlapPhase) * min(1.0, uWingFlutter * 0.4);
+      riverApplyFlap(riverLocalPos, riverLocalNormal, riverGroup, riverSignedFlap);
 
       vec3 objectNormal = normalize(riverRight * riverLocalNormal.x + riverUp * riverLocalNormal.y + riverTangent * riverLocalNormal.z);
       `,
@@ -1029,7 +1031,7 @@ function RiverScene({ settings, onStats }) {
   const { camera, gl } = useThree();
   const speed = useSpeed();
   const craneCount = Math.round(THREE.MathUtils.clamp(settings.craneCount ?? 6000, 2000, MAX_CRANES));
-  const flowSpeedMul = (settings.flowSpeed ?? 1) * 0.016;
+  const flowSpeedMul = (settings.flowSpeed ?? 1) * 0.0064;
   const riverWidthMul = (settings.riverWidth ?? 100) / 100;
   const wingFlutter = 2.5;
   const lampHeight = settings.lampHeight ?? 11.5;
@@ -1153,13 +1155,13 @@ function RiverScene({ settings, onStats }) {
     const keys = droneKeysRef.current;
     const onKeyDown = (event) => {
       if (!droneMode || event.repeat) return;
-      const key = event.key.toLowerCase();
-      if (["w", "a", "s", "d", "q", "e", "shift"].includes(key)) {
+      const key = event.code === "Space" ? "space" : event.key.toLowerCase();
+      if (["w", "a", "s", "d", "q", "e", "space", "shift"].includes(key)) {
         keys.add(key);
         event.preventDefault();
       }
     };
-    const onKeyUp = (event) => keys.delete(event.key.toLowerCase());
+    const onKeyUp = (event) => keys.delete(event.code === "Space" ? "space" : event.key.toLowerCase());
     const onBlur = () => keys.clear();
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
@@ -1231,6 +1233,28 @@ function RiverScene({ settings, onStats }) {
     };
   }, [droneMode, gl]);
 
+  useEffect(() => {
+    const canvas = gl.domElement;
+    const hideDroneCursor = (event) => {
+      if (!droneMode || event.pointerType === "touch") return;
+      canvas.style.cursor = "none";
+    };
+    const restoreDroneCursor = () => {
+      canvas.style.cursor = "";
+    };
+    canvas.addEventListener("pointerdown", hideDroneCursor);
+    canvas.addEventListener("pointerup", restoreDroneCursor);
+    canvas.addEventListener("pointercancel", restoreDroneCursor);
+    window.addEventListener("blur", restoreDroneCursor);
+    return () => {
+      restoreDroneCursor();
+      canvas.removeEventListener("pointerdown", hideDroneCursor);
+      canvas.removeEventListener("pointerup", restoreDroneCursor);
+      canvas.removeEventListener("pointercancel", restoreDroneCursor);
+      window.removeEventListener("blur", restoreDroneCursor);
+    };
+  }, [droneMode, gl]);
+
   useFrame((state, rawDelta) => {
     const elapsed = state.clock.elapsedTime * speed;
     const shader = compiledShaderRef.current;
@@ -1264,9 +1288,10 @@ function RiverScene({ settings, onStats }) {
       if (keys.has("d")) movement.sub(right);
       if (keys.has("e")) movement.y += 1;
       if (keys.has("q")) movement.y -= 1;
+      if (keys.has("space")) movement.y += 1;
+      if (keys.has("shift")) movement.y -= 1;
       if (movement.lengthSq() > 0) {
-        const flightSpeed = keys.has("shift") ? 38 : 15;
-        camera.position.addScaledVector(movement.normalize(), flightSpeed * delta);
+        camera.position.addScaledVector(movement.normalize(), 15 * delta);
         camera.position.x = THREE.MathUtils.clamp(camera.position.x, -120, 120);
         camera.position.y = THREE.MathUtils.clamp(camera.position.y, 0.8, 90);
         camera.position.z = THREE.MathUtils.clamp(camera.position.z, -120, 120);

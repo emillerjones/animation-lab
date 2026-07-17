@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import useLiveFps from "../hooks/useLiveFps";
 import { getProject } from "@theatre/core";
 import RAPIER from "@dimforge/rapier3d-compat";
 import * as THREE from "three";
@@ -678,6 +679,7 @@ function buildStormScene(canvas, host, settingsRef, report) {
 }
 
 export default function StormMadeOfGlass({ settings = {} }) {
+  const fps = useLiveFps();
   const hostRef = useRef(null);
   const canvasRef = useRef(null);
   const settingsRef = useRef(settings);
@@ -716,6 +718,7 @@ export default function StormMadeOfGlass({ settings = {} }) {
         <strong>{telemetry.stage}</strong>
         <i style={{ "--storm-progress": telemetry.progress }} />
         <span>{telemetry.particles.toLocaleString()} ACTIVE PARTICLES</span>
+        <span>{fps ?? "—"} FPS</span>
       </div>
 
       <div className="storm-made-of-glass__hint" aria-hidden="true">

@@ -3,6 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import CanvasStage, { useSpeed } from "./CanvasStage";
 import useDragOrbit from "../hooks/useDragOrbit";
+import AnimationReadout from "./AnimationReadout";
 import "./TheFirstFold.css";
 
 // ---------------------------------------------------------------------------
@@ -273,6 +274,7 @@ export default function TheFirstFold({ settings = {} }) {
       <div className="the-first-fold__legend">
         <div><i>&#8635;</i><div><b>Drag</b><span>Orbit around the crane</span></div></div>
       </div>
+      <AnimationReadout eyebrow="Origami study" value="THE FIRST FOLD" />
     </section>
   );
 }

@@ -1,3 +1,4 @@
+import useLiveFps from "../hooks/useLiveFps";
 import "./AnimationReadout.css";
 
 // A live telemetry readout for the top-right corner (vacated when the provider/title badge
@@ -6,6 +7,8 @@ import "./AnimationReadout.css";
 // sliders change. `progress` (0-1) is optional: only pass it for pieces that actually build
 // up or load in over time; pieces with nothing to "assemble" should omit it.
 export default function AnimationReadout({ eyebrow, value, progress, stats = [], className = "" }) {
+  const fps = useLiveFps();
+
   return (
     <div className={`animation-readout ${className}`} aria-live="polite">
       <small>{eyebrow}</small>
@@ -14,6 +17,7 @@ export default function AnimationReadout({ eyebrow, value, progress, stats = [],
       {stats.map((stat) => (
         <span key={stat.label}>{stat.value} {stat.label}</span>
       ))}
+      <span>{fps ?? "—"} FPS</span>
     </div>
   );
 }

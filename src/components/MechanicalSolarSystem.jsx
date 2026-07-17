@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import useLiveFps from "../hooks/useLiveFps";
 import { getProject } from "@theatre/core";
 import * as THREE from "three";
 import {
@@ -646,6 +647,7 @@ function buildMechanicalScene(canvas, host, settingsRef, report) {
 }
 
 export default function MechanicalSolarSystem({ settings = {} }) {
+  const fps = useLiveFps();
   const hostRef = useRef(null);
   const canvasRef = useRef(null);
   const settingsRef = useRef(settings);
@@ -684,6 +686,7 @@ export default function MechanicalSolarSystem({ settings = {} }) {
         <strong>{activePlanet ?? `${Math.round(telemetry.assembly * 100)}% ASSEMBLED`}</strong>
         <i style={{ "--assembly": telemetry.assembly }} />
         <span>{telemetry.fragments.toLocaleString()} MAGNETIC FRAGMENTS</span>
+        <span>{fps ?? "—"} FPS</span>
       </div>
 
       <div className="mechanical-solar-system__hint" aria-hidden="true">
