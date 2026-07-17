@@ -11,7 +11,12 @@ import "./RiverOfWishes.css";
 
 const MAX_CRANES = 100000;
 const MOBILE_MAX_CRANES = 2500;
-const MOBILE_QUERY = "(max-width: 700px)";
+// Pointer/hover, not viewport width: width-based checks flip depending on orientation (a
+// phone in landscape easily exceeds 700px of CSS width), so dragging the camera around —
+// which naturally invites turning the phone sideways — could silently disable every mobile
+// optimization below (crane cap, shadows) exactly when they matter most. Input mechanism
+// doesn't change with rotation, so this stays reliable regardless of orientation.
+const MOBILE_QUERY = "(hover: none), (pointer: coarse)";
 // Cranes live on this layer alone (not the default layer 0) so only lights explicitly
 // enabled on it light them — cuts the fragment shader's per-crane lighting loop from every
 // real light in the scene (~11) down to just the ones that matter for "closer to a lamp

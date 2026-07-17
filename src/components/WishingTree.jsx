@@ -678,6 +678,21 @@ export function TreeScene({
   const treeMesh = useMemo(() => buildTreeMesh(woody), [woody]);
   useEffect(() => () => { treeMesh.dispose(); }, [treeMesh]);
 
+  const treeInstancedRef = useRef();
+  const treeDummy = useMemo(() => new THREE.Object3D(), []);
+  useEffect(() => {
+    const mesh = treeInstancedRef.current;
+    if (!mesh) return;
+    treePlacements.forEach((tree, index) => {
+      treeDummy.position.set(tree.x, 0, tree.z);
+      treeDummy.rotation.set(0, tree.rotation, 0);
+      treeDummy.scale.setScalar(tree.scale);
+      treeDummy.updateMatrix();
+      mesh.setMatrixAt(index, treeDummy.matrix);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+  }, [treePlacements, treeDummy]);
+
   const dragRef = useDragOrbit({ pitchMin: -0.85, pitchMax: 0.85 });
   const baseAngleRef = useRef(0.4);
   const distanceRef = useRef(defaultCameraDistance);
@@ -788,6 +803,16 @@ export function TreeScene({
         </group>
       ))}
 
+      {/* One instanced draw call for every tree's trunk/branches, instead of a separate
+          mesh (and separate draw call) per placement — with up to 100 trees in the Grove,
+          that was the actual bottleneck: each additional tree cost a whole new draw call,
+          while the petals (already a single GPU-instanced draw call reused per placement)
+          barely cost anything extra as their own count grew. */}
+      <instancedMesh
+        ref={treeInstancedRef}
+        args={[treeMesh, barkMaterial, treePlacements.length]}
+        frustumCulled={false}
+      />
       {treePlacements.map((tree, index) => (
         <group
           key={index}
@@ -795,7 +820,6 @@ export function TreeScene({
           rotation={[0, tree.rotation, 0]}
           scale={tree.scale}
         >
-          <mesh geometry={treeMesh} material={barkMaterial} />
           <mesh geometry={leafGeometry} material={leafMaterial} frustumCulled={false} />
         </group>
       ))}
