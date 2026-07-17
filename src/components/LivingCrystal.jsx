@@ -299,7 +299,7 @@ function CrystalScene({ settings, speedRef, onStats }) {
   const stateRef = useRef(new Map());
   const cyclesRef = useRef(0);
   // Click/tap-drag to orbit, exactly like the other pieces — no more passive hover-parallax.
-  const dragRef = useDragOrbit({ pitchMin: -0.5, pitchMax: 0.55 });
+  const dragRef = useDragOrbit({ pitchMin: -0.85, pitchMax: 0.85 });
   const fpsRef = useRef({ frames: 0, time: 0 });
 
   const shardGeometry = useMemo(() => {

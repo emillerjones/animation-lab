@@ -7,8 +7,11 @@ function clamp(value, min, max) {
 export function createDragOrbit(host, {
   yawSpeed = -0.004,
   pitchSpeed = -0.0026,
-  pitchMin = -0.55,
-  pitchMax = 0.58,
+  // Matches The River of Wishes' hand-tuned range: far enough up to look down on the whole
+  // scene, far enough down to view it side-on — every piece that doesn't explicitly override
+  // this (and most that do, per request) now shares that same feel.
+  pitchMin = -0.85,
+  pitchMax = 0.85,
   clickThreshold = 9,
   onDrag,
 } = {}) {

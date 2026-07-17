@@ -64,7 +64,7 @@ export default function CanvasStage({
   camera = { position: [0, 0, 8], fov: 45 },
   orbitEnabled = false,
   orbitFocus = [0, 0, 0],
-  orbitPitchLimits = [-0.55, 0.58],
+  orbitPitchLimits = [-0.85, 0.85],
   speed = 1,
   bloom,
   extraEffects,

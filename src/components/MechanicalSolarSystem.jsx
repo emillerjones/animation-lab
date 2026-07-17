@@ -469,7 +469,7 @@ function buildMechanicalScene(canvas, host, settingsRef, report) {
       state.dragY = event.clientY;
       state.dragDistance += Math.abs(dx) + Math.abs(dy);
       state.targetRotationY += dx * 0.004;
-      state.targetRotationX = clamp(state.targetRotationX + dy * 0.0026, -0.55, 0.58);
+      state.targetRotationX = clamp(state.targetRotationX + dy * 0.0026, -0.85, 0.85);
       return;
     }
     const nextHover = pickPlanet();

@@ -678,7 +678,7 @@ export function TreeScene({
   const treeMesh = useMemo(() => buildTreeMesh(woody), [woody]);
   useEffect(() => () => { treeMesh.dispose(); }, [treeMesh]);
 
-  const dragRef = useDragOrbit({ pitchMin: -0.45, pitchMax: 0.5 });
+  const dragRef = useDragOrbit({ pitchMin: -0.85, pitchMax: 0.85 });
   const baseAngleRef = useRef(0.4);
   const distanceRef = useRef(defaultCameraDistance);
   const targetDistanceRef = useRef(defaultCameraDistance);

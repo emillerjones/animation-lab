@@ -192,7 +192,7 @@ function Crane({ settings }) {
   const groupRef = useRef();
   const speed = useSpeed();
   const rotationSpeedMul = settings.rotationSpeed ?? 1;
-  const dragRef = useDragOrbit({ pitchMin: -0.5, pitchMax: 0.55 });
+  const dragRef = useDragOrbit({ pitchMin: -0.85, pitchMax: 0.85 });
   const baseYawRef = useRef(0.55);
 
   const geometry = useMemo(() => buildCraneGeometry(), []);

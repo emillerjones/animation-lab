@@ -91,7 +91,7 @@ function buildCity(canvas, host, settingsRef, report) {
   const clock = new THREE.Clock();
   const disposables = [];
   const dummy = new THREE.Object3D();
-  const dragOrbit = createDragOrbit(host, { yawSpeed: 0.0052, pitchSpeed: 0.0034, pitchMin: -0.32, pitchMax: 0.48 });
+  const dragOrbit = createDragOrbit(host, { yawSpeed: 0.0052, pitchSpeed: 0.0034, pitchMin: -0.85, pitchMax: 0.85 });
   const buildingData = createCityData();
   const orbitTarget = new THREE.Vector3(0, 8, 0);
   const orbitPosition = new THREE.Vector3();
