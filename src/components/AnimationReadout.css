@@ -63,9 +63,13 @@
 
 @media (max-width: 760px) {
   .animation-readout {
-    top: 14px;
-    right: 14px;
+    top: 4.75rem;
+    right: 12px;
+    display: grid !important;
+    visibility: visible !important;
+    opacity: 1 !important;
     min-width: 8.5rem;
+    max-width: min(12rem, 48vw);
     padding: 9px 11px;
     gap: 4px;
     font-size: 7px;

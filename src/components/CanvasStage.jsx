@@ -72,11 +72,15 @@ export default function CanvasStage({
   children,
 }) {
   const reducedMotion = useReducedMotion();
+  const mobileRenderer = useMemo(
+    () => window.matchMedia?.("(max-width: 760px), (pointer: coarse)").matches ?? false,
+    [],
+  );
 
   return (
     <div className="canvas-stage">
       <Canvas
-        dpr={WEBGL_DPR}
+        dpr={mobileRenderer ? [0.75, 1] : WEBGL_DPR}
         camera={camera}
         shadows={shadows}
         frameloop={reducedMotion ? "demand" : "always"}
@@ -86,7 +90,7 @@ export default function CanvasStage({
           <Suspense fallback={null}>
             {orbitEnabled && <OrbitCameraRig camera={camera} focus={orbitFocus} pitchLimits={orbitPitchLimits} />}
             {children}
-            <EffectComposer multisampling={WEBGL_MSAA_SAMPLES}>
+            <EffectComposer multisampling={mobileRenderer ? 0 : WEBGL_MSAA_SAMPLES}>
               <Bloom
                 mipmapBlur
                 luminanceThreshold={bloom?.threshold ?? 0.2}

@@ -1,1 +1,0 @@
-import{r as m}from"./index--L1M7nnx.js";function l(){const[u,i]=m.useState(null);return m.useEffect(()=>{let e=0,t=0,r=performance.now(),s=60;const a=n=>{t+=1;const o=n-r;if(o>=500){const p=t*1e3/o;s=s*.35+p*.65,i(Math.round(s)),t=0,r=n}e=requestAnimationFrame(a)};return e=requestAnimationFrame(a),()=>cancelAnimationFrame(e)},[]),u}export{l as u};

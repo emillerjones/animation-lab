@@ -1039,10 +1039,11 @@ function RiverScene({ settings, onStats }) {
   const lampRange = settings.lampRange ?? 220;
   const lampFalloff = settings.lampFalloff ?? 2;
   const droneMode = settings.droneMode ?? false;
-  const shadowMapSize = useMemo(
-    () => (window.matchMedia("(hover: hover) and (pointer: fine)").matches ? 1024 : 512),
+  const isDesktop = useMemo(
+    () => window.matchMedia("(hover: hover) and (pointer: fine)").matches,
     [],
   );
+  const shadowMapSize = isDesktop ? 1024 : 512;
 
   const craneGeometry = useMemo(() => buildCraneGeometry(), []);
   const { texture: pathTexture } = useMemo(() => buildPath(), []);
@@ -1351,7 +1352,7 @@ function RiverScene({ settings, onStats }) {
         position={[-58, 70, -72]}
         intensity={0.22}
         color="#9eb7ea"
-        castShadow
+        castShadow={isDesktop}
         shadow-mapSize-width={shadowMapSize}
         shadow-mapSize-height={shadowMapSize}
         shadow-camera-left={-44}
@@ -1380,8 +1381,8 @@ function RiverScene({ settings, onStats }) {
         position={[-10.5, 0, 9]}
         rotation={[0, 0.38, 0]}
         scale={0.68}
-        petalCount={40000}
-        fallingPetals={600}
+        petalCount={isDesktop ? 40000 : 9000}
+        fallingPetals={isDesktop ? 600 : 180}
         windIntensity={0.7}
       />
 
@@ -1433,7 +1434,7 @@ function RiverScene({ settings, onStats }) {
             intensity={lampIntensity}
             distance={lampRange}
             decay={lampFalloff}
-            castShadow
+            castShadow={isDesktop}
             shadow-mapSize-width={shadowMapSize}
             shadow-mapSize-height={shadowMapSize}
             shadow-bias={-0.0004}
