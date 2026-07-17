@@ -17,11 +17,6 @@ const MOBILE_MAX_CRANES = 2500;
 // optimization below (crane cap, shadows) exactly when they matter most. Input mechanism
 // doesn't change with rotation, so this stays reliable regardless of orientation.
 const MOBILE_QUERY = "(hover: none), (pointer: coarse)";
-// Cranes live on this layer alone (not the default layer 0) so only lights explicitly
-// enabled on it light them — cuts the fragment shader's per-crane lighting loop from every
-// real light in the scene (~11) down to just the ones that matter for "closer to a lamp
-// reads brighter" (ambient + the 4 main lamps), while architecture keeps full lighting.
-const CRANE_LIGHT_LAYER = 1;
 const PATH_SAMPLES = 512;
 const PATH_FOOTPRINT = 0.87;
 const MAIN_LAMPS = [
@@ -630,9 +625,6 @@ function RiverScene({ settings, onStats, mobile }) {
   useEffect(() => {
     camera.position.set(23, 36, 43);
     camera.lookAt(1, 8.5, -3);
-    // The crane mesh lives on its own light layer (see below) — cameras only see layer 0 by
-    // default, so without this the whole river would simply vanish.
-    camera.layers.enable(CRANE_LIGHT_LAYER);
   }, [camera]);
 
   usePinchZoom({ targetDistanceRef, min: 18, max: 115 });
@@ -696,11 +688,7 @@ function RiverScene({ settings, onStats, mobile }) {
 
   return (
     <group>
-      {/* Cranes live on their own light layer (see the mesh below) so their fragment shader
-          only evaluates ~5 lights (this ambient + the 4 main lamps) instead of all ~11 —
-          the hemisphere/directional/garden-lantern lights still fully light the architecture,
-          they just don't also cost every crane pixel a lighting-loop iteration for them. */}
-      <ambientLight intensity={0.008} color="#b9c8e8" layers-enable={CRANE_LIGHT_LAYER} />
+      <ambientLight intensity={0.008} color="#b9c8e8" />
       <hemisphereLight color="#53658f" groundColor="#08070a" intensity={0.008} />
       <directionalLight position={[8, 10, 6]} intensity={0.09} color="#7186b8" />
 
@@ -738,7 +726,6 @@ function RiverScene({ settings, onStats, mobile }) {
             shadow-mapSize-width={512}
             shadow-mapSize-height={512}
             shadow-bias={-0.0004}
-            layers-enable={CRANE_LIGHT_LAYER}
           />
         </group>
       ))}
@@ -766,7 +753,7 @@ function RiverScene({ settings, onStats, mobile }) {
         </group>
       ))}
 
-      <mesh geometry={riverGeometry} material={riverMaterial} layers-set={CRANE_LIGHT_LAYER} frustumCulled={false} />
+      <mesh geometry={riverGeometry} material={riverMaterial} frustumCulled={false} />
     </group>
   );
 }
