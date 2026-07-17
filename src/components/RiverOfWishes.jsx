@@ -973,7 +973,7 @@ function MoonlitGarden({ stoneMaterial }) {
 
   return (
     <group>
-      <CubeCamera resolution={isDesktop ? 192 : 96} frames={isDesktop ? Infinity : 1} near={0.5} far={180}>
+      <CubeCamera resolution={isDesktop ? 192 : 96} frames={1} near={0.5} far={180}>
         {(environmentMap) => (
           <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, -1.5]} scale={[1.45, 0.78, 1]} receiveShadow>
             <circleGeometry args={[9.6, 96]} />
@@ -1036,6 +1036,7 @@ function RiverScene({ settings, onStats }) {
   const lampIntensity = settings.lampIntensity ?? 220;
   const lampRange = settings.lampRange ?? 220;
   const lampFalloff = settings.lampFalloff ?? 2;
+  const droneMode = settings.droneMode ?? false;
   const shadowMapSize = useMemo(
     () => (window.matchMedia("(hover: hover) and (pointer: fine)").matches ? 1024 : 512),
     [],
@@ -1129,6 +1130,8 @@ function RiverScene({ settings, onStats }) {
   const distanceRef = useRef(62);
   const targetDistanceRef = useRef(62);
   const statsTimerRef = useRef({ frames: 0, time: 0 });
+  const droneKeysRef = useRef(new Set());
+  const droneLookRef = useRef({ yaw: 0, pitch: 0 });
 
   useEffect(() => {
     camera.position.set(23, 36, 43);
@@ -1136,11 +1139,45 @@ function RiverScene({ settings, onStats }) {
   }, [camera]);
 
   useEffect(() => {
+    if (droneMode) {
+      const forward = camera.getWorldDirection(new THREE.Vector3());
+      droneLookRef.current.yaw = Math.atan2(forward.x, forward.z);
+      droneLookRef.current.pitch = Math.asin(THREE.MathUtils.clamp(forward.y, -1, 1));
+    }
+    dragRef.current.targetYaw = 0;
+    dragRef.current.targetPitch = 0;
+    droneKeysRef.current.clear();
+  }, [camera, droneMode, dragRef]);
+
+  useEffect(() => {
+    const keys = droneKeysRef.current;
+    const onKeyDown = (event) => {
+      if (!droneMode || event.repeat) return;
+      const key = event.key.toLowerCase();
+      if (["w", "a", "s", "d", "q", "e", "shift"].includes(key)) {
+        keys.add(key);
+        event.preventDefault();
+      }
+    };
+    const onKeyUp = (event) => keys.delete(event.key.toLowerCase());
+    const onBlur = () => keys.clear();
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onBlur);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onBlur);
+    };
+  }, [droneMode]);
+
+  useEffect(() => {
     const canvas = gl.domElement;
     let pinchStartDistance = 0;
     let pinchStartCameraDistance = targetDistanceRef.current;
 
     const onWheel = (event) => {
+      if (droneMode) return;
       if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
       event.preventDefault();
       targetDistanceRef.current = THREE.MathUtils.clamp(
@@ -1192,7 +1229,7 @@ function RiverScene({ settings, onStats }) {
       canvas.removeEventListener("touchend", onTouchEnd);
       canvas.removeEventListener("touchcancel", onTouchEnd);
     };
-  }, [gl]);
+  }, [droneMode, gl]);
 
   useFrame((state, rawDelta) => {
     const elapsed = state.clock.elapsedTime * speed;
@@ -1205,26 +1242,58 @@ function RiverScene({ settings, onStats }) {
     }
 
     travelRef.current = (travelRef.current + Math.min(rawDelta, 0.05) * speed * 0.01) % 1;
-    // Survey the entire current from far above; drag offsets this slow orbit.
-    const yaw = dragRef.current.targetYaw;
-    const pitch = dragRef.current.targetPitch;
-    overviewYawRef.current += Math.min(rawDelta, 0.05) * speed * 0.018;
-    const overviewYaw = overviewYawRef.current + yaw;
-    const overviewPitch = 0.48 + pitch * 0.55;
-    distanceRef.current = THREE.MathUtils.damp(
-      distanceRef.current,
-      targetDistanceRef.current,
-      9,
-      Math.min(rawDelta, 0.05),
-    );
-    const overviewDistance = distanceRef.current;
-    const overviewFocus = new THREE.Vector3(1, 8.5, -3);
-    camera.position.set(
-      overviewFocus.x + Math.sin(overviewYaw) * Math.cos(overviewPitch) * overviewDistance,
-      overviewFocus.y + Math.sin(overviewPitch) * overviewDistance,
-      overviewFocus.z + Math.cos(overviewYaw) * Math.cos(overviewPitch) * overviewDistance,
-    );
-    camera.lookAt(overviewFocus);
+    if (droneMode) {
+      const delta = Math.min(rawDelta, 0.05);
+      const yaw = droneLookRef.current.yaw + dragRef.current.targetYaw;
+      const pitch = THREE.MathUtils.clamp(
+        droneLookRef.current.pitch - dragRef.current.targetPitch,
+        -1.48,
+        1.48,
+      );
+      const forward = new THREE.Vector3(
+        Math.sin(yaw) * Math.cos(pitch),
+        Math.sin(pitch),
+        Math.cos(yaw) * Math.cos(pitch),
+      ).normalize();
+      const right = new THREE.Vector3().crossVectors(camera.up, forward).normalize();
+      const movement = new THREE.Vector3();
+      const keys = droneKeysRef.current;
+      if (keys.has("w")) movement.add(forward);
+      if (keys.has("s")) movement.sub(forward);
+      if (keys.has("a")) movement.add(right);
+      if (keys.has("d")) movement.sub(right);
+      if (keys.has("e")) movement.y += 1;
+      if (keys.has("q")) movement.y -= 1;
+      if (movement.lengthSq() > 0) {
+        const flightSpeed = keys.has("shift") ? 38 : 15;
+        camera.position.addScaledVector(movement.normalize(), flightSpeed * delta);
+        camera.position.x = THREE.MathUtils.clamp(camera.position.x, -120, 120);
+        camera.position.y = THREE.MathUtils.clamp(camera.position.y, 0.8, 90);
+        camera.position.z = THREE.MathUtils.clamp(camera.position.z, -120, 120);
+      }
+      camera.lookAt(camera.position.clone().add(forward));
+    } else {
+      // Survey the entire current from far above; drag offsets this slow orbit.
+      const yaw = dragRef.current.targetYaw;
+      const pitch = dragRef.current.targetPitch;
+      overviewYawRef.current += Math.min(rawDelta, 0.05) * speed * 0.018;
+      const overviewYaw = overviewYawRef.current + yaw;
+      const overviewPitch = 0.48 + pitch * 0.55;
+      distanceRef.current = THREE.MathUtils.damp(
+        distanceRef.current,
+        targetDistanceRef.current,
+        9,
+        Math.min(rawDelta, 0.05),
+      );
+      const overviewDistance = distanceRef.current;
+      const overviewFocus = new THREE.Vector3(1, 8.5, -3);
+      camera.position.set(
+        overviewFocus.x + Math.sin(overviewYaw) * Math.cos(overviewPitch) * overviewDistance,
+        overviewFocus.y + Math.sin(overviewPitch) * overviewDistance,
+        overviewFocus.z + Math.cos(overviewYaw) * Math.cos(overviewPitch) * overviewDistance,
+      );
+      camera.lookAt(overviewFocus);
+    }
 
     // Zone label still tracks where the camera's slow auto-orbit is dwelling — only the sky
     // color itself no longer follows it.

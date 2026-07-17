@@ -433,6 +433,7 @@ export const animations = [
       { key: "craneCount", label: "Cranes in the river", min: 1000, max: 10000, step: 500, default: 8000 },
       { key: "flowSpeed", label: "Current speed", min: 0.2, max: 3, step: 0.1, default: 1, suffix: "×" },
       { key: "riverWidth", label: "River width", min: 0, max: 200, step: 10, default: 100, suffix: "%" },
+      { key: "droneMode", label: "Drone mode", type: "toggle", default: false },
       { key: "lampHeight", label: "Lamp globe height", min: 10.5, max: 14, step: 0.1, default: 11.5 },
       { key: "lampIntensity", label: "Lamp intensity", min: 40, max: 500, step: 10, default: 220 },
       { key: "lampRange", label: "Lamp illumination range", min: 20, max: 300, step: 5, default: 220 },
