@@ -9,6 +9,8 @@ import { seeded } from "../utils/procedural";
 import "./RiverOfWishes.css";
 
 const MAX_CRANES = 100000;
+const MOBILE_MAX_CRANES = 4500;
+const MOBILE_QUERY = "(max-width: 700px)";
 const PATH_SAMPLES = 512;
 const PATH_FOOTPRINT = 0.87;
 const MAIN_LAMPS = [
@@ -514,10 +516,17 @@ function buildRiverGeometry(craneGeometry, count) {
   return geometry;
 }
 
-function RiverScene({ settings, onStats }) {
+function RiverScene({ settings, onStats, mobile }) {
   const { camera, gl } = useThree();
   const speed = useSpeed();
-  const craneCount = Math.round(THREE.MathUtils.clamp(settings.craneCount ?? 6000, 2000, MAX_CRANES));
+  // Mobile GPUs are far weaker at exactly what this piece is heavy on: a complex per-vertex
+  // shader plus full PBR lighting against several real lights, evaluated across tens of
+  // thousands of instances. Camera drift is slow enough to still look fine at a reduced
+  // frame rate; the cranes' faster wing-flap/weave motion is what actually reads as choppy,
+  // so this is the lever that matters — same reduced-instance-count-on-mobile pattern
+  // ThreadBuildsSystem already uses for its particle field.
+  const craneCap = mobile ? MOBILE_MAX_CRANES : MAX_CRANES;
+  const craneCount = Math.round(THREE.MathUtils.clamp(settings.craneCount ?? 6000, 2000, craneCap));
   const flowSpeedMul = (settings.flowSpeed ?? 1) * 0.016;
   const riverWidthMul = (settings.riverWidth ?? 100) / 100;
   const wingFlutter = 2.5;
@@ -618,7 +627,44 @@ function RiverScene({ settings, onStats }) {
       );
     };
     canvas.addEventListener("wheel", onWheel, { passive: false });
-    return () => canvas.removeEventListener("wheel", onWheel);
+
+    // Two-finger pinch, tracked directly off raw touch points rather than the shared
+    // drag-orbit hook (which only understands a single pointer at a time) — same
+    // distance-clamp range as the desktop wheel zoom above.
+    const pinchRef = { startDistance: null, startTarget: null };
+    const touchDistance = (touches) => Math.hypot(
+      touches[0].clientX - touches[1].clientX,
+      touches[0].clientY - touches[1].clientY,
+    );
+    const onTouchStart = (event) => {
+      if (event.touches.length === 2) {
+        pinchRef.startDistance = touchDistance(event.touches);
+        pinchRef.startTarget = targetDistanceRef.current;
+      }
+    };
+    const onTouchMove = (event) => {
+      if (event.touches.length === 2 && pinchRef.startDistance) {
+        event.preventDefault();
+        const currentDistance = touchDistance(event.touches);
+        const scale = pinchRef.startDistance / Math.max(currentDistance, 1);
+        targetDistanceRef.current = THREE.MathUtils.clamp(pinchRef.startTarget * scale, 18, 115);
+      }
+    };
+    const onTouchEnd = (event) => {
+      if (event.touches.length < 2) pinchRef.startDistance = null;
+    };
+    canvas.addEventListener("touchstart", onTouchStart, { passive: true });
+    canvas.addEventListener("touchmove", onTouchMove, { passive: false });
+    canvas.addEventListener("touchend", onTouchEnd, { passive: true });
+    canvas.addEventListener("touchcancel", onTouchEnd, { passive: true });
+
+    return () => {
+      canvas.removeEventListener("wheel", onWheel);
+      canvas.removeEventListener("touchstart", onTouchStart);
+      canvas.removeEventListener("touchmove", onTouchMove);
+      canvas.removeEventListener("touchend", onTouchEnd);
+      canvas.removeEventListener("touchcancel", onTouchEnd);
+    };
   }, [gl]);
 
   useFrame((state, rawDelta) => {
@@ -688,11 +734,11 @@ function RiverScene({ settings, onStats }) {
 
       {MAIN_LAMPS.map((lamp, index) => (
         <group key={`main-lamp-${index}`} position={lamp.position}>
-          <mesh position={[0, 5.1, 0]} castShadow receiveShadow>
+          <mesh position={[0, 5.1, 0]} castShadow={!mobile} receiveShadow={!mobile}>
             <cylinderGeometry args={[0.32, 0.7, 10.2, 10]} />
             <primitive object={stoneMaterial} attach="material" />
           </mesh>
-          <mesh position={[0, 10.35, 0]} castShadow>
+          <mesh position={[0, 10.35, 0]} castShadow={!mobile}>
             <cylinderGeometry args={[1.15, 0.52, 0.65, 10]} />
             <primitive object={woodMaterial} attach="material" />
           </mesh>
@@ -711,7 +757,7 @@ function RiverScene({ settings, onStats }) {
             intensity={lampIntensity}
             distance={lampRange}
             decay={lampFalloff}
-            castShadow
+            castShadow={!mobile}
             shadow-mapSize-width={512}
             shadow-mapSize-height={512}
             shadow-bias={-0.0004}
@@ -750,18 +796,19 @@ function RiverScene({ settings, onStats }) {
 export default function RiverOfWishes({ settings = {} }) {
   const [stats, setStats] = useState({ fps: 60, gpu: "—", cranes: 0, zone: "TEMPLE COURTYARD" });
   const onStats = (patch) => setStats((current) => ({ ...current, ...patch }));
+  const mobile = useMemo(() => window.matchMedia?.(MOBILE_QUERY).matches ?? false, []);
 
   return (
     <section className="atmosphere river-of-wishes" style={{ "--experiment-accent": "#e6c88a" }}>
       <CanvasStage
         camera={{ position: [23, 36, 43], fov: 46, near: 0.1, far: 150 }}
         speed={settings.speed ?? 1}
-        shadows
+        shadows={!mobile}
         bloom={{ intensity: 0.8, threshold: 0.6 }}
       >
         <color attach="background" args={[SKY_COLOR]} />
         <fogExp2 attach="fog" args={[SKY_COLOR, 0.009]} />
-        <RiverScene settings={settings} onStats={onStats} />
+        <RiverScene settings={settings} onStats={onStats} mobile={mobile} />
       </CanvasStage>
 
       <div className="experiment-copy river-of-wishes__copy">
@@ -772,6 +819,7 @@ export default function RiverOfWishes({ settings = {} }) {
 
       <div className="river-of-wishes__legend">
         <div><i>&#8635;</i><div><b>Drag</b><span>Orbit the river</span></div></div>
+        <div><i>&#8645;</i><div><b>Pinch / Scroll</b><span>Zoom in and out</span></div></div>
       </div>
 
       <AnimationReadout
