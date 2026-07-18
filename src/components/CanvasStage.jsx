@@ -4,6 +4,7 @@ import { EffectComposer, Bloom, SMAA } from "@react-three/postprocessing";
 import * as THREE from "three";
 import useDragOrbit from "../hooks/useDragOrbit";
 import usePinchZoom from "../hooks/usePinchZoom";
+import useDroneMode from "../hooks/useDroneMode";
 import { WEBGL_DPR, WEBGL_MSAA_SAMPLES } from "../rendering/quality";
 import "./CanvasStage.css";
 
@@ -16,7 +17,7 @@ function useReducedMotion() {
   return useMemo(() => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false, []);
 }
 
-function OrbitCameraRig({ camera, focus, pitchLimits }) {
+function OrbitCameraRig({ camera, focus, pitchLimits, droneMode = false }) {
   const { invalidate } = useThree();
   const dragRef = useDragOrbit({ pitchMin: pitchLimits[0], pitchMax: pitchLimits[1] });
   const geometry = useMemo(() => {
@@ -43,7 +44,22 @@ function OrbitCameraRig({ camera, focus, pitchLimits }) {
     invalidate,
   });
 
+  // Free-fly bounds scale with this piece's own starting camera distance, same as the
+  // zoom range above, so drone mode can't be asked to leave every scene's actual content.
+  useDroneMode({
+    enabled: droneMode,
+    dragRef,
+    moveSpeed: geometry.distance * 0.45,
+    bounds: {
+      x: geometry.distance * 3.5,
+      yMin: 0.3,
+      yMax: geometry.distance * 3,
+      z: geometry.distance * 3.5,
+    },
+  });
+
   useFrame((state, delta) => {
+    if (droneMode) return;
     const drag = dragRef.current;
     const orbit = orbitRef.current;
     if (drag.dragging) invalidate();
@@ -65,6 +81,7 @@ export default function CanvasStage({
   orbitEnabled = false,
   orbitFocus = [0, 0, 0],
   orbitPitchLimits = [-0.85, 0.85],
+  droneMode = false,
   speed = 1,
   bloom,
   extraEffects,
@@ -88,7 +105,9 @@ export default function CanvasStage({
       >
         <SpeedContext.Provider value={reducedMotion ? 0 : speed}>
           <Suspense fallback={null}>
-            {orbitEnabled && <OrbitCameraRig camera={camera} focus={orbitFocus} pitchLimits={orbitPitchLimits} />}
+            {orbitEnabled && (
+              <OrbitCameraRig camera={camera} focus={orbitFocus} pitchLimits={orbitPitchLimits} droneMode={droneMode} />
+            )}
             {children}
             <EffectComposer multisampling={mobileRenderer ? 0 : WEBGL_MSAA_SAMPLES}>
               <Bloom

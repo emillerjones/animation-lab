@@ -7,6 +7,7 @@ import * as THREE from "three";
 import CanvasStage, { useSpeed } from "./CanvasStage";
 import AnimationReadout from "./AnimationReadout";
 import useDragOrbit from "../hooks/useDragOrbit";
+import useDroneMode from "../hooks/useDroneMode";
 import usePinchZoom from "../hooks/usePinchZoom";
 import { seeded } from "../utils/procedural";
 import "./AlienDysonSwarm.css";
@@ -475,6 +476,13 @@ function Swarm({ settings, onSunReady }) {
   }, [nodes.length, focusedIndex, hoveredIndex]);
 
   usePinchZoom({ targetDistanceRef: distanceRef, min: 9, max: 92 });
+  const droneMode = Boolean(settings.droneMode);
+  useDroneMode({
+    enabled: droneMode,
+    dragRef,
+    moveSpeed: 24,
+    bounds: { x: 160, yMin: 0.5, yMax: 140, z: 160 },
+  });
 
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const origin = useMemo(() => new THREE.Vector3(0, 0, 0), []);
@@ -562,17 +570,19 @@ function Swarm({ settings, onSunReady }) {
       droneRef.current.instanceMatrix.needsUpdate = true;
     }
 
-    baseAngleRef.current += delta * 0.014 * orbitSpeed;
-    const focusedEl = focusedIndex != null ? groupRefs.current[focusedIndex] : null;
-    const target = focusedEl ? focusedEl.position : origin;
-    const desiredDistance = focusedEl ? Math.max(4, nodes[focusedIndex].scale * 3.2) : distanceRef.current;
-    const yaw = baseAngleRef.current + dragRef.current.targetYaw;
-    const pitch = THREE.MathUtils.clamp(0.2 + dragRef.current.targetPitch, -1.4, 1.4);
-    const camX = target.x + Math.cos(yaw) * Math.cos(pitch) * desiredDistance;
-    const camZ = target.z + Math.sin(yaw) * Math.cos(pitch) * desiredDistance;
-    const camY = target.y + Math.sin(pitch) * desiredDistance;
-    camera.position.lerp(new THREE.Vector3(camX, camY, camZ), focusedEl ? 0.035 : 0.05);
-    camera.lookAt(focusedEl ? target : new THREE.Vector3(-5.5, 0, 0));
+    if (!droneMode) {
+      baseAngleRef.current += delta * 0.014 * orbitSpeed;
+      const focusedEl = focusedIndex != null ? groupRefs.current[focusedIndex] : null;
+      const target = focusedEl ? focusedEl.position : origin;
+      const desiredDistance = focusedEl ? Math.max(4, nodes[focusedIndex].scale * 3.2) : distanceRef.current;
+      const yaw = baseAngleRef.current + dragRef.current.targetYaw;
+      const pitch = THREE.MathUtils.clamp(0.2 + dragRef.current.targetPitch, -1.4, 1.4);
+      const camX = target.x + Math.cos(yaw) * Math.cos(pitch) * desiredDistance;
+      const camZ = target.z + Math.sin(yaw) * Math.cos(pitch) * desiredDistance;
+      const camY = target.y + Math.sin(pitch) * desiredDistance;
+      camera.position.lerp(new THREE.Vector3(camX, camY, camZ), focusedEl ? 0.035 : 0.05);
+      camera.lookAt(focusedEl ? target : new THREE.Vector3(-5.5, 0, 0));
+    }
   });
 
   return (
@@ -678,7 +688,7 @@ export default function AlienDysonSwarm({ settings = {} }) {
         ]}
       />
       <div className="experiment-copy">
-        <p>21 — An engineered star, tens of thousands of years old</p>
+        <p>23 — An engineered star, tens of thousands of years old</p>
         <h1>Alien Dyson<br />Swarm.</h1>
         <span>Its builders are gone. The swarm never stopped working. Scroll to approach, drag your cursor to look around, and click a structure to study it closely.</span>
       </div>

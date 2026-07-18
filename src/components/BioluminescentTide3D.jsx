@@ -87,7 +87,7 @@ export default function BioluminescentTide3D({ settings = {} }) {
   const glowHex = useMemo(() => `#${glowColor.getHexString()}`, [glowColor]);
   return (
     <section className="atmosphere bioluminescent-tide-3d" style={{ "--experiment-accent": glowHex }}>
-      <CanvasStage camera={{ position: [0, 1.2, 8], fov: 48 }} orbitEnabled speed={settings.speed ?? 1} bloom={{ intensity: 1.2 }}>
+      <CanvasStage camera={{ position: [0, 1.2, 8], fov: 48 }} orbitEnabled droneMode={settings.droneMode} speed={settings.speed ?? 1} bloom={{ intensity: 1.2 }}>
         <ambientLight intensity={0.05} />
         <Plankton count={count} color={glowColor} />
         <TideCore color={glowColor} />
@@ -95,7 +95,7 @@ export default function BioluminescentTide3D({ settings = {} }) {
         <pointLight color={glowColor} intensity={18} distance={14} />
       </CanvasStage>
       <div className="experiment-copy">
-        <p>06 — Organism study, mirrored in real water</p>
+        <p>07 — Organism study, mirrored in real water</p>
         <h1>Glow, actually<br />afloat.</h1>
         <span>Plankton drift over a real reflective tide instead of a flat animated gradient standing in for water.</span>
       </div>

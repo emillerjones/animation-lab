@@ -23,7 +23,7 @@ export default function SakuraFall({ settings = {} }) {
           <i key={petal.id} style={{ "--x": `${petal.x}%`, "--delay": `${petal.delay}s`, "--duration": `${petal.duration}s`, "--size": `${petal.size}px`, "--rotate": `${petal.rotate}deg`, "--sway": `${petal.sway}px` }} />
         ))}
       </div>
-      <div className="experiment-copy"><p>17 — Petal study</p><h1>Spring, letting<br />go slowly.</h1><span>Cherry-blossom petals spiral down through soft morning light, tumbling on the air.</span></div>
+      <div className="experiment-copy"><p>19 — Petal study</p><h1>Spring, letting<br />go slowly.</h1><span>Cherry-blossom petals spiral down through soft morning light, tumbling on the air.</span></div>
       <AnimationReadout eyebrow="Live garden" value={`${visiblePetals} FALLING PETALS`} />
     </section>
   );

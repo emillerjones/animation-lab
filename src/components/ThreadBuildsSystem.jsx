@@ -335,7 +335,7 @@ export default function ThreadBuildsSystem({ settings = {} }) {
       </Canvas>
 
       <div className="thread-system__copy">
-        <p>24 — Systems study</p>
+        <p>26 — Systems study</p>
         <h1>The thread<br />finds its center.</h1>
         <span>Scattered records and signals are drawn into one living instrument—each piece distinct, each orbit carrying part of the work.</span>
       </div>

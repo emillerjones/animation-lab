@@ -266,7 +266,7 @@ export default function TheFirstFold({ settings = {} }) {
       </CanvasStage>
 
       <div className="experiment-copy the-first-fold__copy">
-        <p>26 — Before the thousand</p>
+        <p>27 — Before the thousand</p>
         <h1>The First<br />Fold.</h1>
         <span>One sheet of paper, folded the traditional way — a diamond body, a long raised neck, a head bent sharply down, a tapered tail, and two broad creased wings. Drag to look around.</span>
       </div>

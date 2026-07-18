@@ -392,7 +392,7 @@ export default function PrismPulse({ settings = {} }) {
 
       <div className="prism-pulse-lab__veil" />
       <div className="experiment-copy">
-        <p>10 — Refractive geometry / {die}</p>
+        <p>12 — Refractive geometry / {die}</p>
         <h1>Hold the<br />light itself.</h1>
         <span>A multi-bounce crystal die catches an off-camera beam, splitting the room into spectral paths. Drag the die and watch the light answer.</span>
       </div>

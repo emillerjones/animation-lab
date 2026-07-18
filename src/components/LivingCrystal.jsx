@@ -531,7 +531,7 @@ export default function LivingCrystal({ settings = {} }) {
       </div>
 
       <div className="experiment-copy living-crystal__copy">
-        <p>23 — Procedural mineral intelligence</p>
+        <p>25 — Procedural mineral intelligence</p>
         <h1>Living<br />Crystal.</h1>
         <span>Facets grow from the seed, breathe with inner light once mature, then shatter and seed the next generation — on, and on. Drag to look around.</span>
       </div>

@@ -5,6 +5,7 @@ import { Bloom, EffectComposer, Noise, SMAA } from "@react-three/postprocessing"
 import * as THREE from "three";
 import useDragOrbit from "../../hooks/useDragOrbit";
 import usePinchZoom from "../../hooks/usePinchZoom";
+import useDroneMode from "../../hooks/useDroneMode";
 import { WEBGL_DPR, WEBGL_MSAA_SAMPLES } from "../../rendering/quality";
 import "./GpuExperience.css";
 
@@ -13,7 +14,7 @@ import "./GpuExperience.css";
 const DEFAULT_ORBIT_FOCUS = [0, 2.4, -14];
 const DEFAULT_ORBIT_POSITION = [0, 3.3, 13.5];
 
-function CameraRig({ speed = 1, impulse, orbitFocus, orbitPosition }) {
+function CameraRig({ speed = 1, impulse, orbitFocus, orbitPosition, droneMode = false }) {
   const travel = useRef(0);
   const dragRef = useDragOrbit();
   const { focus, distance, baseYaw, basePitch } = useMemo(() => {
@@ -34,7 +35,14 @@ function CameraRig({ speed = 1, impulse, orbitFocus, orbitPosition }) {
   const distanceRef = useRef(distance);
   const targetDistanceRef = useRef(distance);
   usePinchZoom({ targetDistanceRef, min: distance * 0.4, max: distance * 2.2 });
+  useDroneMode({
+    enabled: droneMode,
+    dragRef,
+    moveSpeed: distance * 0.45,
+    bounds: { x: distance * 3.5, yMin: 0.3, yMax: distance * 3, z: distance * 3.5 },
+  });
   useFrame((state, delta) => {
+    if (droneMode) return;
     const step = Math.min(delta, .05) * speed;
     travel.current += step;
     const drag = dragRef.current;
@@ -62,7 +70,7 @@ function Stage({ World, settings, accent, background, impulse, actionActive, orb
       <ambientLight intensity={.24} color={accent} />
       <directionalLight position={[4, 10, 6]} intensity={1.1} color="#fff1d3" />
       <pointLight position={[-6, 4, 3]} intensity={22} distance={32} color={accent} />
-      <CameraRig speed={speed} impulse={impulse} orbitFocus={orbitFocus} orbitPosition={orbitPosition} />
+      <CameraRig speed={speed} impulse={impulse} orbitFocus={orbitFocus} orbitPosition={orbitPosition} droneMode={settings.droneMode} />
       <World settings={settings} accent={accent} impulse={impulse} actionActive={actionActive} />
       <EffectComposer multisampling={WEBGL_MSAA_SAMPLES}>
         <Bloom mipmapBlur intensity={1.3} luminanceThreshold={.18} luminanceSmoothing={.45} />

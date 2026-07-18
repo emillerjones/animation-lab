@@ -32,8 +32,11 @@ const RiverOfWishes = load(() => import("../components/RiverOfWishes"));
 const TheFirstFold = load(() => import("../components/TheFirstFold"));
 
 // The single source of truth for the gallery, its order, and every detail route.
-// The first 5 entries (no `collection`) are the Primary section; everything with
-// `collection: "advanced"` renders in the Secondary section, in array order.
+// Entries without `collection` render in the Primary section; everything with
+// `collection: "advanced"` renders in Secondary — each section keeps array order.
+// The sidebar number shown next to each entry is this array's index + 1 (see
+// HomePage.jsx), so every piece's hero-text eyebrow number must be kept in sync
+// with its position here whenever an entry is added, removed, or reordered.
 export const animations = [
   {
     id: "luminous-mycelium",
@@ -44,7 +47,10 @@ export const animations = [
     accent: "#9dff82",
     accentRgb: "157 255 130",
     component: LuminousMycelium,
-    controls: [{ key: "mushrooms", label: "Mushrooms", min: 10, max: 10000, default: 100, curve: { mid: 100, power: 2.2 } }],
+    controls: [
+      { key: "mushrooms", label: "Mushrooms", min: 10, max: 10000, default: 100, curve: { mid: 100, power: 2.2 } },
+      { key: "droneMode", label: "Drone mode", type: "toggle", default: false },
+    ],
   },
   {
     id: "wishing-tree",
@@ -60,6 +66,7 @@ export const animations = [
       { key: "seasonSpeed", label: "Season cycle rate", min: 0.2, max: 3, step: 0.1, default: 1, suffix: "×" },
       { key: "windIntensity", label: "Wind (falling drift)", min: 0, max: 200, step: 10, default: 100, suffix: "%" },
       { key: "flightFrequency", label: "Petals falling", min: 0, max: 10000, step: 1, default: 1000 },
+      { key: "droneMode", label: "Drone mode", type: "toggle", default: false },
     ],
   },
   {
@@ -77,6 +84,7 @@ export const animations = [
       { key: "seasonSpeed", label: "Season cycle rate", min: 0.2, max: 3, step: 0.1, default: 1, suffix: "×" },
       { key: "windIntensity", label: "Wind (falling drift)", min: 0, max: 200, step: 10, default: 100, suffix: "%" },
       { key: "flightFrequency", label: "Petals falling per tree", min: 0, max: 10000, step: 1, default: 500 },
+      { key: "droneMode", label: "Drone mode", type: "toggle", default: false },
     ],
   },
   {
@@ -141,6 +149,7 @@ export const animations = [
     controls: [
       { key: "density", label: "Plankton density", min: 15, max: 70, step: 5, default: 60 },
       { key: "hue", label: "Glow hue", min: 0, max: 360, step: 5, default: 166 },
+      { key: "droneMode", label: "Drone mode", type: "toggle", default: false },
     ],
   },
   {
@@ -152,7 +161,10 @@ export const animations = [
     accent: "#ffc978",
     accentRgb: "255 201 120",
     component: DreamingCity,
-    controls: [{ key: "towers", label: "Dreaming towers", min: 20, max: 400, step: 10, default: 140 }],
+    controls: [
+      { key: "towers", label: "Dreaming towers", min: 20, max: 400, step: 10, default: 140 },
+      { key: "droneMode", label: "Drone mode", type: "toggle", default: false },
+    ],
   },
   {
     id: "glass-harmonics",
@@ -163,7 +175,30 @@ export const animations = [
     accent: "#78e9ff",
     accentRgb: "120 233 255",
     component: GlassHarmonics3D,
-    controls: [{ key: "plates", label: "Floating rings", min: 6, max: 24, step: 1, default: 16 }],
+    controls: [
+      { key: "plates", label: "Floating rings", min: 6, max: 24, step: 1, default: 16 },
+      { key: "droneMode", label: "Drone mode", type: "toggle", default: false },
+    ],
+  },
+  {
+    id: "river-of-wishes",
+    provider: "claude",
+    title: "The River of Wishes",
+    category: "Instancing / Flow Field",
+    description: "Ten thousand patterned origami cranes become a suspended river, flowing through a moonlit stone garden.",
+    accent: "#e6c88a",
+    accentRgb: "230 200 138",
+    component: RiverOfWishes,
+    controls: [
+      { key: "craneCount", label: "Cranes in the river", min: 1000, max: 10000, step: 500, default: 8000 },
+      { key: "flowSpeed", label: "Current speed", min: 0.2, max: 3, step: 0.1, default: 1, suffix: "×" },
+      { key: "riverWidth", label: "River width", min: 0, max: 200, step: 10, default: 100, suffix: "%" },
+      { key: "droneMode", label: "Drone mode", type: "toggle", default: false },
+      { key: "lampHeight", label: "Lamp globe height", min: 10.5, max: 14, step: 0.1, default: 11.5 },
+      { key: "lampIntensity", label: "Lamp intensity", min: 40, max: 500, step: 10, default: 220 },
+      { key: "lampRange", label: "Lamp illumination range", min: 20, max: 300, step: 5, default: 220 },
+      { key: "lampFalloff", label: "Lamp falloff", min: 0.5, max: 3, step: 0.05, default: 2 },
+    ],
   },
   {
     id: "endless-light-tunnel",
@@ -179,6 +214,7 @@ export const animations = [
       { key: "frames", label: "Architectural frames", min: 24, max: 64, step: 4, default: 56 },
       { key: "dust", label: "Rushing particles", min: 40, max: 140, step: 10, default: 120 },
       { key: "debris", label: "Physics debris", min: 8, max: 36, step: 2, default: 20 },
+      { key: "droneMode", label: "Drone mode", type: "toggle", default: false },
     ],
   },
   {
@@ -208,7 +244,10 @@ export const animations = [
     accent: "#9dff82",
     accentRgb: "157 255 130",
     component: LuminousMycelium3D,
-    controls: [{ key: "nodes", label: "Network nodes", min: 4, max: 144, step: 4, default: 64 }],
+    controls: [
+      { key: "nodes", label: "Network nodes", min: 4, max: 144, step: 4, default: 64 },
+      { key: "droneMode", label: "Drone mode", type: "toggle", default: false },
+    ],
   },
   {
     id: "cathedral-of-light",
@@ -237,6 +276,7 @@ export const animations = [
     controls: [
       { key: "lines", label: "Wave lines", min: 16, max: 48, step: 4, default: 42 },
       { key: "vertices", label: "Glowing vertices", min: 50, max: 180, step: 10, default: 160 },
+      { key: "droneMode", label: "Drone mode", type: "toggle", default: false },
     ],
   },
   {
@@ -265,6 +305,7 @@ export const animations = [
     controls: [
       { key: "shelves", label: "Near shelf bays", min: 10, max: 130, step: 10, default: 90 },
       { key: "books", label: "Books on the shelves", min: 200, max: 14000, step: 200, default: 6000 },
+      { key: "droneMode", label: "Drone mode", type: "toggle", default: false },
     ],
   },
   {
@@ -279,6 +320,7 @@ export const animations = [
     controls: [
       { key: "shelves", label: "Near shelf bays", min: 10, max: 130, step: 10, default: 90 },
       { key: "books", label: "Books on the shelves", min: 200, max: 14000, step: 200, default: 6000 },
+      { key: "droneMode", label: "Drone mode", type: "toggle", default: false },
     ],
   },
   {
@@ -309,6 +351,7 @@ export const animations = [
     controls: [
       { key: "facets", label: "Floating forms", min: 6, max: 18, step: 1, default: 14 },
       { key: "flow", label: "Paper current", min: 0.3, max: 1.8, step: 0.1, default: 0.8 },
+      { key: "droneMode", label: "Drone mode", type: "toggle", default: false },
     ],
   },
   {
@@ -363,6 +406,7 @@ export const animations = [
       { key: "starIntensity", label: "Star intensity", min: 40, max: 200, step: 5, default: 110, suffix: "%" },
       { key: "orbitSpeed", label: "Orbital rate", min: 0.1, max: 2, step: 0.1, default: 0.6, suffix: "×" },
       { key: "droneTraffic", label: "Drone traffic", min: 0, max: 40, step: 2, default: 16 },
+      { key: "droneMode", label: "Drone mode", type: "toggle", default: false },
     ],
   },
   {
@@ -381,6 +425,7 @@ export const animations = [
       { key: "rainDensity", label: "Rain density", min: 0, max: 100, step: 5, default: 60, suffix: "%" },
       { key: "lightningRate", label: "Lightning frequency", min: 0, max: 100, step: 5, default: 55, suffix: "%" },
       { key: "foamAmount", label: "Foam & spray", min: 10, max: 150, step: 5, default: 80, suffix: "%" },
+      { key: "droneMode", label: "Drone mode", type: "toggle", default: false },
     ],
   },
   {
@@ -418,26 +463,6 @@ export const animations = [
       { key: "orbitRate", label: "Orbital rate", min: 0.2, max: 1.6, step: 0.1, default: 0.72, suffix: "×" },
       { key: "coreEnergy", label: "Central light", min: 20, max: 140, step: 5, default: 76, suffix: "%" },
       { key: "pointerInfluence", label: "Pointer influence", min: 0, max: 100, step: 5, default: 42, suffix: "%" },
-    ],
-  },
-  {
-    id: "river-of-wishes",
-    provider: "claude",
-    title: "The River of Wishes",
-    category: "Instancing / Flow Field",
-    description: "Ten thousand patterned origami cranes become a suspended river, flowing through a moonlit stone garden.",
-    accent: "#e6c88a",
-    accentRgb: "230 200 138",
-    component: RiverOfWishes,
-    controls: [
-      { key: "craneCount", label: "Cranes in the river", min: 1000, max: 10000, step: 500, default: 8000 },
-      { key: "flowSpeed", label: "Current speed", min: 0.2, max: 3, step: 0.1, default: 1, suffix: "×" },
-      { key: "riverWidth", label: "River width", min: 0, max: 200, step: 10, default: 100, suffix: "%" },
-      { key: "droneMode", label: "Drone mode", type: "toggle", default: false },
-      { key: "lampHeight", label: "Lamp globe height", min: 10.5, max: 14, step: 0.1, default: 11.5 },
-      { key: "lampIntensity", label: "Lamp intensity", min: 40, max: 500, step: 10, default: 220 },
-      { key: "lampRange", label: "Lamp illumination range", min: 20, max: 300, step: 5, default: 220 },
-      { key: "lampFalloff", label: "Lamp falloff", min: 0.5, max: 3, step: 0.05, default: 2 },
     ],
   },
   {

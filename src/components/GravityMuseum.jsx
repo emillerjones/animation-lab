@@ -1738,7 +1738,7 @@ export default function GravityMuseum({ settings = {} }) {
       </Canvas>
 
       <div className="gravity-museum-pro__copy experiment-copy">
-        <p>04 — Impossible mechanics</p>
+        <p>05 — Impossible mechanics</p>
         <h1>Gravity is<br />only a curator.</h1>
         <span>The chamber turns, but down never moves. Its ribs lift the collection until gravity pulls every object back into the tumbling pile below.</span>
       </div>

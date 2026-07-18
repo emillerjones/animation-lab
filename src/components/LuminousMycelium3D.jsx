@@ -101,7 +101,7 @@ export default function LuminousMycelium3D({ settings = {} }) {
 
   return (
     <section className="atmosphere luminous-mycelium-3d" style={{ "--experiment-accent": "#9dff82" }}>
-      <CanvasStage camera={{ position: [1.4, 0.4, 9], fov: 46 }} orbitEnabled orbitFocus={[1.4, 0.4, -1]} speed={settings.speed ?? 1} bloom={{ intensity: 1 }}>
+      <CanvasStage camera={{ position: [1.4, 0.4, 9], fov: 46 }} orbitEnabled orbitFocus={[1.4, 0.4, -1]} droneMode={settings.droneMode} speed={settings.speed ?? 1} bloom={{ intensity: 1 }}>
         <ambientLight intensity={0.1} />
         <group position={[1.4, 0.4, -1]}>
           <Strands nodes={nodes} edges={edges} accent="#9dff82" />
@@ -111,7 +111,7 @@ export default function LuminousMycelium3D({ settings = {} }) {
         </group>
       </CanvasStage>
       <div className="experiment-copy">
-        <p>11 — Intelligence study, with real signal</p>
+        <p>13 — Intelligence study, with real signal</p>
         <h1>Light that<br />actually travels.</h1>
         <span>Real pulses of signal move along each connection, the way a fungal network actually communicates.</span>
       </div>

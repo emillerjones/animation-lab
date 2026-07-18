@@ -708,7 +708,7 @@ export default function StormMadeOfGlass({ settings = {} }) {
       <div className="storm-made-of-glass__grain" aria-hidden="true" />
 
       <div className="storm-made-of-glass__copy">
-        <p>19 — CONTAINED WEATHER</p>
+        <p>21 — CONTAINED WEATHER</p>
         <h1>A storm<br />made of glass.</h1>
         <span>A museum artifact holds an entire weather system—until pressure, light, and curiosity become too much.</span>
       </div>

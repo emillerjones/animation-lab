@@ -70,7 +70,7 @@ export default function WishingGrove({ settings = {} }) {
       </CanvasStage>
 
       <div className="experiment-copy wishing-tree__copy">
-        <p>— A forest of wishes, growing outward</p>
+        <p>03 — A forest of wishes, growing outward</p>
         <h1>The Wishing<br />Grove.</h1>
         <span>The first tree stands at the heart of the sand garden. Around it, an entire living grove takes root—each tree bearing its own impossible multitude of wishes.</span>
       </div>

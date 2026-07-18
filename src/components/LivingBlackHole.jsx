@@ -709,7 +709,7 @@ export default function LivingBlackHole({ settings = {} }) {
       <div className="living-black-hole__grain" aria-hidden="true" />
 
       <div className="living-black-hole__copy">
-        <p>03 — LIVING GRAVITY</p>
+        <p>04 — LIVING GRAVITY</p>
         <h1>Nothing escapes.<br />Not even light.</h1>
         <span>Scroll toward the horizon. Hold to feed the singularity.</span>
       </div>

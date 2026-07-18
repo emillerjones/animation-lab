@@ -54,7 +54,17 @@ export default function HomePage({ selectedId, open, onToggle, onSelect }) {
         <i /><i /><i /><span>{open ? "Hide" : "Experiments"}</span>
       </button>
       <aside className={`library-nav ${open ? "is-open" : ""}`} id="animation-library">
-        <div className="library-nav__brand"><span>Animation</span><strong>Lab</strong><small>{animations.length} experiments</small></div>
+        <div className="library-nav__brand">
+          <div className="library-nav__logo" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none">
+              <circle cx="12" cy="10.5" r="4.6" stroke="currentColor" strokeWidth="1.4" />
+              <line x1="2" y1="17.5" x2="22" y2="17.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
+            <span>Horizon</span>
+          </div>
+          <div className="library-nav__brand-name"><span>Animation</span><strong>Lab</strong></div>
+          <small>{animations.length} experiments</small>
+        </div>
         <label className="library-nav__search"><span aria-hidden="true">&#9906;</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find an animation" /></label>
         <div className="library-nav__scroll">
           <Collection title="Primary" provider="library" animations={standardAnimations} selectedId={selectedId} onSelect={onSelect} />

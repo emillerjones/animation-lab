@@ -5,6 +5,7 @@ import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import CanvasStage, { useSpeed } from "./CanvasStage";
 import useDragOrbit from "../hooks/useDragOrbit";
 import usePinchZoom from "../hooks/usePinchZoom";
+import useDroneMode from "../hooks/useDroneMode";
 import AnimationReadout from "./AnimationReadout";
 import { seeded } from "../utils/procedural";
 import "./WishingTree.css";
@@ -792,6 +793,13 @@ export function TreeScene({
   }, [camera]);
 
   usePinchZoom({ targetDistanceRef, min: 15, max: maxCameraDistance });
+  const droneMode = Boolean(settings.droneMode);
+  useDroneMode({
+    enabled: droneMode,
+    dragRef,
+    moveSpeed: maxCameraDistance * 0.35,
+    bounds: { x: maxCameraDistance * 3, yMin: 0.5, yMax: maxCameraDistance * 2.2, z: maxCameraDistance * 3 },
+  });
 
   useFrame((state, rawDelta) => {
     const elapsed = state.clock.elapsedTime * speed;
@@ -820,23 +828,25 @@ export function TreeScene({
     const displayIdx = localT > 0.5 ? nextIdx : idx;
     seasonIndexRef.current.value = displayIdx;
 
-    baseAngleRef.current += Math.min(rawDelta, 0.05) * 0.015 * speed;
-    const yaw = baseAngleRef.current + dragRef.current.targetYaw;
-    const pitch = 0.18 + dragRef.current.targetPitch;
-    distanceRef.current = THREE.MathUtils.damp(
-      distanceRef.current,
-      targetDistanceRef.current,
-      9,
-      Math.min(rawDelta, 0.05),
-    );
-    const distance = distanceRef.current;
-    const focus = new THREE.Vector3(0, 12, 0);
-    camera.position.set(
-      focus.x + Math.sin(yaw) * Math.cos(pitch) * distance,
-      focus.y + Math.sin(pitch) * distance * 0.55,
-      focus.z + Math.cos(yaw) * Math.cos(pitch) * distance,
-    );
-    camera.lookAt(focus);
+    if (!droneMode) {
+      baseAngleRef.current += Math.min(rawDelta, 0.05) * 0.015 * speed;
+      const yaw = baseAngleRef.current + dragRef.current.targetYaw;
+      const pitch = 0.18 + dragRef.current.targetPitch;
+      distanceRef.current = THREE.MathUtils.damp(
+        distanceRef.current,
+        targetDistanceRef.current,
+        9,
+        Math.min(rawDelta, 0.05),
+      );
+      const distance = distanceRef.current;
+      const focus = new THREE.Vector3(0, 12, 0);
+      camera.position.set(
+        focus.x + Math.sin(yaw) * Math.cos(pitch) * distance,
+        focus.y + Math.sin(pitch) * distance * 0.55,
+        focus.z + Math.cos(yaw) * Math.cos(pitch) * distance,
+      );
+      camera.lookAt(focus);
+    }
 
     statsTimerRef.current.frames += 1;
     statsTimerRef.current.time += rawDelta;

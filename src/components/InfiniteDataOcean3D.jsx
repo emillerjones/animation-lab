@@ -103,14 +103,14 @@ export default function InfiniteDataOcean3D({ settings = {} }) {
 
   return (
     <section className="atmosphere infinite-data-ocean-3d" style={{ "--experiment-accent": "#5ef3ff" }}>
-      <CanvasStage camera={{ position: [0, 2.2, 9], fov: 48 }} orbitEnabled speed={settings.speed ?? 1} bloom={{ intensity: 0.8 }}>
+      <CanvasStage camera={{ position: [0, 2.2, 9], fov: 48 }} orbitEnabled droneMode={settings.droneMode} speed={settings.speed ?? 1} bloom={{ intensity: 0.8 }}>
         <color attach="background" args={["#010204"]} />
         <fogExp2 attach="fog" args={["#010204", 0.014]} />
         <ambientLight intensity={0.12} />
         <OceanScene settings={settings} />
       </CanvasStage>
       <div className="experiment-copy">
-        <p>13 — Seascape study, mirrored</p>
+        <p>15 — Seascape study, mirrored</p>
         <h1>Data, reflected<br />in black glass.</h1>
         <span>A breathing signal grid floats above a real mirrored floor instead of a flat wireframe pretending at depth.</span>
       </div>

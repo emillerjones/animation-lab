@@ -676,7 +676,7 @@ export default function MechanicalSolarSystem({ settings = {} }) {
       <div className="mechanical-solar-system__grain" aria-hidden="true" />
 
       <div className="mechanical-solar-system__copy">
-        <p>05 — ANCIENT ASTRONOMY</p>
+        <p>06 — ANCIENT ASTRONOMY</p>
         <h1>The heavens<br />were engineered.</h1>
         <span>An impossible clock assembles a solar system from brass, light, and a memory older than its makers.</span>
       </div>

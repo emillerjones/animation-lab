@@ -45,17 +45,22 @@
 .library-nav__toggle.is-open i:nth-child(3) { height: 11px; transform: translateX(-5px) rotate(-45deg); }
 
 .library-nav__brand {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: end;
-  padding: 20px 46px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 18px 46px 16px 18px;
   border-bottom: 1px solid rgb(255 255 255 / 10%);
   line-height: .9;
 }
 
-.library-nav__brand span { color: rgb(255 255 255 / 48%); font-size: 13px; letter-spacing: .08em; }
-.library-nav__brand strong { font-size: 22px; font-weight: 550; letter-spacing: -.04em; }
-.library-nav__brand small { grid-column: 1 / -1; margin-top: 10px; color: rgb(255 255 255 / 35%); font-size: 9px; letter-spacing: .15em; text-transform: uppercase; }
+.library-nav__logo { display: flex; align-items: center; gap: 6px; color: rgb(255 255 255 / 58%); }
+.library-nav__logo svg { flex: none; }
+.library-nav__logo span { font-size: 10px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: rgb(255 255 255 / 58%); }
+
+.library-nav__brand-name { display: flex; align-items: baseline; gap: 5px; }
+.library-nav__brand-name span { color: rgb(255 255 255 / 48%); font-size: 13px; letter-spacing: .08em; }
+.library-nav__brand-name strong { font-size: 22px; font-weight: 550; letter-spacing: -.04em; }
+.library-nav__brand small { color: rgb(255 255 255 / 35%); font-size: 9px; letter-spacing: .15em; text-transform: uppercase; }
 
 .library-nav__search {
   display: flex;

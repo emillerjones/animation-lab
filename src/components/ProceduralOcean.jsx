@@ -8,6 +8,7 @@ import {
 import { getProject } from "@theatre/core";
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from "three-mesh-bvh";
 import { seeded } from "../utils/procedural";
+import useDroneMode from "../hooks/useDroneMode";
 import AnimationReadout from "./AnimationReadout";
 import "./ProceduralOcean.css";
 
@@ -369,7 +370,11 @@ function OceanScene({ settings, speedRef, onSunReady, onTelemetry }) {
   const AUTO_CLIMB_SECONDS = 25;
   const stormProgressRef = useRef(INITIAL_PROGRESS);
   const manualProgressRef = useRef(false);
-  const dragRef = useRef({ yaw: 0, pitch: 0 });
+  // targetYaw/targetPitch mirror yaw/pitch below — useDroneMode expects a ref shaped like
+  // useDragOrbit's return value, and this piece predates that hook, so the two pointer-drag
+  // handlers below just keep both name pairs in sync instead of migrating this file's whole
+  // bespoke drag implementation.
+  const dragRef = useRef({ yaw: 0, pitch: 0, targetYaw: 0, targetPitch: 0 });
   const lightningRef = useRef({ nextStrike: 3, flash: 0 });
   const telemetryFrameRef = useRef(0);
   const sunRef = useRef();
@@ -407,6 +412,8 @@ function OceanScene({ settings, speedRef, onSunReady, onTelemetry }) {
       lastY = event.clientY;
       dragRef.current.yaw = THREE.MathUtils.clamp(dragRef.current.yaw - dx * 0.0025, -0.5, 0.5);
       dragRef.current.pitch = THREE.MathUtils.clamp(dragRef.current.pitch - dy * 0.0018, -0.85, 0.85);
+      dragRef.current.targetYaw = dragRef.current.yaw;
+      dragRef.current.targetPitch = dragRef.current.pitch;
     };
     const onPointerUp = (event) => {
       if (dragging && !dragMoved && oceanMesh) {
@@ -438,6 +445,14 @@ function OceanScene({ settings, speedRef, onSunReady, onTelemetry }) {
       window.removeEventListener("pointerup", onPointerUp);
     };
   }, [camera, gl, oceanMesh]);
+
+  const droneMode = Boolean(settings.droneMode);
+  useDroneMode({
+    enabled: droneMode,
+    dragRef,
+    moveSpeed: 6,
+    bounds: { x: 60, yMin: 0.3, yMax: 40, z: 60 },
+  });
 
   useFrame((state, rawDelta) => {
     const delta = Math.min(rawDelta, 0.05) * speedRef.current;
@@ -499,15 +514,17 @@ function OceanScene({ settings, speedRef, onSunReady, onTelemetry }) {
       sunRef.current.intensity = 1.1 + intensity * 0.3 + lightningRef.current.flash * 6;
     }
 
-    const yaw = dragRef.current.yaw + state.pointer.x * 0.05;
-    const pitch = dragRef.current.pitch + state.pointer.y * 0.03;
-    const distance = tuning.value.cameraDistance + intensity * 0.4;
-    camera.position.set(
-      Math.sin(yaw) * distance,
-      tuning.value.cameraHeight - pitch * 2,
-      2.6 + Math.cos(yaw) * distance,
-    );
-    camera.lookAt(Math.sin(yaw) * 4, 1.4, -18);
+    if (!droneMode) {
+      const yaw = dragRef.current.yaw + state.pointer.x * 0.05;
+      const pitch = dragRef.current.pitch + state.pointer.y * 0.03;
+      const distance = tuning.value.cameraDistance + intensity * 0.4;
+      camera.position.set(
+        Math.sin(yaw) * distance,
+        tuning.value.cameraHeight - pitch * 2,
+        2.6 + Math.cos(yaw) * distance,
+      );
+      camera.lookAt(Math.sin(yaw) * 4, 1.4, -18);
+    }
     camera.fov = 52 + intensity * 6;
     camera.updateProjectionMatrix();
   });
@@ -568,7 +585,7 @@ export default function ProceduralOcean({ settings = {} }) {
         </Canvas>
       </div>
       <div className="experiment-copy">
-        <p>22 — Weather that actually arrives</p>
+        <p>24 — Weather that actually arrives</p>
         <h1>Procedural<br />Ocean.</h1>
         <span>A predawn sea builds through wind, rain, and swell on its own as warm light breaks through. Scroll to steer the weather yourself, drag to look around, click the water to send out a ripple.</span>
       </div>

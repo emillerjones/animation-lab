@@ -695,7 +695,7 @@ export default function InfiniteLibrary3D({ settings = {} }) {
 
   return (
     <section className="atmosphere infinite-library-3d" style={{ "--experiment-accent": "#e0ba79" }}>
-      <CanvasStage camera={{ position: [0, 1.4, 9], fov: 52 }} orbitEnabled shadows speed={settings.speed ?? 1} bloom={{ intensity: 0.6 }}>
+      <CanvasStage camera={{ position: [0, 1.4, 9], fov: 52 }} orbitEnabled shadows droneMode={settings.droneMode} speed={settings.speed ?? 1} bloom={{ intensity: 0.6 }}>
         <color attach="background" args={["#050309"]} />
         <fogExp2 attach="fog" args={["#050309", 0.01]} />
         <ambientLight intensity={0.22} />
@@ -715,7 +715,7 @@ export default function InfiniteLibrary3D({ settings = {} }) {
         <BookInstances count={bookCount} slotBayCount={bayCount + FAR_BAY_COUNT} />
       </CanvasStage>
       <div className="experiment-copy">
-        <p>16 — Perspective study, genuinely endless</p>
+        <p>18 — Perspective study, genuinely endless</p>
         <h1>A hall that<br />actually recedes.</h1>
         <span>Full shelving bays under a vaulted, gold-ribbed ceiling forty feet up, thousands of books threaded through the shelves, and a much longer silhouette fading into the fog far beyond where the detail stops.</span>
       </div>

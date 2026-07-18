@@ -46,7 +46,7 @@ export default function GlassHarmonics3D({ settings = {} }) {
   const count = Math.max(6, Math.min(24, settings.plates ?? 16));
   return (
     <section className="atmosphere glass-harmonics-3d" style={{ "--experiment-accent": "#78e9ff" }}>
-      <CanvasStage camera={{ position: [1.6, 0.6, 8], fov: 46 }} orbitEnabled orbitFocus={[1.6, 0.4, 0]} speed={settings.speed ?? 1} bloom={{ intensity: 0.9 }}>
+      <CanvasStage camera={{ position: [1.6, 0.6, 8], fov: 46 }} orbitEnabled orbitFocus={[1.6, 0.4, 0]} droneMode={settings.droneMode} speed={settings.speed ?? 1} bloom={{ intensity: 0.9 }}>
         <ambientLight intensity={0.2} />
         <pointLight color="#78e9ff" intensity={35} distance={20} position={[1.6, 1, 3]} />
         <group position={[1.6, 0.4, 0]}>
@@ -54,7 +54,7 @@ export default function GlassHarmonics3D({ settings = {} }) {
         </group>
       </CanvasStage>
       <div className="experiment-copy">
-        <p>08 — Orbital geometry</p>
+        <p>09 — Orbital geometry</p>
         <h1>Halos without<br />a horizon.</h1>
         <span>Transmissive rings float, tilt, and breathe through a field where gravity has released its hold.</span>
       </div>
