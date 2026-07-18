@@ -1,0 +1,4 @@
+@import "../experiment-base.css";
+
+.waking-field { background: #000000; }
+.waking-field .experiment-copy { z-index: 20; }

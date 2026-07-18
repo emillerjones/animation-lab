@@ -30,6 +30,7 @@ const WishingTree = load(() => import("../components/WishingTree"));
 const WishingGrove = load(() => import("../components/WishingGrove"));
 const RiverOfWishes = load(() => import("../components/RiverOfWishes"));
 const TheFirstFold = load(() => import("../components/TheFirstFold"));
+const WakingField = load(() => import("../components/WakingField"));
 
 // The single source of truth for the gallery, its order, and every detail route.
 // Entries without `collection` render in the Primary section; everything with
@@ -478,6 +479,21 @@ export const animations = [
     controls: [
       { key: "rotationSpeed", label: "Rotation speed", min: 0, max: 2, step: 0.1, default: 1, suffix: "×" },
       { key: "lightWarmth", label: "Light warmth", min: 50, max: 200, step: 10, default: 100, suffix: "%" },
+    ],
+  },
+  {
+    id: "waking-field",
+    provider: "claude",
+    title: "Waking Field",
+    category: "Instancing / Real Illumination",
+    description: "Thousands of stone, wood, brass, glass, and crystal orbs sit dark in a scattered field until a chosen few wake with real point lights, spilling actual light onto whatever neighboring orbs happen to be nearby.",
+    accent: "#ffd23d",
+    accentRgb: "255 210 61",
+    component: WakingField,
+    controls: [
+      { key: "lightsOn", label: "Lights on", min: 0, max: 20, step: 1, default: 2 },
+      { key: "orbsOn", label: "Orbs assembled", min: 0, max: 3000, step: 50, default: 3000 },
+      { key: "motion", label: "Orbs in motion", type: "toggle", default: true },
     ],
   },
 ].map((animation, index) => ({ ...animation, index }));
