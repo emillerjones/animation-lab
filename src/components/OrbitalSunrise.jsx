@@ -226,6 +226,7 @@ const sunFragment = /* glsl */ `
     float d = length(gl_PointCoord - 0.5) * 2.0;
     float core = smoothstep(0.1, 0.06, d) * 60.0;
     float glow = exp(-d * 9.0) * 4.0 + exp(-d * 3.0) * 0.3;
+    glow *= smoothstep(1.0, 0.6, d); // round, no square sprite edge
     gl_FragColor = vec4(vec3(1.0, 0.96, 0.9) * (core + glow) * uSunI * 0.3, 1.0);
   }
 `;
