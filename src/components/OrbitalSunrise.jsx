@@ -154,6 +154,14 @@ const airFragment = /* glsl */ `
   uniform float uSunI;
   varying vec3 vP;
   ${AIR}
+  // Air density (Rayleigh, Mie) at height h: the usual exponential, lowered
+  // so it thins to exactly zero at the top of the shell. (Cut off plainly,
+  // it would still be at about 2% there, and the glow would end in a hard
+  // line against space.)
+  vec2 airDensity(float h) {
+    vec2 atTop = vec2(exp(-(RA - 1.0) / HR), exp(-(RA - 1.0) / HM));
+    return max(vec2(exp(-h / HR), exp(-h / HM)) - atTop, 0.0) / (1.0 - atTop);
+  }
   void main() {
     vec3 ro = cameraPosition;
     vec3 rd = normalize(vP - ro);
@@ -177,7 +185,7 @@ const airFragment = /* glsl */ `
       vec3 p = ro + rd * (t0 + dt * (float(i) + 0.5));
       float r = length(p);
       float h = r - 1.0;
-      vec2 dens = vec2(exp(-h / HR), exp(-h / HM));
+      vec2 dens = airDensity(h);
       odView += dens * dt;
       vec3 T = extinction(odView + sunDepth(h, dot(p / r, uSun)));
       sumR += dens.x * dt * T;
