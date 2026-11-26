@@ -616,9 +616,6 @@ function buildScene(el, host, settingsRef, report) {
   sunrise(-0.1 * DEG, SIDE, HOME);
   placeMoon();
   const view = { vx: 0, vy: 0, drag: null, spin: still ? 0 : 1 };
-  function endIntro() {
-    if (intro < INTRO) intro = INTRO;
-  }
 
   const glow = 0;
   let time = 0, last = performance.now(), frame = 0, clock = 0;
@@ -721,7 +718,7 @@ function buildScene(el, host, settingsRef, report) {
   const radPerPx = () => ((camera.fov / h) * 1.25 * DEG * (distance - 1)) / (HOME - 1);
   const down = (e) => {
     if (e.button !== 0 || e.target.closest?.(FOREGROUND)) return;
-    endIntro();
+    if (intro < INTRO) return; // hands off until the sunrise has played
     view.drag = { x: e.clientX, y: e.clientY, t: performance.now() };
     view.vx = view.vy = 0;
     view.spin = 0;
@@ -751,7 +748,7 @@ function buildScene(el, host, settingsRef, report) {
   };
   const wheel = (e) => {
     e.preventDefault();
-    endIntro();
+    if (intro < INTRO) return; // no zoom until the sunrise has played
     const dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
     zoom = Math.min(FAR, Math.max(NEAR, 1 + (zoom - 1) * Math.exp(dy * (e.ctrlKey ? 0.012 : 0.0016))));
   };
