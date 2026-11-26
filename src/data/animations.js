@@ -31,6 +31,7 @@ const WishingGrove = load(() => import("../components/WishingGrove"));
 const RiverOfWishes = load(() => import("../components/RiverOfWishes"));
 const TheFirstFold = load(() => import("../components/TheFirstFold"));
 const WakingField = load(() => import("../components/WakingField"));
+const OrbitalSunrise = load(() => import("../components/OrbitalSunrise"));
 
 // The single source of truth for the gallery, its order, and every detail route.
 // Entries without `collection` render in the Primary section; everything with
@@ -494,6 +495,22 @@ export const animations = [
       { key: "lightsOn", label: "Lights on", min: 0, max: 20, step: 1, default: 2 },
       { key: "orbsOn", label: "Orbs assembled", min: 0, max: 3000, step: 50, default: 3000 },
       { key: "motion", label: "Orbs in motion", type: "toggle", default: true },
+    ],
+  },
+  {
+    id: "orbital-sunrise",
+    provider: "claude",
+    title: "Orbital Sunrise",
+    category: "Real Sky / Atmospheric Scattering",
+    description: "The real sun climbs over the Earth's edge where it actually is right now, through a ray-marched atmosphere, over NASA day imagery, city lights, recent satellite clouds and the Moon at today's phase. Drag to turn the planet; scroll to fly from orbit height out to the whole globe.",
+    accent: "#ffc27a",
+    accentRgb: "255 194 122",
+    component: OrbitalSunrise,
+    controls: [
+      { key: "orbit", label: "Orbit speed", min: 0, max: 400, step: 10, default: 100, suffix: "%" },
+      { key: "hours", label: "Time shift", min: -12, max: 12, step: 0.5, default: 0, suffix: " h" },
+      { key: "lights", label: "City lights", min: 0, max: 250, step: 10, default: 100, suffix: "%" },
+      { key: "clouds", label: "Clouds", type: "toggle", default: true },
     ],
   },
 ].map((animation, index) => ({ ...animation, index }));

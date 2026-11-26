@@ -1,0 +1,43 @@
+@import "../experiment-base.css";
+
+.orbital-sunrise {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.orbital-sunrise:active {
+  cursor: grabbing;
+}
+.orbital-sunrise__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 1.8s ease;
+}
+.orbital-sunrise__canvas.is-ready {
+  opacity: 1;
+}
+.orbital-sunrise .experiment-copy {
+  z-index: 20;
+}
+.orbital-sunrise__error {
+  position: absolute;
+  inset: auto 0 18vh;
+  z-index: 30;
+  text-align: center;
+  color: rgb(255 255 255 / 70%);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+}
+@media (prefers-reduced-motion: reduce) {
+  .orbital-sunrise__canvas {
+    transition: none;
+  }
+}
